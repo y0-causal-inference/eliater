@@ -1,0 +1,8 @@
+cff-version: 1.0.2
+message: "If you use this software, please cite it as below."
+title: "Eliater"
+authors:
+  - name: "Sara Taheri"
+version: 0.0.1-dev
+doi:
+url: "https://github.com/y0-causal-inference/eliater"
