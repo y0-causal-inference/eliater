@@ -38,6 +38,8 @@
     </a>
 </p>
 
+<img src="docs/source/img/overview.png" />
+
 A high level, end-to-end causal inference workflow.
 
 ## 💪 Getting Started
