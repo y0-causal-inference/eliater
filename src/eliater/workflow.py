@@ -1,15 +1,18 @@
-from typing import Optional, Dict, Literal
+from typing import Dict, Literal, Optional
 
 import numpy as np
 import pandas as pd
+
 from y0.algorithm.falsification import get_conditional_independencies
-from y0.graph import NxMixedGraph
 from y0.dsl import Variable
+from y0.graph import NxMixedGraph
 
 
-def get_state_space_map(data: pd.DataFrame, threshold: int) -> Dict[Variable, Literal["discrete", "continuous"]]:
+def get_state_space_map(
+    data: pd.DataFrame, threshold: int
+) -> Dict[Variable, Literal["discrete", "continuous"]]:
     """Get a dictionary from each variable to its type."""
-    unique_count = {column_name:  data[column_name].nunique() for column_name in data.columns}
+    unique_count = {column_name: data[column_name].nunique() for column_name in data.columns}
     return {
         Variable(column): "discrete" if unique_count[column] <= threshold else "continuous"
         for column in data.columns
@@ -25,7 +28,9 @@ def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str]):
     is_continuous = ~is_discrete
 
     if not is_discrete.all() and not is_continuous.all():
-        raise NotImplementedError("Mixed data types are not allowed. Either the data should be discrete / continuous")
+        raise NotImplementedError(
+            "Mixed data types are not allowed. Either the data should be discrete / continuous"
+        )
 
     if is_discrete.all():
         test = "pearson"
@@ -33,7 +38,7 @@ def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str]):
         test = "chi-square"
 
     for conditional_independency in get_conditional_independencies(graph):
-        if not conditional_independency.test(data, boolean=True, method=test, significance_level=0.05):
+        if not conditional_independency.test(
+            data, boolean=True, method=test, significance_level=0.05
+        ):
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
-
-

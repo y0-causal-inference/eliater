@@ -1,7 +1,8 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 import y0
-from y0.dsl import Variable, X, Y, Z1, Z2, Z3
+from y0.dsl import Z1, Z2, Z3, Variable, X, Y
 
 M1 = y0.dsl.Variable("M1")
 M2 = y0.dsl.Variable("M2")
