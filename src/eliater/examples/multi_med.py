@@ -27,6 +27,7 @@ def generate_data_for_multi_med(
     generator = np.random.default_rng(seed)
 
     u = generator.normal(loc=50.0, scale=10.0, size=num_samples)
+    u2 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
 
     beta0_x = 1
     beta_u_to_x = 0.7
@@ -39,11 +40,12 @@ def generate_data_for_multi_med(
 
     beta0_m1 = 2
     beta_x_to_m1 = 0.7
+    beta_u2_to_m1 = 0.8
 
     if M1 in treatments:
         m1 = np.full(num_samples, treatments[M1])
     else:
-        loc_m1 = beta0_m1 + x * beta_x_to_m1
+        loc_m1 = beta0_m1 + x * beta_x_to_m1 + u2 * beta_u2_to_m1
         m1 = generator.normal(loc=loc_m1, scale=10.0, size=num_samples)
 
     beta0_m2 = 2
@@ -57,12 +59,13 @@ def generate_data_for_multi_med(
 
     beta0_y = 1.8
     beta_u_to_y = 0.5
+    beta_u2_to_y = 0.7
     beta_m2_to_y = 0.7
     if Y in treatments:
         y = np.full(num_samples, treatments[Y])
     else:
         y = generator.normal(
-            loc=beta0_y + u * beta_u_to_y + m2 * beta_m2_to_y,
+            loc=beta0_y + u * beta_u_to_y + m2 * beta_m2_to_y + u2 * beta_u2_to_y,
             scale=10.0,
             size=num_samples,
         )
