@@ -9,8 +9,7 @@ from y0.graph import NxMixedGraph
 
 
 def get_state_space_map(
-        data: pd.DataFrame,
-        threshold: Optional[int] = 10
+    data: pd.DataFrame, threshold: Optional[int] = 10
 ) -> Dict[Variable, Literal["discrete", "continuous"]]:
     """Get a dictionary from each variable to its type."""
     unique_count = {column_name: data[column_name].nunique() for column_name in data.columns}
@@ -47,6 +46,6 @@ def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str] = Non
 
     for conditional_independency in get_conditional_independencies(graph):
         if not conditional_independency.test(
-                data, boolean=True, method=test, significance_level=0.05
+            data, boolean=True, method=test, significance_level=0.05
         ):
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)

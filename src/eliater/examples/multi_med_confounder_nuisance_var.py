@@ -11,16 +11,16 @@ R2 = y0.dsl.Variable("R2")
 R3 = y0.dsl.Variable("R3")
 
 
-def generate_data_for_multi_med_confounder(
+def generate_data_for_multi_med_confounder_nuisance_var(
     num_samples: int, treatments: dict[Variable, float] | None = None, *, seed: int | None = None
 ) -> pd.DataFrame:
-    """Generate testing data for the multi_med_confounder case study.
+    """Generate testing data for the multi_med_confounder_nuisance_var case study.
 
     :param num_samples: The number of samples to generate. Try 1000.
     :param treatments: An optional dictionary of the values to fix each variable to.
     :param seed: An optional random seed for reproducibility purposes
     :returns: A pandas Dataframe with columns corresponding
-        to the variable names in the multi_med_confounder example
+        to the variable names in the multi_med_confounder_nuisance_var example
     """
     if treatments is None:
         treatments = {}
@@ -100,6 +100,34 @@ def generate_data_for_multi_med_confounder(
             size=num_samples,
         )
 
+    beta0_r1 = -3
+    beta_m1_to_r1 = 0.7
+
+    if R1 in treatments:
+        r1 = np.full(num_samples, treatments[R1])
+    else:
+        loc_r1 = beta0_r1 + x * beta_m1_to_r1
+        r1 = generator.normal(loc=loc_r1, scale=10.0, size=num_samples)
+
+    beta0_r2 = -3
+    beta_r1_to_r2 = 0.7
+
+    if R2 in treatments:
+        r2 = np.full(num_samples, treatments[R2])
+    else:
+        loc_r2 = beta0_r2 + r1 * beta_r1_to_r2
+        r2 = generator.normal(loc=loc_r2, scale=10.0, size=num_samples)
+
+    beta0_r3 = -3
+    beta_r2_to_r3 = 0.7
+    bea_y_to_r3 = -0.4
+
+    if R3 in treatments:
+        r3 = np.full(num_samples, treatments[R3])
+    else:
+        loc_r3 = beta0_r3 + r1 * beta_r2_to_r3 + y * bea_y_to_r3
+        r3 = generator.normal(loc=loc_r3, scale=10.0, size=num_samples)
+
     return pd.DataFrame(
         {
             X.name: x,
@@ -108,6 +136,9 @@ def generate_data_for_multi_med_confounder(
             Z1.name: z1,
             Z2.name: z2,
             Z3.name: z3,
+            R1.name: r1,
+            R2.name: r2,
+            R3.name: r3,
             Y.name: y,
         }
     )
