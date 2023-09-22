@@ -27,7 +27,7 @@ def choose_default_test(data: pd.DataFrame) -> str:
 
     if not is_discrete.all() and not is_continuous.all():
         raise NotImplementedError(
-            "Mixed data types are not allowed. Either the data should be discrete / continuous"
+            "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
         )
 
     if is_continuous.all():
