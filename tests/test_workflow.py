@@ -6,7 +6,11 @@ import pandas as pd
 from src.eliater.workflow import choose_default_test, fix_graph, get_state_space_map
 from y0.dsl import Variable
 from y0.examples.frontdoor import generate_data_for_frontdoor
+from y0.graph import NxMixedGraph
 from y0.examples.frontdoor_backdoor import generate_data_for_frontdoor_backdoor
+from src.eliater.examples import multi_med, multi_med_confounder
+from src.eliater.examples.multi_med import generate_data_for_multi_med
+from src.eliater.examples.multi_med_confounder import generate_data_for_multi_med_confounder
 
 
 class TestWorkflow(unittest.TestCase):
@@ -52,4 +56,34 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(expected_default_test, actual_default_test)
 
     def test_fix_graph(self):
-        pass
+
+        actual_fixed_graph = fix_graph(multi_med, generate_data_for_multi_med(1000))
+        expected_fixed_graph = NxMixedGraph.from_str_adj(
+            directed={
+                'X': ['M1'],
+                'M1': ['M2'],
+                'M2': ['Y']
+            },
+            undirected={
+                'X': ['Y'],
+                'M1': ['Y']
+            }
+        )
+        self.assertEqual(actual_fixed_graph, expected_fixed_graph)
+
+        actual_fixed_graph = fix_graph(multi_med_confounder, generate_data_for_multi_med_confounder(40))
+        expected_fixed_graph = NxMixedGraph.from_str_adj(
+            directed= {
+                "Z1": ["X", "Z2"],
+                "X": ["M1"],
+                "M1": ["M2"],
+                "M2": ["Y"],
+                "Z2": ["Z3"],
+                "Z3": ["Y"]
+            },
+            undirected={
+                "Z1": ["X"],
+                "Y": ["Z2"]
+            }
+        )
+        self.assertEqual(actual_fixed_graph, expected_fixed_graph)

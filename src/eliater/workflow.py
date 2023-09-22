@@ -46,6 +46,8 @@ def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str] = Non
 
     for conditional_independency in get_conditional_independencies(graph):
         if not conditional_independency.test(
-            data, boolean=True, method=test, significance_level=0.05
+            data, boolean=True, method=test, significance_level=0.001
         ):
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
+
+    return graph
