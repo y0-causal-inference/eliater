@@ -1,16 +1,23 @@
-from typing import Dict, Literal, Optional
 import warnings
+from typing import Dict, Literal, Optional
 
 import numpy as np
 import pandas as pd
-
 from y0.algorithm.falsification import get_conditional_independencies
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 
-
-tests = ["pearson", "chi-square", "cressie_read", "freeman_tuckey", "g_sq",
-         "log_likelihood", "modified_log_likelihood", "power_divergence", "neyman"]
+tests = [
+    "pearson",
+    "chi-square",
+    "cressie_read",
+    "freeman_tuckey",
+    "g_sq",
+    "log_likelihood",
+    "modified_log_likelihood",
+    "power_divergence",
+    "neyman",
+]
 
 
 def get_state_space_map(
@@ -25,16 +32,18 @@ def get_state_space_map(
 
 
 def is_data_discrete(data: pd.DataFrame) -> bool:
-    """Checks if all the columns in the dataframe has discrete data."""
+    """Check if all the columns in the dataframe has discrete data."""
     variable_types = get_state_space_map(data=data)
     is_discrete = np.array([col_type == "discrete" for column, col_type in variable_types.items()])
     return is_discrete.all()
 
 
 def is_data_continuous(data: pd.DataFrame) -> bool:
-    """Checks if all the columns in the dataframe has continuous data."""
+    """Check if all the columns in the dataframe has continuous data."""
     variable_types = get_state_space_map(data=data)
-    is_continuous = np.array([col_type == "continuous" for column, col_type in variable_types.items()])
+    is_continuous = np.array(
+        [col_type == "continuous" for column, col_type in variable_types.items()]
+    )
     return is_continuous.all()
 
 
@@ -56,22 +65,23 @@ def choose_default_test(data: pd.DataFrame) -> str:
     return test
 
 
-def fix_graph(graph: NxMixedGraph,
-              data: pd.DataFrame,
-              test: Optional[str] = None
-              ) -> NxMixedGraph:
+def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str] = None) -> NxMixedGraph:
     """Repairs the graph by adding undirected edges between the nodes that fail the conditional independency test."""
-
     if not test:
         test = choose_default_test(data)
 
     if test not in tests:
-        raise Exception("Please input a valid test. The supported tests are listed below:\n[pearson, chi-square, "
-                        "cressie_read, freeman_tuckey, g_sq, log_likelihood, modified_log_likelihood, "
-                        "power_divergence, neyman]")
+        raise Exception(
+            "Please input a valid test. The supported tests are listed below:\n[pearson, chi-square, "
+            "cressie_read, freeman_tuckey, g_sq, log_likelihood, modified_log_likelihood, "
+            "power_divergence, neyman]"
+        )
 
     if is_data_continuous(data) and test != "pearson":
-        warnings.warn(message="The data is continuous. Either discretize and use chi-square or use the pearson.")
+        warnings.warn(
+            message="The data is continuous. Either discretize and use chi-square or use the pearson.",
+            stacklevel=2,
+        )
 
     if is_data_discrete(data) and test == "pearson":
         raise Exception("Cannot run pearson on discrete data. Use chi-square instead.")

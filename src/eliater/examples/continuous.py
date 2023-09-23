@@ -1,7 +1,7 @@
 from typing import Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def generate_random_continuous_data(num_samples: int, seed: Optional[int] = 1) -> pd.DataFrame:
@@ -12,9 +12,9 @@ def generate_random_continuous_data(num_samples: int, seed: Optional[int] = 1) -
     :returns: A pandas Dataframe with random continuous data.
     """
     np.random.seed(seed)
-    W = np.random.normal(loc=10, scale=1, size=num_samples)
-    X = np.random.normal(loc=W * 0.7, scale=3, size=num_samples)
-    Z = np.random.normal(loc=X * 0.4, scale=2, size=num_samples)
-    Y = np.random.normal(loc=Z * 0.5 + W * 0.3, scale=6)
-    data = pd.DataFrame({"W": W, "Z": Z, "X": X, "Y": Y})
+    w = np.random.normal(loc=10, scale=1, size=num_samples)
+    x = np.random.normal(loc=w * 0.7, scale=3, size=num_samples)
+    z = np.random.normal(loc=x * 0.4, scale=2, size=num_samples)
+    y = np.random.normal(loc=z * 0.5 + w * 0.3, scale=6)
+    data = pd.DataFrame({"W": w, "Z": z, "X": x, "Y": y})
     return data
