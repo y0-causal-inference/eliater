@@ -6,18 +6,7 @@ import pandas as pd
 from y0.algorithm.falsification import get_conditional_independencies
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
-
-tests = [
-    "pearson",
-    "chi-square",
-    "cressie_read",
-    "freeman_tuckey",
-    "g_sq",
-    "log_likelihood",
-    "modified_log_likelihood",
-    "power_divergence",
-    "neyman",
-]
+from y0.struct import get_conditional_independence_tests
 
 
 def get_state_space_map(
@@ -70,12 +59,9 @@ def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str] = Non
     if not test:
         test = choose_default_test(data)
 
+    tests = get_conditional_independence_tests()
     if test not in tests:
-        raise Exception(
-            "Please input a valid test. The supported tests are listed below:\n[pearson, chi-square, "
-            "cressie_read, freeman_tuckey, g_sq, log_likelihood, modified_log_likelihood, "
-            "power_divergence, neyman]"
-        )
+        raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
 
     if is_data_continuous(data) and test != "pearson":
         warnings.warn(
