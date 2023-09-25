@@ -101,5 +101,4 @@ multi_med_confounder_nuisance_var_example = Example(
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
 
-
-
+continuous = NxMixedGraph.from_str_edges(directed=[("W", "X"), ("X", "Z"), ("Z", "Y"), ("W", "Y")])
