@@ -106,7 +106,7 @@ def generate_data_for_multi_med_confounder_nuisance_var(
     if R1 in treatments:
         r1 = np.full(num_samples, treatments[R1])
     else:
-        loc_r1 = beta0_r1 + x * beta_m1_to_r1
+        loc_r1 = beta0_r1 + m1 * beta_m1_to_r1
         r1 = generator.normal(loc=loc_r1, scale=10.0, size=num_samples)
 
     beta0_r2 = -3
@@ -120,12 +120,12 @@ def generate_data_for_multi_med_confounder_nuisance_var(
 
     beta0_r3 = -3
     beta_r2_to_r3 = 0.7
-    bea_y_to_r3 = -0.4
+    beta_y_to_r3 = -0.4
 
     if R3 in treatments:
         r3 = np.full(num_samples, treatments[R3])
     else:
-        loc_r3 = beta0_r3 + r1 * beta_r2_to_r3 + y * bea_y_to_r3
+        loc_r3 = beta0_r3 + r2 * beta_r2_to_r3 + y * beta_y_to_r3
         r3 = generator.normal(loc=loc_r3, scale=10.0, size=num_samples)
 
     return pd.DataFrame(
