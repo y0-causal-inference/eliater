@@ -1,7 +1,6 @@
 import warnings
 from typing import Dict, Literal, Optional
 
-import numpy as np
 import pandas as pd
 from y0.algorithm.falsification import get_conditional_independencies
 from y0.dsl import Variable
@@ -13,45 +12,34 @@ def get_state_space_map(
     data: pd.DataFrame, threshold: Optional[int] = 10
 ) -> Dict[Variable, Literal["discrete", "continuous"]]:
     """Get a dictionary from each variable to its type."""
-    unique_count = {column_name: data[column_name].nunique() for column_name in data.columns}
+    column_values_unique_count = {column_name: data[column_name].nunique() for column_name in data.columns}
     return {
-        Variable(column): "discrete" if unique_count[column] <= threshold else "continuous"
+        Variable(column): "discrete" if column_values_unique_count[column] <= threshold else "continuous"
         for column in data.columns
     }
 
 
 def is_data_discrete(data: pd.DataFrame) -> bool:
     """Check if all the columns in the dataframe has discrete data."""
-    variable_types = get_state_space_map(data=data)
-    is_discrete = np.array([col_type == "discrete" for column, col_type in variable_types.items()])
-    return is_discrete.all()
+    variable_types = set(get_state_space_map(data=data).values())
+    return variable_types == {"discrete"}
 
 
 def is_data_continuous(data: pd.DataFrame) -> bool:
     """Check if all the columns in the dataframe has continuous data."""
-    variable_types = get_state_space_map(data=data)
-    is_continuous = np.array(
-        [col_type == "continuous" for column, col_type in variable_types.items()]
-    )
-    return is_continuous.all()
+    variable_types = set(get_state_space_map(data).values())
+    return variable_types == {"continuous"}
 
 
 def choose_default_test(data: pd.DataFrame) -> str:
     """Choose the default statistical test for testing conditional independencies based on the data."""
-    is_discrete = is_data_discrete(data)
-    is_continuous = is_data_continuous(data)
-
-    if not is_discrete and not is_continuous:
-        raise NotImplementedError(
+    if is_data_discrete(data):
+        return "chi-square"
+    if is_data_continuous(data):
+        return "pearson"
+    raise NotImplementedError(
             "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
         )
-
-    if is_continuous:
-        test = "pearson"
-    else:
-        test = "chi-square"
-
-    return test
 
 
 def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str] = None) -> NxMixedGraph:
