@@ -12,9 +12,13 @@ def get_state_space_map(
     data: pd.DataFrame, threshold: Optional[int] = 10
 ) -> Dict[Variable, Literal["discrete", "continuous"]]:
     """Get a dictionary from each variable to its type."""
-    column_values_unique_count = {column_name: data[column_name].nunique() for column_name in data.columns}
+    column_values_unique_count = {
+        column_name: data[column_name].nunique() for column_name in data.columns
+    }
     return {
-        Variable(column): "discrete" if column_values_unique_count[column] <= threshold else "continuous"
+        Variable(column): "discrete"
+        if column_values_unique_count[column] <= threshold
+        else "continuous"
         for column in data.columns
     }
 
@@ -38,11 +42,16 @@ def choose_default_test(data: pd.DataFrame) -> str:
     if is_data_continuous(data):
         return "pearson"
     raise NotImplementedError(
-            "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
-        )
+        "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
+    )
 
 
-def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str] = None) -> NxMixedGraph:
+def fix_graph(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    test: Optional[str] = None,
+    significance_level: Optional[float] = 0.05,
+) -> NxMixedGraph:
     """Repairs the graph by adding undirected edges between the nodes that fail the conditional independency test."""
     if not test:
         test = choose_default_test(data)
@@ -62,7 +71,7 @@ def fix_graph(graph: NxMixedGraph, data: pd.DataFrame, test: Optional[str] = Non
 
     for conditional_independency in get_conditional_independencies(graph):
         if not conditional_independency.test(
-            data, boolean=True, method=test, significance_level=0.001
+            data, boolean=True, method=test, significance_level=significance_level
         ):
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
