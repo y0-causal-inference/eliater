@@ -1,10 +1,11 @@
 import warnings
-from typing import Dict, Literal, Optional
+from typing import Dict, Literal, Optional, Set, Union
 
+import networkx as nx
 import pandas as pd
 from y0.algorithm.falsification import get_conditional_independencies
 from y0.dsl import Variable
-from y0.graph import NxMixedGraph
+from y0.graph import NxMixedGraph, set_latent
 from y0.struct import get_conditional_independence_tests
 
 
@@ -75,4 +76,42 @@ def fix_graph(
         ):
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
+    return graph
+
+
+def find_nodes_on_all_paths(
+    graph: NxMixedGraph, sources: Union[Variable, Set[Variable]], destination: Variable
+) -> Set[Variable]:
+    """Find every node in all possible paths from source to destination."""
+    if isinstance(sources, Variable):
+        sources = {sources}
+    nodes = set()
+    for source in sources:
+        for path in nx.all_simple_paths(graph.directed, source, destination):
+            for node in path:
+                nodes.add(node)
+    return nodes
+
+
+def mark_latent(
+    graph: NxMixedGraph, treatments: Union[Variable, Set[Variable]], outcome: Variable
+) -> NxMixedGraph:
+    """Marks the descendants of mediators that are not ancestors of the outcome variable as latent nodes."""
+    if isinstance(treatments, Variable):
+        treatments = {treatments}
+    # Find the mediators on the causal path
+    nodes_on_causal_path = find_nodes_on_all_paths(
+        graph=graph, sources=treatments, destination=outcome
+    )
+    mediators = nodes_on_causal_path.difference(treatments.union({outcome}))
+    # Find the descendants of mediators
+    descendants_of_mediators = graph.descendants_inclusive(mediators)
+    # Find the ancestors of the outcome variable
+    ancestors_of_outcome = graph.ancestors_inclusive(outcome)
+    # Descendants of mediators that are not ancestors of the outcome variable
+    descendants_not_ancestors = descendants_of_mediators.difference(ancestors_of_outcome)
+    # Remove treatments and outcome
+    descendants_not_ancestors = descendants_not_ancestors.difference(treatments.union({outcome}))
+    # Mark nodes as latent
+    set_latent(graph.directed, descendants_not_ancestors)
     return graph

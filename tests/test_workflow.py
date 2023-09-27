@@ -1,11 +1,12 @@
 import unittest
 import warnings
+from copy import deepcopy
 
 from y0.dsl import Variable
 from y0.examples import frontdoor_backdoor
 from y0.examples.frontdoor import generate_data_for_frontdoor
 from y0.examples.frontdoor_backdoor import generate_data_for_frontdoor_backdoor
-from y0.graph import NxMixedGraph
+from y0.graph import NxMixedGraph, set_latent
 
 from eliater.examples import (
     continuous,
@@ -19,7 +20,13 @@ from eliater.examples.multi_med_confounder import generate_data_for_multi_med_co
 from eliater.examples.multi_med_confounder_nuisance_var import (
     generate_data_for_multi_med_confounder_nuisance_var,
 )
-from eliater.workflow import choose_default_test, fix_graph, get_state_space_map
+from eliater.workflow import (
+    choose_default_test,
+    find_nodes_on_all_paths,
+    fix_graph,
+    get_state_space_map,
+    mark_latent,
+)
 
 
 class TestWorkflow(unittest.TestCase):
@@ -148,3 +155,22 @@ class TestWorkflow(unittest.TestCase):
             undirected={"Z1": ["X"], "Y": ["Z2"]},
         )
         self.assertEqual(actual_fixed_graph, expected_fixed_graph)
+
+    def test_find_nodes_on_all_paths_for_multi_med(self):
+        """Tests finding nodes on all causal paths for multi_med."""
+        expected_nodes = {Variable("X"), Variable("M2"), Variable("M1"), Variable("Y")}
+        actual_nodes = find_nodes_on_all_paths(multi_med, Variable("X"), Variable("Y"))
+        self.assertEqual(expected_nodes, actual_nodes)
+
+    def test_mark_latent_for_multi_med_confounder_nuisance_var(self):
+        """Tests marking nodes as latent.
+
+        Test marking the descendants of mediators not ancestors of the outcome as latent nodes for
+        multi_med_confounder_nuisance_var.
+        """
+        expected_graph = deepcopy(multi_med_confounder_nuisance_var)
+        set_latent(expected_graph.directed, {Variable("R1"), Variable("R2"), Variable("R3")})
+        actual_graph = mark_latent(
+            graph=multi_med_confounder_nuisance_var, treatments=Variable("X"), outcome=Variable("Y")
+        )
+        self.assertEqual(expected_graph, actual_graph)
