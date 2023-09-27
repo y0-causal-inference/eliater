@@ -1,3 +1,5 @@
+"""This module tests the steps involved in the causal workflow."""
+
 import unittest
 import warnings
 from copy import deepcopy
@@ -30,6 +32,8 @@ from eliater.workflow import (
 
 
 class TestWorkflow(unittest.TestCase):
+    """This class implements tests to verify the correctness of steps involved in the causal workflow."""
+
     def test_get_space_map_for_frontdoor(self):
         """Test get_space_map for frontdoor."""
         frontdoor_data = generate_data_for_frontdoor(1000)

@@ -1,7 +1,9 @@
+"""This module contains a method to generate testing data for the multi_med case study."""
+
 import numpy as np
 import pandas as pd
 import y0
-from y0.dsl import Z1, Z2, Z3, Variable, X, Y
+from y0.dsl import Variable, X, Y
 
 M1 = y0.dsl.Variable("M1")
 M2 = y0.dsl.Variable("M2")

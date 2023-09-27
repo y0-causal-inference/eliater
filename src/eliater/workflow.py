@@ -1,3 +1,5 @@
+"""This module defines the steps for the end-to-end causal workflow for estimation of causal queries."""
+
 import warnings
 from typing import Dict, Literal, Optional, Set, Union
 
@@ -96,10 +98,15 @@ def find_all_nodes_in_causal_paths(
 def mark_latent(
     graph: NxMixedGraph, treatments: Union[Variable, Set[Variable]], outcome: Variable
 ) -> NxMixedGraph:
-    """Marks latent nodes.
+    """Mark the latent nodes in the graph.
 
     Marks the descendants of nodes in all causal paths that are not ancestors of the outcome variable as latent
     nodes.
+
+    :param graph: an NxMixedGraph
+    :param treatments: a list of treatments
+    :param outcome: the outcome variable
+    :returns: The modified graph marked with latent nodes.
     """
     if isinstance(treatments, Variable):
         treatments = {treatments}

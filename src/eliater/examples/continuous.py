@@ -1,3 +1,5 @@
+"""This module contains methods to generate random continuous data."""
+
 from typing import Optional
 
 import numpy as np

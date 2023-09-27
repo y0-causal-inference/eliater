@@ -1,6 +1,8 @@
+"""This module contains methods for data generation using examples from various case studies."""
+
 import y0
 from y0.algorithm.identify import Query
-from y0.dsl import Z1, Z2, Z3, Variable, X, Y
+from y0.dsl import Z1, Z2, Z3, X, Y
 from y0.examples import Example
 from y0.graph import NxMixedGraph
 
@@ -61,7 +63,8 @@ multi_med_confounder = NxMixedGraph.from_edges(
 
 multi_med_confounder_example = Example(
     name="Multi_mediators_confounders",
-    reference="Causal workflow paper, figure 4 (b). The query can be estimated with both front-door and back-door approaches",
+    reference="Causal workflow paper, figure 4 (b). The query can be estimated with both front-door and "
+              "back-door approaches",
     graph=multi_med_confounder,
     generate_data=generate_data_for_multi_med_confounder,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
@@ -95,7 +98,8 @@ multi_med_confounder_nuisance_var = NxMixedGraph.from_edges(
 
 multi_med_confounder_nuisance_var_example = Example(
     name="Multi_mediators_confounders_nuisance_var",
-    reference="Causal workflow paper, figure 4 (a). The query can be estimated with both front-door and back-door approaches",
+    reference="Causal workflow paper, figure 4 (a). The query can be estimated with both front-door and back-door "
+              "approaches",
     graph=multi_med_confounder_nuisance_var,
     generate_data=generate_data_for_multi_med_confounder_nuisance_var,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
