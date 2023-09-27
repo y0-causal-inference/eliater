@@ -79,16 +79,16 @@ def fix_graph(
     return graph
 
 
-def find_nodes_on_all_paths(
-    graph: NxMixedGraph, sources: Union[Variable, Set[Variable]], destination: Variable
+def find_all_nodes_in_causal_paths(
+    graph: NxMixedGraph, treatments: Union[Variable, Set[Variable]], outcome: Variable
 ) -> Set[Variable]:
-    """Find every node in all possible paths from source to destination."""
-    if isinstance(sources, Variable):
-        sources = {sources}
+    """Find all the nodes in causal paths from source to destination."""
+    if isinstance(treatments, Variable):
+        treatments = {treatments}
     nodes = set()
-    for source in sources:
-        for path in nx.all_simple_paths(graph.directed, source, destination):
-            for node in path:
+    for treatment in treatments:
+        for causal_path in nx.all_simple_paths(graph.directed, treatment, outcome):
+            for node in causal_path:
                 nodes.add(node)
     return nodes
 
@@ -96,20 +96,25 @@ def find_nodes_on_all_paths(
 def mark_latent(
     graph: NxMixedGraph, treatments: Union[Variable, Set[Variable]], outcome: Variable
 ) -> NxMixedGraph:
-    """Marks the descendants of mediators that are not ancestors of the outcome variable as latent nodes."""
+    """Marks latent nodes.
+
+    Marks the descendants of nodes in all causal paths that are not ancestors of the outcome variable as latent
+    nodes.
+    """
     if isinstance(treatments, Variable):
         treatments = {treatments}
-    # Find the mediators on the causal path
-    nodes_on_causal_path = find_nodes_on_all_paths(
-        graph=graph, sources=treatments, destination=outcome
+    # Find the nodes on the causal path
+    nodes_on_causal_paths = find_all_nodes_in_causal_paths(
+        graph=graph, treatments=treatments, outcome=outcome
     )
-    mediators = nodes_on_causal_path.difference(treatments.union({outcome}))
-    # Find the descendants of mediators
-    descendants_of_mediators = graph.descendants_inclusive(mediators)
+    # Find the descendants for the nodes on the causal paths
+    descendants_of_nodes_on_causal_paths = graph.descendants_inclusive(nodes_on_causal_paths)
     # Find the ancestors of the outcome variable
     ancestors_of_outcome = graph.ancestors_inclusive(outcome)
-    # Descendants of mediators that are not ancestors of the outcome variable
-    descendants_not_ancestors = descendants_of_mediators.difference(ancestors_of_outcome)
+    # Descendants of nodes on the causal paths that are not ancestors of the outcome variable
+    descendants_not_ancestors = descendants_of_nodes_on_causal_paths.difference(
+        ancestors_of_outcome
+    )
     # Remove treatments and outcome
     descendants_not_ancestors = descendants_not_ancestors.difference(treatments.union({outcome}))
     # Mark nodes as latent
