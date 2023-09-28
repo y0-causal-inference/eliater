@@ -6,9 +6,9 @@ from y0.dsl import Z1, Z2, Z3, X, Y
 from y0.examples import Example
 from y0.graph import NxMixedGraph
 
-from .multi_med import generate_data_for_multi_med
-from .multi_med_confounder import generate_data_for_multi_med_confounder
-from .multi_med_confounder_nuisance_var import generate_data_for_multi_med_confounder_nuisance_var
+from .multi_mediators import generate_data_for_multi_mediators
+from .multi_mediators_confounder import generate_data_for_multi_mediators_confounder
+from .multi_mediators_confounder_nuisance_var import generate_data_for_multi_mediators_confounder_nuisance_var
 
 M1 = y0.dsl.Variable("M1")
 M2 = y0.dsl.Variable("M2")
@@ -19,7 +19,7 @@ R3 = y0.dsl.Variable("R3")
 #: Treatment: X
 #: Outcome: Y
 #: Adjusted: N/A
-multi_med = NxMixedGraph.from_edges(
+multi_mediators = NxMixedGraph.from_edges(
     directed=[
         (X, M1),
         (M1, M2),
@@ -32,18 +32,18 @@ multi_med = NxMixedGraph.from_edges(
     ],
 )
 
-multi_med_example = Example(
+multi_mediators_example = Example(
     name="Multi_mediators",
     reference="Inspired by the frontdoor example, but with multiple mediators.",
-    graph=multi_med,
-    generate_data=generate_data_for_multi_med,
+    graph=multi_mediators,
+    generate_data=generate_data_for_multi_mediators,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
 
 #: Treatment: X
 #: Outcome: Y
 #: Adjusted: N/A
-multi_med_confounder = NxMixedGraph.from_edges(
+multi_mediators_confounder = NxMixedGraph.from_edges(
     directed=[
         (Z1, X),
         (X, M1),
@@ -61,12 +61,12 @@ multi_med_confounder = NxMixedGraph.from_edges(
     ],
 )
 
-multi_med_confounder_example = Example(
+multi_mediators_confounder_example = Example(
     name="Multi_mediators_confounders",
     reference="Causal workflow paper, figure 4 (b). The query can be estimated with both front-door and "
               "back-door approaches",
-    graph=multi_med_confounder,
-    generate_data=generate_data_for_multi_med_confounder,
+    graph=multi_mediators_confounder,
+    generate_data=generate_data_for_multi_mediators_confounder,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
 
@@ -74,7 +74,7 @@ multi_med_confounder_example = Example(
 #: Treatment: X
 #: Outcome: Y
 #: Adjusted: N/A
-multi_med_confounder_nuisance_var = NxMixedGraph.from_edges(
+multi_mediators_confounder_nuisance_var = NxMixedGraph.from_edges(
     directed=[
         (Z1, X),
         (X, M1),
@@ -96,12 +96,12 @@ multi_med_confounder_nuisance_var = NxMixedGraph.from_edges(
     ],
 )
 
-multi_med_confounder_nuisance_var_example = Example(
+multi_mediators_confounder_nuisance_var_example = Example(
     name="Multi_mediators_confounders_nuisance_var",
     reference="Causal workflow paper, figure 4 (a). The query can be estimated with both front-door and back-door "
               "approaches",
-    graph=multi_med_confounder_nuisance_var,
-    generate_data=generate_data_for_multi_med_confounder_nuisance_var,
+    graph=multi_mediators_confounder_nuisance_var,
+    generate_data=generate_data_for_multi_mediators_confounder_nuisance_var,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
 

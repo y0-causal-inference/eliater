@@ -1,4 +1,4 @@
-"""This module contains a method to generate testing data for the multi_med_confounder_nuisance_var case study."""
+"""This module contains a method to generate testing data for the multi_mediators_confounder_nuisance_var case study."""
 
 import numpy as np
 import pandas as pd
@@ -12,16 +12,16 @@ R2 = y0.dsl.Variable("R2")
 R3 = y0.dsl.Variable("R3")
 
 
-def generate_data_for_multi_med_confounder_nuisance_var(
+def generate_data_for_multi_mediators_confounder_nuisance_var(
     num_samples: int, treatments: dict[Variable, float] | None = None, *, seed: int | None = None
 ) -> pd.DataFrame:
-    """Generate testing data for the multi_med_confounder_nuisance_var case study.
+    """Generate testing data for the multi_mediators_confounder_nuisance_var case study.
 
     :param num_samples: The number of samples to generate. Try 1000.
     :param treatments: An optional dictionary of the values to fix each variable to.
     :param seed: An optional random seed for reproducibility purposes
     :returns: A pandas Dataframe with columns corresponding
-        to the variable names in the multi_med_confounder_nuisance_var example
+        to the variable names in the multi_mediators_confounder_nuisance_var example
     """
     if treatments is None:
         treatments = {}

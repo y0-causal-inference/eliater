@@ -5,18 +5,18 @@ import warnings
 
 from eliater.examples import (
     continuous,
-    multi_med,
-    multi_med_confounder,
-    multi_med_confounder_nuisance_var,
+    multi_mediators,
+    multi_mediators_confounder,
+    multi_mediators_confounder_nuisance_var,
 )
 from eliater.examples.continuous import generate_random_continuous_data
-from eliater.examples.multi_med import generate_data_for_multi_med
-from eliater.examples.multi_med_confounder import generate_data_for_multi_med_confounder
-from eliater.examples.multi_med_confounder_nuisance_var import (
+from eliater.examples.multi_mediators import generate_data_for_multi_mediators
+from eliater.examples.multi_mediators_confounder import generate_data_for_multi_mediators_confounder
+from eliater.examples.multi_mediators_confounder_nuisance_var import (
     R1,
     R2,
     R3,
-    generate_data_for_multi_med_confounder_nuisance_var,
+    generate_data_for_multi_mediators_confounder_nuisance_var,
 )
 from eliater.repair import choose_default_test, fix_graph, get_state_space_map
 from y0.dsl import Variable
@@ -73,7 +73,7 @@ class TestRepair(unittest.TestCase):
 
     def test_fix_graph_for_invalid_input_test(self):
         """Test fix_graph for invalid input test."""
-        self.assertRaises(Exception, fix_graph, multi_med, generate_data_for_multi_med(1000), "abc")
+        self.assertRaises(Exception, fix_graph, multi_mediators, generate_data_for_multi_mediators(1000), "abc")
 
     def test_fix_graph_for_continuous_data_and_not_pearson(self):
         """Test fix_graph for continuous data when pearson is not chosen."""
@@ -105,9 +105,9 @@ class TestRepair(unittest.TestCase):
             "pearson",
         )
 
-    def test_fix_graph_for_multi_med(self):
-        """Test fix_graph for multi_med."""
-        actual_fixed_graph = fix_graph(multi_med, generate_data_for_multi_med(1000))
+    def test_fix_graph_for_multi_mediators(self):
+        """Test fix_graph for multi_mediators."""
+        actual_fixed_graph = fix_graph(multi_mediators, generate_data_for_multi_mediators(1000))
         expected_fixed_graph = NxMixedGraph.from_str_adj(
             directed={"X": ["M1"], "M1": ["M2"], "M2": ["Y"]}, undirected={"X": ["Y"], "M1": ["Y"]}
         )
@@ -134,12 +134,12 @@ class TestRepair(unittest.TestCase):
             msg="Graphs have different undirected edges",
         )
 
-    def test_fix_graph_for_multi_med_confounder(self):
-        """Test fix_graph for multi_med_confounder."""
+    def test_fix_graph_for_multi_mediators_confounder(self):
+        """Test fix_graph for multi_mediators_confounder."""
         # FIXME: This test fails sometimes
         actual_fixed_graph = fix_graph(
-            graph=multi_med_confounder,
-            data=generate_data_for_multi_med_confounder(40),
+            graph=multi_mediators_confounder,
+            data=generate_data_for_multi_mediators_confounder(40),
             significance_level=0.001,
         )
         expected_fixed_graph = NxMixedGraph.from_str_adj(
@@ -155,12 +155,12 @@ class TestRepair(unittest.TestCase):
         )
         self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
 
-    def test_fix_graph_for_multi_med_confounder_nuisance_var(self):
-        """Test fix_graph for multi_med_confounder_nuisance_var."""
+    def test_fix_graph_for_multi_mediators_confounder_nuisance_var(self):
+        """Test fix_graph for multi_mediators_confounder_nuisance_var."""
         # FIXME: This test fails
         actual = fix_graph(
-            graph=multi_med_confounder_nuisance_var,
-            data=generate_data_for_multi_med_confounder_nuisance_var(100, seed=2000),
+            graph=multi_mediators_confounder_nuisance_var,
+            data=generate_data_for_multi_mediators_confounder_nuisance_var(100, seed=2000),
             significance_level=0.001,
         )
         expected = NxMixedGraph.from_str_adj(
