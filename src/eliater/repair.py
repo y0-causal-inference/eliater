@@ -16,18 +16,20 @@ and/or experimental data. The output is the repaired ADMG.
 
 Here is an example:
 
-#import a prior knowledge network X -> M1 -> M2 -> Y, X <-> Y, where X is the treatment,
-#Y is the outcome. There is a bi-directed edge between X and Y.
+.. code-block:: python
 
-from eliater.examples import multi_med
+    #import a prior knowledge network X -> M1 -> M2 -> Y, X <-> Y, where X is the treatment,
+    #Y is the outcome. There is a bi-directed edge between X and Y.
 
-#Generate data for this prior network with the assumption that there is a  bi-directed
-#edge between M1 and Y that is missed from the prior knowledge network. The goal is to
-#recover that edge.
+    from eliater.examples import multi_med
 
-from eliater.examples.multi_med import generate_data_for_multi_med
+    #Generate data for this prior network with the assumption that there is a  bi-directed
+    #edge between M1 and Y that is missed from the prior knowledge network. The goal is to
+    #recover that edge.
 
-repaired_graph = fix_graph(multi_med, generate_data_for_multi_med(100))
+    from eliater.examples.multi_med import generate_data_for_multi_med
+
+    repaired_graph = fix_graph(multi_med, generate_data_for_multi_med(100))
 
 """
 
