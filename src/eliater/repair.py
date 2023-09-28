@@ -1,35 +1,32 @@
 """This module defines the steps for repairing the network structure.
 
-The prior knowledge of the network may contain errors, missing edges
-and omitted variables. It is crucial to repair the structure of the
-prior network, by examining the conditional independencies implied
-by the network with the ones implied by the data.
+Given an Acyclic Directed Mixed Graph (ADMG) and the corresponding data,
+you can assess whether the conditional independence tests suggested by the
+network are supported by the data. Any conditional independency implied by
+the network and not by the data, indicates the likely presence of a latent
+confounder among the variables for which the test failed. In such cases,
+this module adds a bidirectional edge between the affected variables.
 
-If a conditional independency implied by the network is not supported by the data,
-it fails. This failure suggests that there is probably a latent
-confounder between the variables for which the test has failed.
-In this case, we suggest putting a bi-directed edge between those
-variables to indicate the presence of latent confounder.
-
-The inputs are the prior knowledge of the graph in the form of an ADMG, and the observational
-and/or experimental data. The output is the repaired ADMG.
+The inputs are the ADMG, and the observational data. The output is the repaired ADMG.
 
 Here is an example:
 
 .. code-block:: python
 
-    #import a prior knowledge network X -> M1 -> M2 -> Y, X <-> Y, where X is the treatment,
-    #Y is the outcome. There is a bi-directed edge between X and Y.
+    multi_mediators = NxMixedGraph.from_edges(
+    directed=[
+        (X, M1),
+        (M1, M2),
+        (M2, Y),
+    ],
+    undirected=[
+        (X, Y),
+    ],
+)
 
-    from eliater.examples import multi_med
+    from eliater.examples.multi_med import generate_data_for_multi_mediators
 
-    #Generate data for this prior network with the assumption that there is a  bi-directed
-    #edge between M1 and Y that is missed from the prior knowledge network. The goal is to
-    #recover that edge.
-
-    from eliater.examples.multi_med import generate_data_for_multi_med
-
-    repaired_graph = fix_graph(multi_med, generate_data_for_multi_med(100))
+    repaired_graph = fix_graph(multi_mediators, generate_data_for_multi_mediators(100))
 
 """
 
