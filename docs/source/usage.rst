@@ -1,4 +1,4 @@
-Usage
-=====
-.. automodule:: eliater.api
+Network Repair
+==============
+.. automodule:: eliater.repair
     :members:
