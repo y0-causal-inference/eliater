@@ -1,32 +1,32 @@
 """This module defines the steps for repairing the network structure.
 
-Given an Acyclic Directed Mixed Graph (ADMG) and the corresponding data,
-you can assess whether the conditional independence tests suggested by the
-network are supported by the data. Any conditional independency implied by
-the network and not by the data, indicates the likely presence of a latent
+Given an acyclic directed mixed graph (ADMG) and corresponding observational data,
+you can assess whether the conditional independences between entities in the ADMG
+are supported by observational data. Any conditional independency implied by
+the ADMG and not by the data, indicates the likely presence of a latent
 confounder among the variables for which the test failed. In such cases,
 this module adds a bidirectional edge between the affected variables.
-
-The inputs are the ADMG, and the observational data. The output is the repaired ADMG.
 
 Here is an example:
 
 .. code-block:: python
 
-    multi_mediators = NxMixedGraph.from_edges(
-    directed=[
-        (X, M1),
-        (M1, M2),
-        (M2, Y),
-    ],
-    undirected=[
-        (X, Y),
-    ],
-)
+    graph = NxMixedGraph.from_edges(
+        directed=[
+            (X, M1),
+            (M1, M2),
+            (M2, Y),
+        ],
+        undirected=[
+            (X, Y),
+        ],
+    )
 
+    # Generate observational data for this graph (this is a special example)
     from eliater.examples.multi_med import generate_data_for_multi_mediators
+    observational_data = generate_data_for_multi_mediators(100)
 
-    repaired_graph = fix_graph(multi_mediators, generate_data_for_multi_mediators(100))
+    repaired_graph = fix_graph(graph, observational_data)
 
 """
 
