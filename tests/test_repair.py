@@ -19,6 +19,9 @@ from eliater.examples.continuous import generate_random_continuous_data
 from eliater.examples.multi_med import generate_data_for_multi_med
 from eliater.examples.multi_med_confounder import generate_data_for_multi_med_confounder
 from eliater.examples.multi_med_confounder_nuisance_var import (
+    R1,
+    R2,
+    R3,
     generate_data_for_multi_med_confounder_nuisance_var,
 )
 from eliater.repair import choose_default_test, fix_graph, get_state_space_map
@@ -156,12 +159,12 @@ class TestRepair(unittest.TestCase):
     def test_fix_graph_for_multi_med_confounder_nuisance_var(self):
         """Test fix_graph for multi_med_confounder_nuisance_var."""
         # FIXME: This test fails
-        actual_fixed_graph = fix_graph(
+        actual = fix_graph(
             graph=multi_med_confounder_nuisance_var,
             data=generate_data_for_multi_med_confounder_nuisance_var(100, seed=2000),
             significance_level=0.001,
         )
-        expected_fixed_graph = NxMixedGraph.from_str_adj(
+        expected = NxMixedGraph.from_str_adj(
             directed={
                 "Z1": ["X", "Z2"],
                 "X": ["M1"],
@@ -172,4 +175,13 @@ class TestRepair(unittest.TestCase):
             },
             undirected={"Z1": ["X"], "Y": ["Z2"]},
         )
-        self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
+        self.assertNotIn(
+            R1, set(actual.nodes()), msg="Nuisance variable R1 should have been removed"
+        )
+        self.assertNotIn(
+            R2, set(actual.nodes()), msg="Nuisance variable R2 should have been removed"
+        )
+        self.assertNotIn(
+            R3, set(actual.nodes()), msg="Nuisance variable R3 should have been removed"
+        )
+        self.assert_graph_equal(actual, expected)
