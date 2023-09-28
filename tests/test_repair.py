@@ -3,12 +3,6 @@
 import unittest
 import warnings
 
-from y0.dsl import Variable
-from y0.examples import frontdoor_backdoor
-from y0.examples.frontdoor import generate_data_for_frontdoor
-from y0.examples.frontdoor_backdoor import generate_data_for_frontdoor_backdoor
-from y0.graph import NxMixedGraph
-
 from eliater.examples import (
     continuous,
     multi_med,
@@ -25,6 +19,11 @@ from eliater.examples.multi_med_confounder_nuisance_var import (
     generate_data_for_multi_med_confounder_nuisance_var,
 )
 from eliater.repair import choose_default_test, fix_graph, get_state_space_map
+from y0.dsl import Variable
+from y0.examples import frontdoor_backdoor
+from y0.examples.frontdoor import generate_data_for_frontdoor
+from y0.examples.frontdoor_backdoor import generate_data_for_frontdoor_backdoor
+from y0.graph import NxMixedGraph
 
 
 class TestRepair(unittest.TestCase):

@@ -1,18 +1,41 @@
 """This module defines the steps for repairing the network structure.
 
-.. todo:: @sara add the following to this module docstring:
+The prior knowledge of the network may contain errors, missing edges
+and omitted variables. It is crucial to repair the structure of the
+prior network, by examining the conditional independencies implied
+by the network with the ones implied by the data.
 
-    - What is the underlying idea behind the repairs for this algorithm
-    - Why does adding undirected edges mathematically make sense?
-    - What inputs and outputs do users need?
-    - Describe the algorithm
-    - Give an example
+If a conditional independency implied by the network is not supported by the data,
+it fails. This failure suggests that there is probably a latent
+confounder between the variables for which the test has failed.
+In this case, we suggest putting a bi-directed edge between those
+variables to indicate the presence of latent confounder.
+
+The inputs are the prior knowledge of the graph in the form of an ADMG, and the observational
+and/or experimental data. The output is the repaired ADMG.
+
+Here is an example:
+
+#import a prior knowledge network X -> M1 -> M2 -> Y, X <-> Y, where X is the treatment,
+#Y is the outcome. There is a bi-directed edge between X and Y.
+
+from eliater.examples import multi_med
+
+#Generate data for this prior network with the assumption that there is a  bi-directed
+#edge between M1 and Y that is missed from the prior knowledge network. The goal is to
+#recover that edge.
+
+from eliater.examples.multi_med import generate_data_for_multi_med
+
+repaired_graph = fix_graph(multi_med, generate_data_for_multi_med(100))
+
 """
 
 import warnings
 from typing import Dict, Literal, Optional
 
 import pandas as pd
+
 from y0.algorithm.falsification import get_conditional_independencies
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
