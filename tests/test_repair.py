@@ -21,11 +21,7 @@ from eliater.examples.multi_med_confounder import generate_data_for_multi_med_co
 from eliater.examples.multi_med_confounder_nuisance_var import (
     generate_data_for_multi_med_confounder_nuisance_var,
 )
-from eliater.repair import (
-    choose_default_test,
-    fix_graph,
-    get_state_space_map,
-)
+from eliater.repair import choose_default_test, fix_graph, get_state_space_map
 
 
 class TestRepair(unittest.TestCase):
@@ -115,6 +111,27 @@ class TestRepair(unittest.TestCase):
         )
         self.assertEqual(actual_fixed_graph, expected_fixed_graph)
 
+    def assert_graph_equal(self, g1: NxMixedGraph, g2: NxMixedGraph) -> None:
+        """Assert two graphs are equal."""
+        self.assertEqual(
+            set(g1.directed.nodes()),
+            set(g2.directed.nodes()),
+            msg="Directed graphs have different nodes",
+        )
+        self.assertEqual(
+            set(g1.undirected.nodes()),
+            set(g2.undirected.nodes()),
+            msg="Undirected graphs have different nodes",
+        )
+        self.assertEqual(
+            g1.directed.edges(), g2.directed.edges(), msg="Graphs have different directed edges"
+        )
+        self.assertEqual(
+            g1.undirected.edges(),
+            g2.undirected.edges(),
+            msg="Graphs have different undirected edges",
+        )
+
     def test_fix_graph_for_multi_med_confounder(self):
         """Test fix_graph for multi_med_confounder."""
         # FIXME: This test fails sometimes
@@ -134,7 +151,7 @@ class TestRepair(unittest.TestCase):
             },
             undirected={"Z1": ["X"], "Y": ["Z2"]},
         )
-        self.assertEqual(actual_fixed_graph, expected_fixed_graph)
+        self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
 
     def test_fix_graph_for_multi_med_confounder_nuisance_var(self):
         """Test fix_graph for multi_med_confounder_nuisance_var."""
@@ -155,4 +172,4 @@ class TestRepair(unittest.TestCase):
             },
             undirected={"Z1": ["X"], "Y": ["Z2"]},
         )
-        self.assertEqual(actual_fixed_graph, expected_fixed_graph)
+        self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
