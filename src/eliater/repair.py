@@ -1,4 +1,13 @@
-"""This module defines the steps for repairing the network structure.."""
+"""This module defines the steps for repairing the network structure.
+
+.. todo:: @sara add the following to this module docstring:
+
+    - What is the underlying idea behind the repairs for this algorithm
+    - Why does adding undirected edges mathematically make sense?
+    - What inputs and outputs do users need?
+    - Describe the algorithm
+    - Give an example
+"""
 
 import warnings
 from typing import Dict, Literal, Optional
