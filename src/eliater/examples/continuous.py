@@ -52,9 +52,14 @@ def generate(
 
 
 continuous_example = Example(
-    name="",
+    name=...,# TODO give a descriptive, self-explanatory name. No abbreviations
+
     reference="",
     graph=graph,
+    description=...,
+    # TODO write a good description
+    #  - What phenomena does the graph model here. Give a real-world example if possible
+    #  - What is this example graph used to demonstrate?
     generate_data=generate,
     example_queries=[Query.from_str(treatments=X, outcomes=Y)],
 )

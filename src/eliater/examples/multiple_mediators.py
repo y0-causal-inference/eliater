@@ -99,8 +99,12 @@ def generate(
 
 multiple_mediators_example = Example(
     name="Multiple mediators example",
-    reference="Inspired by the frontdoor example, but with multiple mediators.",
+    reference="Inspired by the frontdoor example, but with multiple mediators.",  # TODO that is not a reference to a paer. Put that in the description
     graph=graph,
+    description=...,
+    # TODO write a good description
+    #  - What phenomena does the graph model here. Give a real-world example if possible
+    #  - What is this example graph used to demonstrate?
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
