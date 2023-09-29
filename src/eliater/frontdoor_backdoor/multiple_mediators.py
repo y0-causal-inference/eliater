@@ -27,8 +27,6 @@ graph = NxMixedGraph.from_edges(
     ],
     undirected=[
         (X, Y),
-        # (M1, Y) We generated data for this graph with the assumption that the bi-directed edge between
-        # M1 and Y is present. However, we assume that the prior knowledge graph does not have this information.
     ],
 )
 
@@ -102,11 +100,17 @@ def generate(
 
 
 multiple_mediators_example = Example(
-    name="front door with multiple mediators example",
+    name="Multiple mediators and a single confounder example",
     reference="Sara Taheri",
     graph=graph,
-    description="This is an extension of front door example but with multiple mediators"
-    "and a single confounder between X and Y",
+    description="This is an extension of the frontdoor_backdoor example from y0 module"
+    " but with more variables directly connecting the treatment to outcome (mediators)"
+    "and an additional variable that is a direct cause of both the treatment and outcome"
+    "(confounder). In the data generation process, the data was generated  with the assumption"
+    " that there exist a bi-directed edge between M1 and Y. However, the graph does not include"
+    " this confounder. In this example all the variables are continuous. It is designed to check"
+    " if the conditional independencies implied by the graph are aligned with the ones implied by"
+    " data via the Pearson test.",
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )

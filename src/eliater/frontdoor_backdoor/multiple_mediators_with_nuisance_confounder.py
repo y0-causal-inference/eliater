@@ -31,9 +31,6 @@ graph = NxMixedGraph.from_edges(
     ],
     undirected=[
         (Z1, X),
-        # (Y, Z2)
-        # We are generating data with the assumption that there is a bi-directed edge between
-        # Y and Z2, but that bi-directed edge is missed from this prior knowledge graph.
     ],
 )
 
@@ -177,9 +174,15 @@ def generate(
 multi_mediators_confounder_nuisance_var_example = Example(
     name="frontdoor with multiple mediators and nuisance variables",
     reference="Causal workflow paper, figure 4 (a).",
-    description="This is an extension of front door example but with multiple mediators. "
-    "It contains nuisance variables R1, R2, R3 that should not be part of query estimation."
-    "The query can be estimated with both front-door and back-door approaches",
+    description="This is an extension of the frontdoor_backdoor example from y0 module"
+    " but with more variables directly connecting the treatment to outcome (mediators)"
+    "and several additional variables that are a direct cause of both the treatment and outcome"
+    "(confounders), and several nuisance variables. The nuisance variables are R1, R2, R3. "
+    "They should not be part of query estimation because they are downstream of the outcome."
+    " In the data generation process, all the variables are continuous, and the data was generated"
+    "  with the assumption that there exist a bi-directed edge between Z2 and Y. However, the graph does not include"
+    " this confounder. This example is designed to check if the conditional independencies implied by the graph are"
+    " aligned with the ones implied by the data via the Pearson test.",
     graph=graph,
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],

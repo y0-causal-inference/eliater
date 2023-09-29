@@ -1,4 +1,4 @@
-"""This module contains methods to generate random continuous data."""
+"""This module contains methods to generate random continuous data for the frontdoor backdoor example."""
 
 from typing import Optional
 
@@ -56,9 +56,9 @@ base_example = Example(
     name="frontdoor_backdoor example",
     reference="frontdoor_backdoor example from y0 module",
     graph=graph,
-    description="In this example all the variables are continuous but"
-    " in the same example in y0, X is generated binary. "
-    "query can be estimated from both the frontdoor and backdoor criterion",
+    description="In this example all the variables are continuous. This "
+    "example is designed to check if the conditional independencies implied by"
+    "the graph align with the ones implied by data via the Pearson test.",
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
