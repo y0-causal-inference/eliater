@@ -12,7 +12,7 @@ variables for which the test failed. In such cases, this workflow adds a bidirec
 edge between the affected variables.
 
 This process allows for unbiased estimation of causal queries in cases where the
-overall ADMG structure of the observed variables is correct, but the number and location of
+overall ADMG structure over the observed variables is correct, but the number and location of
 latent variables is unknown.
 
 Here is an example:
