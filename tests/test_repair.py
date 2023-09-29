@@ -3,20 +3,11 @@
 import unittest
 import warnings
 
-from eliater.examples import (
-    continuous,
-    multi_mediators,
-    multi_mediators_confounder,
-    multi_mediators_confounder_nuisance_var,
-)
-from eliater.examples.continuous import generate_random_continuous_data
-from eliater.examples.multi_mediators import generate_data_for_multi_mediators
-from eliater.examples.multi_mediators_confounder import generate_data_for_multi_mediators_confounder
-from eliater.examples.multi_mediators_confounder_nuisance_var import (
-    R1,
-    R2,
-    R3,
-    generate_data_for_multi_mediators_confounder_nuisance_var,
+from eliater.frontdoor_backdoor import (
+    base_example,
+    multiple_mediators_single_confounder_example,
+    multi_mediators_confounders_nuisance_vars_example,
+    multiple_mediators_with_multiple_confounders_nuisances,
 )
 from eliater.repair import choose_default_test, fix_graph, get_state_space_map
 from y0.dsl import Variable
@@ -24,6 +15,8 @@ from y0.examples import frontdoor_backdoor
 from y0.examples.frontdoor import generate_data_for_frontdoor
 from y0.examples.frontdoor_backdoor import generate_data_for_frontdoor_backdoor
 from y0.graph import NxMixedGraph
+
+R1, R2, R3 = (Variable("R{i}") for i in (1, 2, 3))
 
 
 class TestRepair(unittest.TestCase):
@@ -63,7 +56,7 @@ class TestRepair(unittest.TestCase):
     def test_choose_default_test_for_continuous_data(self):
         """Test choose_default_test for continuous data."""
         expected_default_test = "pearson"
-        actual_default_test = choose_default_test(generate_random_continuous_data(1000))
+        actual_default_test = choose_default_test(base_example.generate_data())
         self.assertEqual(expected_default_test, actual_default_test)
 
     def test_choose_default_test_for_mixed_data(self):
@@ -73,12 +66,14 @@ class TestRepair(unittest.TestCase):
 
     def test_fix_graph_for_invalid_input_test(self):
         """Test fix_graph for invalid input test."""
-        self.assertRaises(Exception, fix_graph, multi_mediators, generate_data_for_multi_mediators(1000), "abc")
+        self.assertRaises(
+            Exception, fix_graph, multi_mediators, generate_data_for_multi_mediators(1000), "abc"
+        )
 
     def test_fix_graph_for_continuous_data_and_not_pearson(self):
         """Test fix_graph for continuous data when pearson is not chosen."""
         with warnings.catch_warnings(record=True) as w:
-            fix_graph(continuous, generate_random_continuous_data(1000), "chi-square")
+            fix_graph(base_example.graph, base_example.generate_data(), "chi-square")
             self.assertTrue(len(w) > 0)
             # Iterate through the captured warnings and check for the specific message
             specific_warning_found = False
