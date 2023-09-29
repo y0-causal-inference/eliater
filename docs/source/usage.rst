@@ -1,6 +1,6 @@
 Frontdoor-Backdoor Example
 ==========================
-.. automodule:: eliater.frontdoor_backdoor
+.. automodapi:: eliater.frontdoor_backdoor
     :include-all-objects:
 
 Usage
