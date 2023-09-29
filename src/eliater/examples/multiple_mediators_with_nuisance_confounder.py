@@ -174,13 +174,11 @@ def generate(
 
 
 multi_mediators_confounder_nuisance_var_example = Example(
-    name="Multi_mediators_confounders_nuisance_var",  # TODO give a descriptive, self-explanatory name. No abbreviations
-    reference="Causal workflow paper, figure 4 (a). The query can be estimated with both front-door and back-door "
-    "approaches",
-    description=...,
-    # TODO write a good description
-    #  - What phenomena does the graph model here. Give a real-world example if possible
-    #  - What is this example graph used to demonstrate?
+    name="frontdoor with multiple mediators and nuisance variables",
+    reference="Causal workflow paper, figure 4 (a).",
+    description="This is an extension of front door example but with multiple mediators. "
+                "It contains nuisance variables R1, R2, R3 that should not be part of query estimation."
+                "The query can be estimated with both front-door and back-door approaches",
     graph=graph,
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
