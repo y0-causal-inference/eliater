@@ -50,7 +50,10 @@ def generate(
         treatments = {}
     generator = np.random.default_rng(seed)
 
+    #latent confounder between x and y
     u = generator.normal(loc=50.0, scale=10.0, size=num_samples)
+
+    #latent confounder between m2 and y
     u2 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
 
     beta0_x = 1
@@ -98,13 +101,11 @@ def generate(
 
 
 multiple_mediators_example = Example(
-    name="Multiple mediators example",
-    reference="Inspired by the frontdoor example, but with multiple mediators.",  # TODO that is not a reference to a paer. Put that in the description
+    name="front door with multiple mediators example",
+    reference="Sara Taheri",
     graph=graph,
-    description=...,
-    # TODO write a good description
-    #  - What phenomena does the graph model here. Give a real-world example if possible
-    #  - What is this example graph used to demonstrate?
+    description="This is an extension of front door example but with multiple mediators"
+                "and a single confounder between X and Y",
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
