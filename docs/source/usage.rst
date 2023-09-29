@@ -1,4 +1,3 @@
-Network Repair
-==============
-.. automodule:: eliater.repair
-    :members:
+Usage
+=====
+.. automodule:: eliater.api
