@@ -2,14 +2,34 @@
 
 import numpy as np
 import pandas as pd
-import y0
+from y0.algorithm.identify import Query
 from y0.dsl import Variable, X, Y
+from y0.examples import Example
+from y0.graph import NxMixedGraph
 
-M1 = y0.dsl.Variable("M1")
-M2 = y0.dsl.Variable("M2")
-R1 = y0.dsl.Variable("R1")
-R2 = y0.dsl.Variable("R2")
-R3 = y0.dsl.Variable("R3")
+__all__ = [
+    "multi_mediators_example",
+]
+
+M1 = Variable("M1")
+M2 = Variable("M2")
+R1 = Variable("R1")
+R2 = Variable("R2")
+R3 = Variable("R3")
+
+
+multi_mediators = NxMixedGraph.from_edges(
+    directed=[
+        (X, M1),
+        (M1, M2),
+        (M2, Y),
+    ],
+    undirected=[
+        (X, Y),
+        # (M1, Y) We generated data for this graph with the assumption that the bi-directed edge between
+        # M1 and Y is present. However, we assume that the prior knowledge graph does not have this information.
+    ],
+)
 
 
 def generate_data_for_multi_mediators(
@@ -71,11 +91,13 @@ def generate_data_for_multi_mediators(
             size=num_samples,
         )
 
-    return pd.DataFrame(
-        {
-            X.name: x,
-            M1.name: m1,
-            M2.name: m2,
-            Y.name: y,
-        }
-    )
+    return pd.DataFrame({X.name: x, M1.name: m1, M2.name: m2, Y.name: y})
+
+
+multi_mediators_example = Example(
+    name="Multi_mediators",
+    reference="Inspired by the frontdoor example, but with multiple mediators.",
+    graph=multi_mediators,
+    generate_data=generate_data_for_multi_mediators,
+    example_queries=[Query.from_str(treatments="X", outcomes="Y")],
+)

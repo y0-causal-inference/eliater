@@ -2,14 +2,39 @@
 
 import numpy as np
 import pandas as pd
-import y0
+from y0.algorithm.identify import Query
 from y0.dsl import Z1, Z2, Z3, Variable, X, Y
+from y0.examples import Example
+from y0.graph import NxMixedGraph
 
-M1 = y0.dsl.Variable("M1")
-M2 = y0.dsl.Variable("M2")
-R1 = y0.dsl.Variable("R1")
-R2 = y0.dsl.Variable("R2")
-R3 = y0.dsl.Variable("R3")
+__all__ = [
+    "multi_mediators_confounder_example",
+]
+
+M1 = Variable("M1")
+M2 = Variable("M2")
+R1 = Variable("R1")
+R2 = Variable("R2")
+R3 = Variable("R3")
+
+
+multi_mediators_confounder = NxMixedGraph.from_edges(
+    directed=[
+        (Z1, X),
+        (X, M1),
+        (M1, M2),
+        (M2, Y),
+        (Z1, Z2),
+        (Z2, Z3),
+        (Z3, Y),
+    ],
+    undirected=[
+        (Z1, X),
+        # (Y, Z2)
+        # We are generating data with the assumption that there is a bi-directed edge between
+        # Y and Z2, but that bi-directed edge is missed from this prior knowledge graph.
+    ],
+)
 
 
 def generate_data_for_multi_mediators_confounder(
@@ -112,3 +137,13 @@ def generate_data_for_multi_mediators_confounder(
             Y.name: y,
         }
     )
+
+
+multi_mediators_confounder_example = Example(
+    name="Multi_mediators_confounders",
+    reference="Causal workflow paper, figure 4 (b). The query can be estimated with both front-door and "
+    "back-door approaches",
+    graph=multi_mediators_confounder,
+    generate_data=generate_data_for_multi_mediators_confounder,
+    example_queries=[Query.from_str(treatments="X", outcomes="Y")],
+)

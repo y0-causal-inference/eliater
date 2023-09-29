@@ -4,6 +4,15 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from y0.algorithm.identify import Query
+from y0.examples import Example
+from y0.graph import NxMixedGraph
+
+__all__ = [
+    "continuous_example",
+]
+
+continuous = NxMixedGraph.from_str_edges(directed=[("W", "X"), ("X", "Z"), ("Z", "Y"), ("W", "Y")])
 
 
 def generate_random_continuous_data(num_samples: int, seed: Optional[int] = 1) -> pd.DataFrame:
@@ -20,3 +29,12 @@ def generate_random_continuous_data(num_samples: int, seed: Optional[int] = 1) -
     y = np.random.normal(loc=z * 0.5 + w * 0.3, scale=6)
     data = pd.DataFrame({"W": w, "Z": z, "X": x, "Y": y})
     return data
+
+
+continuous_example = Example(
+    name=...,
+    reference=...,
+    graph=continuous,
+    generate_data=generate_random_continuous_data,
+    example_queries=[Query.from_str(treatments="X", outcomes="Y")],
+)
