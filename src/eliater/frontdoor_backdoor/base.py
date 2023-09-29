@@ -60,5 +60,5 @@ base_example = Example(
     " in the same example in y0, X is generated binary. "
     "query can be estimated from both the frontdoor and backdoor criterion",
     generate_data=generate,
-    example_queries=[Query.from_str(treatments=X, outcomes=Y)],
+    example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
