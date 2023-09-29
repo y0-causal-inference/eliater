@@ -1,7 +1,7 @@
 Frontdoor-Backdoor Example
 ==========================
 .. automodule:: eliater.frontdoor_backdoor
-    :members:
+    :include-all-objects:
 
 Usage
 =====

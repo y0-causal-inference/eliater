@@ -53,7 +53,7 @@ def generate(
 
 
 base_example = Example(
-    name="frontdoor_backdoor example",
+    name="Frontdoor/Backdoor Example",
     reference="frontdoor_backdoor example from y0 module",
     graph=graph,
     description="In this example all the variables are continuous. This "
@@ -62,3 +62,5 @@ base_example = Example(
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
+
+base_example.__doc__ = base_example.description

@@ -106,7 +106,7 @@ multiple_mediators_single_confounder_example = Example(
     description="This is an extension of the frontdoor_backdoor example from y0 module"
     " but with more variables directly connecting the treatment to outcome (mediators)"
     "and an additional variable that is a direct cause of both the treatment and outcome"
-    "(confounder). In the data generation process, the data was generated  with the assumption"
+    "(confounder). In the data generation process, the data was generated with the assumption"
     " that there exist a bi-directed edge between M1 and Y. However, the graph does not include"
     " this confounder. In this example all the variables are continuous. It is designed to check"
     " if the conditional independencies implied by the graph are aligned with the ones implied by"

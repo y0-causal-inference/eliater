@@ -183,7 +183,7 @@ multi_mediators_confounders_nuisance_vars_example = Example(
     "(confounders), and several nuisance variables. The nuisance variables are R1, R2, R3. "
     "They should not be part of query estimation because they are downstream of the outcome."
     " In the data generation process, all the variables are continuous, and the data was generated"
-    "  with the assumption that there exist a bi-directed edge between Z2 and Y. However, the graph does not include"
+    " with the assumption that there exist a bi-directed edge between Z2 and Y. However, the graph does not include"
     " this confounder. This example is designed to check if the conditional independencies implied by the graph are"
     " aligned with the ones implied by the data via the Pearson test.",
     graph=graph,
