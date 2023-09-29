@@ -1,27 +1,39 @@
 """This module defines the steps for repairing the network structure.
 
-"Given an Acyclic Directed Mixed Graph (ADMG) and the corresponding data,
-you can assess the correctness of the graph by checking whether the conditional
-independencies implied by the graph are supported by the data. This can be
-performed by using a statistical conditional independence test. For all the
-conditional independencies implied by the graph, if any of them, such as X
-being independent of Y given Z, is not supported by the data, then the network
-structure should be repaired. In the case of a failed test, the network likely
-misses confounders between the affected nodes (e.g., X and Y). This module adds
-bidirectional edges between the affected nodes to indicate the presence of confounders
-and outputs a repaired ADMG."
+Given an acyclic directed mixed graph (ADMG) and corresponding observational data,
+one can assess whether the conditional independences implied by the structure of the
+ADMG are supported by the data with a statistical test for conditional independence.
+By default, this workflow uses a chi-square test for discrete data and a Pearson test
+for continuous data from :mod:`pgmpy.estimators.CITests`.
+
+Any conditional independency implied by the ADMG that fails to reject the null hypothesis
+of the statistical test suggests the presence of a latent confounder between the two
+variables for which the test failed. In such cases, this workflow adds a bidirectional
+edge between the affected variables.
+
+This process allows for unbiased estimation of causal queries in cases where the
+overall ADMG structure of the observed variables is correct, but the number and location of
+latent variables is unknown.
 
 Here is an example:
 
 .. code-block:: python
 
-    #Get the input ADMG
-    from eliater.examples import multi_mediators
+    graph = NxMixedGraph.from_edges(
+        directed=[
+            (X, M1),
+            (M1, M2),
+            (M2, Y),
+        ],
+        undirected=[
+            (X, Y),
+        ],
+    )
 
-    #Get the data associated with the input ADMG
-    from eliater.examples.multi_med import generate_data_for_multi_mediators
+    # Generate observational data for this graph (this is a special example)
+    observational_data = generate_data_for_multi_mediators(100)
 
-    repaired_graph = fix_graph(multi_mediators, generate_data_for_multi_mediators(100))
+    repaired_graph = fix_graph(graph, observational_data)
 
 """
 
@@ -74,6 +86,7 @@ def choose_default_test(data: pd.DataFrame) -> str:
     )
 
 
+# FIXME rename to something more descriptive
 def fix_graph(
     graph: NxMixedGraph,
     data: pd.DataFrame,
