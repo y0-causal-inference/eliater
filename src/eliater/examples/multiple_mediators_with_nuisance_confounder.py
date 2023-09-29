@@ -14,7 +14,7 @@ R2 = Variable("R2")
 R3 = Variable("R3")
 
 
-multi_mediators_confounder_nuisance_var = NxMixedGraph.from_edges(
+graph = NxMixedGraph.from_edges(
     directed=[
         (Z1, X),
         (X, M1),
@@ -37,7 +37,7 @@ multi_mediators_confounder_nuisance_var = NxMixedGraph.from_edges(
 )
 
 
-def generate_data_for_multi_mediators_confounder_nuisance_var(
+def generate(
     num_samples: int = 1000,
     treatments: dict[Variable, float] | None = None,
     *,
@@ -177,7 +177,7 @@ multi_mediators_confounder_nuisance_var_example = Example(
     name="Multi_mediators_confounders_nuisance_var",
     reference="Causal workflow paper, figure 4 (a). The query can be estimated with both front-door and back-door "
     "approaches",
-    graph=multi_mediators_confounder_nuisance_var,
-    generate_data=generate_data_for_multi_mediators_confounder_nuisance_var,
+    graph=graph,
+    generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )

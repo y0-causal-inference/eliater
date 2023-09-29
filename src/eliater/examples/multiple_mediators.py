@@ -18,7 +18,7 @@ R2 = Variable("R2")
 R3 = Variable("R3")
 
 
-multiple_mediators = NxMixedGraph.from_edges(
+graph = NxMixedGraph.from_edges(
     directed=[
         (X, M1),
         (M1, M2),
@@ -32,7 +32,7 @@ multiple_mediators = NxMixedGraph.from_edges(
 )
 
 
-def generate_data_for_multi_mediators(
+def generate(
     num_samples: int = 1000,
     treatments: dict[Variable, float] | None = None,
     *,
@@ -100,7 +100,7 @@ def generate_data_for_multi_mediators(
 multiple_mediators_example = Example(
     name="Multiple mediators example",
     reference="Inspired by the frontdoor example, but with multiple mediators.",
-    graph=multiple_mediators,
-    generate_data=generate_data_for_multi_mediators,
+    graph=graph,
+    generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )

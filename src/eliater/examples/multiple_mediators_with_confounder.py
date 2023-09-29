@@ -8,7 +8,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "multi_mediators_confounder_example",
+    "multiple_mediators_confounder_example",
 ]
 
 M1 = Variable("M1")
@@ -18,7 +18,7 @@ R2 = Variable("R2")
 R3 = Variable("R3")
 
 
-multi_mediators_confounder = NxMixedGraph.from_edges(
+graph = NxMixedGraph.from_edges(
     directed=[
         (Z1, X),
         (X, M1),
@@ -37,7 +37,7 @@ multi_mediators_confounder = NxMixedGraph.from_edges(
 )
 
 
-def generate_data_for_multi_mediators_confounder(
+def generate(
     num_samples: int = 1000,
     treatments: dict[Variable, float] | None = None,
     *,
@@ -142,11 +142,11 @@ def generate_data_for_multi_mediators_confounder(
     )
 
 
-multi_mediators_confounder_example = Example(
+multiple_mediators_confounder_example = Example(
     name="Multi_mediators_confounders",
     reference="Causal workflow paper, figure 4 (b). The query can be estimated with both front-door and "
     "back-door approaches",
-    graph=multi_mediators_confounder,
-    generate_data=generate_data_for_multi_mediators_confounder,
+    graph=graph,
+    generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
