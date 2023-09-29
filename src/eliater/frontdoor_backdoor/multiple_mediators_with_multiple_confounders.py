@@ -1,4 +1,4 @@
-"""This module contains a method to generate testing data for the multi_mediators_confounder_nuisance_var case study."""
+"""This module contains a method to generate testing data for the multi_mediators_confounder case study."""
 
 import numpy as np
 import pandas as pd
@@ -7,6 +7,10 @@ from y0.algorithm.identify import Query
 from y0.dsl import Z1, Z2, Z3, Variable, X, Y
 from y0.examples import Example
 from y0.graph import NxMixedGraph
+
+__all__ = [
+    "multiple_mediators_confounders_example",
+]
 
 M1 = Variable("M1")
 M2 = Variable("M2")
@@ -24,10 +28,6 @@ graph = NxMixedGraph.from_edges(
         (Z1, Z2),
         (Z2, Z3),
         (Z3, Y),
-        (M1, R1),
-        (R1, R2),
-        (R2, R3),
-        (Y, R3),
     ],
     undirected=[
         (Z1, X),
@@ -41,13 +41,13 @@ def generate(
     *,
     seed: int | None = None,
 ) -> pd.DataFrame:
-    """Generate testing data for the multi_mediators_confounder_nuisance_var case study.
+    """Generate testing data for the multi_mediators_confounder case study.
 
     :param num_samples: The number of samples to generate. Try 1000.
     :param treatments: An optional dictionary of the values to fix each variable to.
     :param seed: An optional random seed for reproducibility purposes
     :returns: A pandas Dataframe with columns corresponding
-        to the variable names in the multi_mediators_confounder_nuisance_var example
+        to the variable names in the multi_mediators_confounder example
     """
     if treatments is None:
         treatments = {}
@@ -127,34 +127,6 @@ def generate(
             size=num_samples,
         )
 
-    beta0_r1 = -3
-    beta_m1_to_r1 = 0.7
-
-    if R1 in treatments:
-        r1 = np.full(num_samples, treatments[R1])
-    else:
-        loc_r1 = beta0_r1 + m1 * beta_m1_to_r1
-        r1 = generator.normal(loc=loc_r1, scale=10.0, size=num_samples)
-
-    beta0_r2 = -3
-    beta_r1_to_r2 = 0.7
-
-    if R2 in treatments:
-        r2 = np.full(num_samples, treatments[R2])
-    else:
-        loc_r2 = beta0_r2 + r1 * beta_r1_to_r2
-        r2 = generator.normal(loc=loc_r2, scale=10.0, size=num_samples)
-
-    beta0_r3 = -3
-    beta_r2_to_r3 = 0.7
-    beta_y_to_r3 = -0.4
-
-    if R3 in treatments:
-        r3 = np.full(num_samples, treatments[R3])
-    else:
-        loc_r3 = beta0_r3 + r2 * beta_r2_to_r3 + y * beta_y_to_r3
-        r3 = generator.normal(loc=loc_r3, scale=10.0, size=num_samples)
-
     return pd.DataFrame(
         {
             X.name: x,
@@ -163,26 +135,22 @@ def generate(
             Z1.name: z1,
             Z2.name: z2,
             Z3.name: z3,
-            R1.name: r1,
-            R2.name: r2,
-            R3.name: r3,
             Y.name: y,
         }
     )
 
 
-multi_mediators_confounder_nuisance_var_example = Example(
-    name="frontdoor with multiple mediators and nuisance variables",
-    reference="Causal workflow paper, figure 4 (a).",
+multiple_mediators_confounders_example = Example(
+    name="front door with multiple mediators and multiple confounders example",
+    reference="Causal workflow paper, figure 4 (b)",
     description="This is an extension of the frontdoor_backdoor example from y0 module"
     " but with more variables directly connecting the treatment to outcome (mediators)"
     "and several additional variables that are a direct cause of both the treatment and outcome"
-    "(confounders), and several nuisance variables. The nuisance variables are R1, R2, R3. "
-    "They should not be part of query estimation because they are downstream of the outcome."
-    " In the data generation process, all the variables are continuous, and the data was generated"
-    "  with the assumption that there exist a bi-directed edge between Z2 and Y. However, the graph does not include"
-    " this confounder. This example is designed to check if the conditional independencies implied by the graph are"
-    " aligned with the ones implied by the data via the Pearson test.",
+    "(confounders). In the data generation process, the data was generated  with the assumption"
+    " that there exist a bi-directed edge between Z2 and Y. However, the graph does not include"
+    " this confounder. In this example all the variables are continuous. It is designed to check"
+    " if the conditional independencies implied by the graph are aligned with the ones implied by"
+    " data via the Pearson test.",
     graph=graph,
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],

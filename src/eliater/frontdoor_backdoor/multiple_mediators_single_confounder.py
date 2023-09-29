@@ -9,7 +9,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "multiple_mediators_example",
+    "multiple_mediators_single_confounder_example",
 ]
 
 M1 = Variable("M1")
@@ -99,7 +99,7 @@ def generate(
     return pd.DataFrame({X.name: x, M1.name: m1, M2.name: m2, Y.name: y})
 
 
-multiple_mediators_example = Example(
+multiple_mediators_single_confounder_example = Example(
     name="Multiple mediators and a single confounder example",
     reference="Sara Taheri",
     graph=graph,
