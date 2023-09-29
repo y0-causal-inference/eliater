@@ -1,12 +1,15 @@
 """This module defines the steps for repairing the network structure.
 
-Given an Acyclic Directed Mixed Graph (ADMG) and a corresponding data,
-you can assess whether the conditional independence tests suggested by the
-graph are supported by the data. If a conditional independence implied by
-the graph, such as X being independent of Y given Z, is not supported by
-the data, then there are likely confounders affecting both X and Y. In
-such cases, this module adds bidirectional edges between the any affected
-set of variables and outputs the repaired ADMG.
+"Given an Acyclic Directed Mixed Graph (ADMG) and the corresponding data,
+you can assess the correctness of the graph by checking whether the conditional
+independencies implied by the graph are supported by the data. This can be
+performed by using a statistical conditional independence test. For all the
+conditional independencies implied by the graph, if any of them, such as X
+being independent of Y given Z, is not supported by the data, then the network
+structure should be repaired. In the case of a failed test, the network likely
+misses confounders between the affected nodes (e.g., X and Y). This module adds
+bidirectional edges between the affected nodes to indicate the presence of confounders
+and outputs a repaired ADMG."
 
 Here is an example:
 
