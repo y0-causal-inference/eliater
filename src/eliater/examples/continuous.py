@@ -10,7 +10,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "continuous_example",
+    "frontdoor_backdoor_example",
 ]
 
 graph = NxMixedGraph.from_edges(directed=[(W, X), (X, Z), (Z, Y), (W, Y)])
@@ -51,15 +51,11 @@ def generate(
     return data
 
 
-continuous_example = Example(
-    name=...,# TODO give a descriptive, self-explanatory name. No abbreviations
-
-    reference="",
+frontdoor_backdoor_example = Example(
+    name="frontdoor_backdoor example",
+    reference="frontdoor_backdoor example from y0 module",
     graph=graph,
-    description=...,
-    # TODO write a good description
-    #  - What phenomena does the graph model here. Give a real-world example if possible
-    #  - What is this example graph used to demonstrate?
+    description="In this example the query can be estimated from both the frontdoor and backdoor criterion",
     generate_data=generate,
     example_queries=[Query.from_str(treatments=X, outcomes=Y)],
 )
