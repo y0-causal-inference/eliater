@@ -1,11 +1,17 @@
 """This module defines the steps for repairing the network structure.
 
 Given an acyclic directed mixed graph (ADMG) and corresponding observational data,
-you can assess whether the conditional independences between entities in the ADMG
-are supported by observational data. Any conditional independency implied by
-the ADMG and not by the data, indicates the likely presence of a latent
-confounder among the variables for which the test failed. In such cases,
-this module adds a bidirectional edge between the affected variables.
+one can assess whether the conditional independences implied by the structure of the
+ADMG are supported by the data with a statistical test for conditional independence.
+By default, this workflow uses a chi-square test for discrete data and a Pearson test
+for continuous data from :mod:`pgmpy.estimators.CITests`.
+
+Any conditional independency implied by the ADMG that fails to reject the null hypothesis
+of the statistical test suggests the presence of a latent confounder between the two
+variables for which the test failed. In such cases, this workflow adds a bidirectional
+edge between the affected variables.
+
+..todo:: SARA - last sentence, what does this accomplish? how does it improve downstream methodologies like identification?
 
 Here is an example:
 
@@ -79,6 +85,7 @@ def choose_default_test(data: pd.DataFrame) -> str:
     )
 
 
+# FIXME rename to something more descriptive
 def fix_graph(
     graph: NxMixedGraph,
     data: pd.DataFrame,
