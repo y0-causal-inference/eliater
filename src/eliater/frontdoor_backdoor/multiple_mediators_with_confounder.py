@@ -32,6 +32,7 @@ graph = NxMixedGraph.from_edges(
     undirected=[
         (Z1, X),
         # (Y, Z2)
+        # TODO put in description
         # We are generating data with the assumption that there is a bi-directed edge between
         # Y and Z2, but that bi-directed edge is missed from this prior knowledge graph.
     ],
