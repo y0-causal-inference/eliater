@@ -54,28 +54,28 @@ def generate(
     generator = np.random.default_rng(seed)
 
     # latent node between X and Z1
-    u1 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
+    #u1 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
     # latent node between Y and Z2
     u2 = generator.normal(loc=50.0, scale=10.0, size=num_samples)
 
-    beta0_z1 = 1.5
-    beta_u1_to_z1 = 0.7
+    beta0_z1 = 50 #1.5
+    beta_u1_to_z1 = 0.3
 
     if Z1 in treatments:
         z1 = np.full(num_samples, treatments[Z1])
     else:
-        loc_z1 = beta0_z1 + u1 * beta_u1_to_z1
+        loc_z1 = beta0_z1 #+ u1 * beta_u1_to_z1
         z1 = generator.normal(loc=loc_z1, scale=10.0, size=num_samples)
 
     beta0_z2 = 3
     beta_z1_to_z2 = 0.3
-    beta_u2_to_z2 = 0.6
+    beta_u2_to_z2 = 0.7
 
     if Z2 in treatments:
         z2 = np.full(num_samples, treatments[Z2])
     else:
         loc_z2 = beta0_z2 + z1 * beta_z1_to_z2 + u2 * beta_u2_to_z2
-        z2 = generator.normal(loc=loc_z2, scale=10.0, size=num_samples)
+        z2 = generator.normal(loc=loc_z2, scale=4.0, size=num_samples)
 
     beta0_z3 = 4
     beta_z2_to_z3 = 0.6
@@ -84,17 +84,17 @@ def generate(
         z3 = np.full(num_samples, treatments[Z3])
     else:
         loc_z3 = beta0_z3 + z2 * beta_z2_to_z3
-        z3 = generator.normal(loc=loc_z3, scale=10.0, size=num_samples)
+        z3 = generator.normal(loc=loc_z3, scale=4.0, size=num_samples)
 
     beta0_x = 1
     beta_z1_to_x = 0.6
-    beta_u1_to_x = 0.7
+    #beta_u1_to_x = 0.3
 
     if X in treatments:
         x = np.full(num_samples, treatments[X])
     else:
-        loc_x = beta0_x + z1 * beta_z1_to_x + u1 * beta_u1_to_x
-        x = generator.normal(loc=loc_x, scale=10.0, size=num_samples)
+        loc_x = beta0_x + z1 * beta_z1_to_x #+ u1 * beta_u1_to_x
+        x = generator.normal(loc=loc_x, scale=4.0, size=num_samples)
 
     beta0_m1 = 2
     beta_x_to_m1 = 0.7
@@ -103,7 +103,7 @@ def generate(
         m1 = np.full(num_samples, treatments[M1])
     else:
         loc_m1 = beta0_m1 + x * beta_x_to_m1
-        m1 = generator.normal(loc=loc_m1, scale=10.0, size=num_samples)
+        m1 = generator.normal(loc=loc_m1, scale=4.0, size=num_samples)
 
     beta0_m2 = 2
     beta_m1_to_m2 = 0.7
@@ -112,7 +112,7 @@ def generate(
         m2 = np.full(num_samples, treatments[M2])
     else:
         loc_m2 = beta0_m2 + m1 * beta_m1_to_m2
-        m2 = generator.normal(loc=loc_m2, scale=10.0, size=num_samples)
+        m2 = generator.normal(loc=loc_m2, scale=7.0, size=num_samples)
 
     beta0_y = 1.8
     beta_z3_to_y = 0.5
@@ -121,8 +121,9 @@ def generate(
     if Y in treatments:
         y = np.full(num_samples, treatments[Y])
     else:
+        loc_y = beta0_y + z3 * beta_z3_to_y + m2 * beta_m2_to_y + u2 * beta_u2_to_y
         y = generator.normal(
-            loc=beta0_y + z3 * beta_z3_to_y + m2 * beta_m2_to_y + u2 * beta_u2_to_y,
+            loc=loc_y,
             scale=10.0,
             size=num_samples,
         )
