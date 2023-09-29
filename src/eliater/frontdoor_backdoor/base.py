@@ -11,7 +11,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "frontdoor_backdoor_example",
+    "base_example",
 ]
 
 graph = NxMixedGraph.from_edges(directed=[(W, X), (X, Z), (Z, Y), (W, Y)])
@@ -52,13 +52,13 @@ def generate(
     return data
 
 
-frontdoor_backdoor_example = Example(
+base_example = Example(
     name="frontdoor_backdoor example",
     reference="frontdoor_backdoor example from y0 module",
     graph=graph,
     description="In this example all the variables are continuous but"
-                " in the same example in y0, X is generated binary. "
-                "query can be estimated from both the frontdoor and backdoor criterion",
+    " in the same example in y0, X is generated binary. "
+    "query can be estimated from both the frontdoor and backdoor criterion",
     generate_data=generate,
     example_queries=[Query.from_str(treatments=X, outcomes=Y)],
 )
