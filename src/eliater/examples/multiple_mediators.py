@@ -8,7 +8,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "multi_mediators_example",
+    "multiple_mediators_example",
 ]
 
 M1 = Variable("M1")
@@ -18,7 +18,7 @@ R2 = Variable("R2")
 R3 = Variable("R3")
 
 
-multi_mediators = NxMixedGraph.from_edges(
+multiple_mediators = NxMixedGraph.from_edges(
     directed=[
         (X, M1),
         (M1, M2),
@@ -33,7 +33,10 @@ multi_mediators = NxMixedGraph.from_edges(
 
 
 def generate_data_for_multi_mediators(
-    num_samples: int, treatments: dict[Variable, float] | None = None, *, seed: int | None = None
+    num_samples: int = 1000,
+    treatments: dict[Variable, float] | None = None,
+    *,
+    seed: int | None = None,
 ) -> pd.DataFrame:
     """Generate testing data for the multi_mediators case study.
 
@@ -94,10 +97,10 @@ def generate_data_for_multi_mediators(
     return pd.DataFrame({X.name: x, M1.name: m1, M2.name: m2, Y.name: y})
 
 
-multi_mediators_example = Example(
-    name="Multi_mediators",
+multiple_mediators_example = Example(
+    name="Multiple mediators example",
     reference="Inspired by the frontdoor example, but with multiple mediators.",
-    graph=multi_mediators,
+    graph=multiple_mediators,
     generate_data=generate_data_for_multi_mediators,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
