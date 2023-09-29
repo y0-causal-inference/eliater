@@ -4,6 +4,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+
 from y0.algorithm.identify import Query
 from y0.dsl import Variable, W, X, Y, Z
 from y0.examples import Example
@@ -55,7 +56,9 @@ frontdoor_backdoor_example = Example(
     name="frontdoor_backdoor example",
     reference="frontdoor_backdoor example from y0 module",
     graph=graph,
-    description="In this example the query can be estimated from both the frontdoor and backdoor criterion",
+    description="In this example all the variables are continuous but"
+                " in the same example in y0, X is generated binary. "
+                "query can be estimated from both the frontdoor and backdoor criterion",
     generate_data=generate,
     example_queries=[Query.from_str(treatments=X, outcomes=Y)],
 )

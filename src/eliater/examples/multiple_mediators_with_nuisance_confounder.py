@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+
 from y0.algorithm.identify import Query
 from y0.dsl import Z1, Z2, Z3, Variable, X, Y
 from y0.examples import Example
@@ -177,8 +178,8 @@ multi_mediators_confounder_nuisance_var_example = Example(
     name="frontdoor with multiple mediators and nuisance variables",
     reference="Causal workflow paper, figure 4 (a).",
     description="This is an extension of front door example but with multiple mediators. "
-                "It contains nuisance variables R1, R2, R3 that should not be part of query estimation."
-                "The query can be estimated with both front-door and back-door approaches",
+    "It contains nuisance variables R1, R2, R3 that should not be part of query estimation."
+    "The query can be estimated with both front-door and back-door approaches",
     graph=graph,
     generate_data=generate,
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
