@@ -61,7 +61,12 @@ __all__ = [
 def find_all_nodes_in_causal_paths(
     graph: NxMixedGraph, treatments: Union[Variable, Set[Variable]], outcome: Variable
 ) -> Set[Variable]:
-    """Find all the nodes in causal paths from source to destination."""
+    """Find all the nodes in causal paths from source to destination.
+
+    .. todo:: how do treatments and outcomes mato to source and destination?
+
+    .. todo:: make this this work for multiple outcomes
+    """
     if isinstance(treatments, Variable):
         treatments = {treatments}
     nodes = set()
@@ -83,6 +88,8 @@ def mark_latent(
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
     :param outcome: the outcome variable
+
+        .. todo:: need to enable multiple outcomes
     :returns: The modified graph marked with latent nodes.
     """
     if isinstance(treatments, Variable):
