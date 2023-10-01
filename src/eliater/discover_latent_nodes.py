@@ -1,4 +1,41 @@
-"""This module contains methods to discover and mark latent nodes in a network."""
+"""This module contains methods to discover and mark nuisance nodes in a network.
+
+Given an acyclic directed mixed graph (ADMG), along with the treatment and the outcome
+of interest, certain observable variables can be regarded as nuisances. This
+classification arises because they do not have any impact on the outcome and should not
+be involved in the estimation of the treatment's effect on the outcome. These specific
+variables are descendants of the variables on all causal paths that are not ancestors of
+the outcome. A causal path, in this context, refers to a directed path that starts from the
+treatment and leads to the outcome such that all the arrows on the path have the same direction.
+This module is designed to identify these variables and produce a new ADMG in which they are
+designated as latent.
+
+This process enables us to concentrate on the fundamental variables needed to estimate the
+treatment's impact on the outcome. This focus results in more precise estimates with reduced
+variance and bias.
+
+Here is an example:
+
+.. code-block:: python
+
+    graph = NxMixedGraph.from_edges(
+        directed=[
+            (X, M1),
+            (M1, M2),
+            (M2, Y),
+            (M1, R1),
+            (R1, R2),
+            (R2, R3),
+            (Y, R3),
+        ],
+        undirected=[
+            (X, Y),
+        ],
+    )
+
+    new_graph = mark_latent(graph, treatments = 'X', outcome: 'Y')
+
+"""
 
 from typing import Set, Union
 
