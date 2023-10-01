@@ -102,5 +102,7 @@ def mark_latent(
     # Remove treatments and outcome
     descendants_not_ancestors = descendants_not_ancestors.difference(treatments.union({outcome}))
     # Mark nodes as latent
+    # FIXME this operation is currently meaningless in ADMGs, it's supposed to be used on graphs
+    #  going through the Latent DAG workflow
     set_latent(graph.directed, descendants_not_ancestors)
     return graph
