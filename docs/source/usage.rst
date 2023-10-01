@@ -4,6 +4,12 @@ Frontdoor-Backdoor Example
     :no-heading:
     :include-all-objects:
 
+Discover Latent Nodes
+=====================
+.. automodapi:: eliater.discover_latent_nodes
+    :no-heading:
+    :include-all-objects:
+
 Usage
 =====
 .. automodule:: eliater.api

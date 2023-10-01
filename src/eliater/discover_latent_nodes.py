@@ -16,6 +16,11 @@ variance and bias.
 
 Here is an example:
 
+.. todo::
+
+    Don't just give some random example. Motivate it. Explain the characteristics of the
+    example ADMG that are important. Explain what the algorithm does to it.
+
 .. code-block:: python
 
     graph = NxMixedGraph.from_edges(
@@ -35,6 +40,9 @@ Here is an example:
 
     new_graph = mark_latent(graph, treatments = 'X', outcome: 'Y')
 
+.. todo::
+
+    And then what? what do we do with an ADMG that has variables marked as latent?
 """
 
 from typing import Set, Union
@@ -42,6 +50,12 @@ from typing import Set, Union
 import networkx as nx
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph, set_latent
+
+
+__all__ = [
+    "find_all_nodes_in_causal_paths",
+    "mark_latent",
+]
 
 
 def find_all_nodes_in_causal_paths(
