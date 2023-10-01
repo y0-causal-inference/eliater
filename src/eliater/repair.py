@@ -17,6 +17,16 @@ latent variables is unknown.
 
 Here is an example:
 
+.. todo::
+
+    Don't just give some random example. Motivate it. Explain the characteristics of the
+    example ADMG that are important. Explain what the algorithm does to it.
+
+.. todo::
+
+    Make sure to include correct imports such that this example can be directly
+    copy-pasted into a repl/jupyter
+
 .. code-block:: python
 
     graph = NxMixedGraph.from_edges(
@@ -46,6 +56,10 @@ from y0.algorithm.falsification import get_conditional_independencies
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 from y0.struct import get_conditional_independence_tests
+
+__all__ = [
+    "fix_graph",
+]
 
 
 def get_state_space_map(
@@ -86,14 +100,31 @@ def choose_default_test(data: pd.DataFrame) -> str:
     )
 
 
-# FIXME rename to something more descriptive
+CITest = Literal[
+    "pearson",
+    "chi-square",
+    "cressie_read",
+    "freeman_tuckey",
+    "g_sq",
+    "log_likelihood",
+    "modified_log_likelihood",
+    "power_divergence",
+    "neyman",
+]
+
+
 def fix_graph(
     graph: NxMixedGraph,
     data: pd.DataFrame,
-    test: Optional[str] = None,
+    test: Optional[CITest] = None,
     significance_level: Optional[float] = 0.05,
 ) -> NxMixedGraph:
-    """Repairs the graph by adding undirected edges between the nodes that fail the conditional independency test."""
+    """Repairs the graph by adding undirected edges between the nodes that fail the conditional independency test.
+
+    .. todo:: rename to be more descriptive
+
+    .. todo:: document all parameters
+    """
     if not test:
         test = choose_default_test(data)
 
@@ -117,4 +148,3 @@ def fix_graph(
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
     return graph
-
