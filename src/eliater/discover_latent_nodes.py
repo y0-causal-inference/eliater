@@ -21,6 +21,11 @@ Here is an example:
     Don't just give some random example. Motivate it. Explain the characteristics of the
     example ADMG that are important. Explain what the algorithm does to it.
 
+.. todo::
+
+    Make sure to include correct imports such that this example can be directly
+    copy-pasted into a repl/jupyter
+
 .. code-block:: python
 
     graph = NxMixedGraph.from_edges(
