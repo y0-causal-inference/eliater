@@ -15,34 +15,31 @@ This process allows for unbiased estimation of causal queries in cases where the
 overall ADMG structure over the observed variables is correct, but the number and location of
 latent variables is unknown.
 
-Here is an example:
-
-.. todo::
-
-    Don't just give some random example. Motivate it. Explain the characteristics of the
-    example ADMG that are important. Explain what the algorithm does to it.
-
-.. todo::
-
-    Make sure to include correct imports such that this example can be directly
-    copy-pasted into a repl/jupyter
+Here is an example of an ADMG with its corresponding observational data. This ADMG has one
+bi-directed edge between X and Y. The observational data is generated with the assumption
+that there exists an additional bidirectional edge between M2 and Y, which is not depicted
+in the given ADMG. Our objective is to identify all the conditional independencies implied
+by this ADMG and pinpoint any inconsistencies with the data. The ultimate aim is to detect
+this overlooked bidirectional edge and incorporate it into the corrected ADMG.
 
 .. code-block:: python
-
+    from y0.graph import NxMixedGraph
     graph = NxMixedGraph.from_edges(
         directed=[
-            (X, M1),
-            (M1, M2),
-            (M2, Y),
+            ('X', 'M1'),
+            ('M1', 'M2'),
+            ('M2', 'Y'),
         ],
         undirected=[
-            (X, Y),
+            ('X', 'Y'),
         ],
     )
 
     # Generate observational data for this graph (this is a special example)
-    observational_data = generate_data_for_multi_mediators(100)
+    from frontdoor_backdoor.multiple_mediators_single_confounder import generate
+    observational_data = generate(100)
 
+    from eliater.repair import fix_graph
     repaired_graph = fix_graph(graph, observational_data)
 
 """
@@ -148,3 +145,4 @@ def fix_graph(
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
     return graph
+

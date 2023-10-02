@@ -5,8 +5,8 @@ import warnings
 
 from eliater.frontdoor_backdoor import (
     base_example,
-    multiple_mediators_single_confounder_example,
     multi_mediators_confounders_nuisance_vars_example,
+    multiple_mediators_single_confounder_example,
     multiple_mediators_with_multiple_confounders_nuisances,
 )
 from eliater.repair import choose_default_test, fix_graph, get_state_space_map
@@ -67,7 +67,11 @@ class TestRepair(unittest.TestCase):
     def test_fix_graph_for_invalid_input_test(self):
         """Test fix_graph for invalid input test."""
         self.assertRaises(
-            Exception, fix_graph, multi_mediators, generate_data_for_multi_mediators(1000), "abc"
+            Exception,
+            fix_graph,
+            multiple_mediators_single_confounder_example,
+            generate(1000),
+            "abc",
         )
 
     def test_fix_graph_for_continuous_data_and_not_pearson(self):
