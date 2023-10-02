@@ -54,7 +54,7 @@ def generate(
     generator = np.random.default_rng(seed)
 
     # latent node between X and Z1
-    #u1 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
+    # u1 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
     # latent node between Y and Z2
     u2 = generator.normal(loc=50.0, scale=10.0, size=num_samples)
 

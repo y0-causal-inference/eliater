@@ -5,9 +5,9 @@ import warnings
 
 from eliater.frontdoor_backdoor import (
     base_example,
-    multi_mediators_confounders_nuisance_vars_example,
     multiple_mediators_single_confounder_example,
-    multiple_mediators_with_multiple_confounders_nuisances,
+    multiple_mediators_confounders_example,
+    multi_mediators_confounders_nuisance_vars_example
 )
 from eliater.repair import choose_default_test, fix_graph, get_state_space_map
 from y0.dsl import Variable
@@ -70,7 +70,7 @@ class TestRepair(unittest.TestCase):
             Exception,
             fix_graph,
             multiple_mediators_single_confounder_example,
-            generate(1000),
+            multiple_mediators_single_confounder_example.generate_data(),
             "abc",
         )
 
@@ -106,7 +106,10 @@ class TestRepair(unittest.TestCase):
 
     def test_fix_graph_for_multi_mediators(self):
         """Test fix_graph for multi_mediators."""
-        actual_fixed_graph = fix_graph(multi_mediators, generate_data_for_multi_mediators(1000))
+        actual_fixed_graph = fix_graph(
+            multiple_mediators_single_confounder_example.graph,
+            multiple_mediators_single_confounder_example.generate_data()
+        )
         expected_fixed_graph = NxMixedGraph.from_str_adj(
             directed={"X": ["M1"], "M1": ["M2"], "M2": ["Y"]}, undirected={"X": ["Y"], "M1": ["Y"]}
         )
@@ -137,9 +140,9 @@ class TestRepair(unittest.TestCase):
         """Test fix_graph for multi_mediators_confounder."""
         # FIXME: This test fails sometimes
         actual_fixed_graph = fix_graph(
-            graph=multi_mediators_confounder,
-            data=generate_data_for_multi_mediators_confounder(40),
-            significance_level=0.001,
+            graph=multiple_mediators_confounders_example.graph,
+            data=multiple_mediators_confounders_example.generate_data(100, seed=1),
+            significance_level=0.05,
         )
         expected_fixed_graph = NxMixedGraph.from_str_adj(
             directed={
@@ -158,9 +161,9 @@ class TestRepair(unittest.TestCase):
         """Test fix_graph for multi_mediators_confounder_nuisance_var."""
         # FIXME: This test fails
         actual = fix_graph(
-            graph=multi_mediators_confounder_nuisance_var,
-            data=generate_data_for_multi_mediators_confounder_nuisance_var(100, seed=2000),
-            significance_level=0.001,
+            graph=multi_mediators_confounders_nuisance_vars_example.graph,
+            data=multi_mediators_confounders_nuisance_vars_example.generate_data(100, seed=2),
+            significance_level=0.01,
         )
         expected = NxMixedGraph.from_str_adj(
             directed={
