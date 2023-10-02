@@ -70,7 +70,7 @@ class TestRepair(unittest.TestCase):
             Exception,
             fix_graph,
             multiple_mediators_single_confounder_example,
-            multiple_mediators_single_confounder_example.generate_data(),
+            multiple_mediators_single_confounder_example.generate_data(100),
             "abc",
         )
 
@@ -108,7 +108,7 @@ class TestRepair(unittest.TestCase):
         """Test fix_graph for multi_mediators."""
         actual_fixed_graph = fix_graph(
             multiple_mediators_single_confounder_example.graph,
-            multiple_mediators_single_confounder_example.generate_data()
+            multiple_mediators_single_confounder_example.generate_data(100)
         )
         expected_fixed_graph = NxMixedGraph.from_str_adj(
             directed={"X": ["M1"], "M1": ["M2"], "M2": ["Y"]}, undirected={"X": ["Y"], "M1": ["Y"]}
