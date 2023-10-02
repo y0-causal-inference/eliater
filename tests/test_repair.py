@@ -153,7 +153,7 @@ class TestRepair(unittest.TestCase):
                 "Z2": ["Z3"],
                 "Z3": ["Y"],
             },
-            undirected={"Z1": ["X"], "Y": ["Z2"]},
+            undirected={"Y": ["Z2"]},
         )
         self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
 
@@ -173,9 +173,17 @@ class TestRepair(unittest.TestCase):
                 "M2": ["Y"],
                 "Z2": ["Z3"],
                 "Z3": ["Y"],
+                "M1": ["R1"],
+                "R1": ["R2"],
+                "R2": ["R3"],
+                "Y": ["R3"]
             },
-            undirected={"Z1": ["X"], "Y": ["Z2"]},
+            undirected={"Y": ["Z2"]},
         )
+        print(expected.directed.edges)
+        print(expected.undirected.edges)
+        print(actual.directed.edges)
+        print(actual.undirected.edges)
         self.assertNotIn(
             R1, set(actual.nodes()), msg="Nuisance variable R1 should have been removed"
         )

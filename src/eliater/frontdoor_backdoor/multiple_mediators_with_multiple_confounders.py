@@ -29,9 +29,6 @@ graph = NxMixedGraph.from_edges(
         (Z2, Z3),
         (Z3, Y),
     ],
-    undirected=[
-        (Z1, X),
-    ],
 )
 
 
