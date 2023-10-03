@@ -52,6 +52,21 @@ this overlooked bidirectional edge and incorporate it into the corrected ADMG.
 
     repaired_graph = repair_network(graph, observational_data)
 
+
+.. todo::
+
+    Sara said on Slack:
+
+    > This is also explained in Robert's book and it is not a step that one should
+    > highly rely on for several reasons. First, these tests make distributional
+    > assumptions about the data generation process. For example assume they follow
+    > the X-square distribution where in reality it may not be the case, or for
+    > continuous data make the assumption that the data is from Gaussian distribution.
+
+    Let's see some examples where this methodology doesn't work that also includes
+    documentation on what a user should do in this situation.
+    DO NOT DELETE THIS TO-DO until several end-to-end runnable examples are given below
+
 """
 
 import warnings
