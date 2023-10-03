@@ -5,11 +5,11 @@ import warnings
 
 from eliater.frontdoor_backdoor import (
     base_example,
-    multiple_mediators_single_confounder_example,
+    multi_mediators_confounders_nuisance_vars_example,
     multiple_mediators_confounders_example,
-    multi_mediators_confounders_nuisance_vars_example
+    multiple_mediators_single_confounder_example,
 )
-from eliater.repair import choose_default_test, fix_graph, get_state_space_map
+from eliater.repair import choose_default_test, get_state_space_map, repair_network
 from y0.dsl import Variable
 from y0.examples import frontdoor_backdoor
 from y0.examples.frontdoor import generate_data_for_frontdoor
@@ -64,20 +64,20 @@ class TestRepair(unittest.TestCase):
         frontdoor_data = generate_data_for_frontdoor(1000)
         self.assertRaises(NotImplementedError, choose_default_test, frontdoor_data)
 
-    def test_fix_graph_for_invalid_input_test(self):
-        """Test fix_graph for invalid input test."""
+    def test_repair_network_for_invalid_input_test(self):
+        """Test repair_network for invalid input test."""
         self.assertRaises(
             Exception,
-            fix_graph,
+            repair_network,
             multiple_mediators_single_confounder_example,
             multiple_mediators_single_confounder_example.generate_data(),
             "abc",
         )
 
-    def test_fix_graph_for_continuous_data_and_not_pearson(self):
-        """Test fix_graph for continuous data when pearson is not chosen."""
+    def test_repair_network_for_continuous_data_and_not_pearson(self):
+        """Test repair_network for continuous data when pearson is not chosen."""
         with warnings.catch_warnings(record=True) as w:
-            fix_graph(base_example.graph, base_example.generate_data(), "chi-square")
+            repair_network(base_example.graph, base_example.generate_data(), "chi-square")
             self.assertTrue(len(w) > 0)
             # Iterate through the captured warnings and check for the specific message
             specific_warning_found = False
@@ -94,21 +94,21 @@ class TestRepair(unittest.TestCase):
             # Assert that the specific warning was found
             self.assertTrue(specific_warning_found)
 
-    def test_fix_graph_for_discrete_data_and_pearson(self):
-        """Test fix_graph for discrete data when pearson is chosen."""
+    def test_repair_network_for_discrete_data_and_pearson(self):
+        """Test repair_network for discrete data when pearson is chosen."""
         self.assertRaises(
             Exception,
-            fix_graph,
+            repair_network,
             frontdoor_backdoor,
             generate_data_for_frontdoor_backdoor(1000),
             "pearson",
         )
 
-    def test_fix_graph_for_multi_mediators(self):
-        """Test fix_graph for multi_mediators."""
-        actual_fixed_graph = fix_graph(
+    def test_repair_network_for_multi_mediators(self):
+        """Test repair_network for multi_mediators."""
+        actual_fixed_graph = repair_network(
             multiple_mediators_single_confounder_example.graph,
-            multiple_mediators_single_confounder_example.generate_data()
+            multiple_mediators_single_confounder_example.generate_data(),
         )
         expected_fixed_graph = NxMixedGraph.from_str_adj(
             directed={"X": ["M1"], "M1": ["M2"], "M2": ["Y"]}, undirected={"X": ["Y"], "M1": ["Y"]}
@@ -136,10 +136,9 @@ class TestRepair(unittest.TestCase):
             msg="Graphs have different undirected edges",
         )
 
-    def test_fix_graph_for_multi_mediators_confounder(self):
-        """Test fix_graph for multi_mediators_confounder."""
-        # FIXME: This test fails sometimes
-        actual_fixed_graph = fix_graph(
+    def test_repair_network_for_multi_mediators_confounder(self):
+        """Test repair_network for multi_mediators_confounder."""
+        actual_fixed_graph = repair_network(
             graph=multiple_mediators_confounders_example.graph,
             data=multiple_mediators_confounders_example.generate_data(100, seed=1),
             significance_level=0.05,
@@ -157,10 +156,9 @@ class TestRepair(unittest.TestCase):
         )
         self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
 
-    def test_fix_graph_for_multi_mediators_confounder_nuisance_var(self):
-        """Test fix_graph for multi_mediators_confounder_nuisance_var."""
-        # FIXME: This test fails
-        actual = fix_graph(
+    def test_repair_network_for_multi_mediators_confounder_nuisance_var(self):
+        """Test repair_network for multi_mediators_confounder_nuisance_var."""
+        actual = repair_network(
             graph=multi_mediators_confounders_nuisance_vars_example.graph,
             data=multi_mediators_confounders_nuisance_vars_example.generate_data(100, seed=2),
             significance_level=0.01,
@@ -175,14 +173,10 @@ class TestRepair(unittest.TestCase):
                 "Z3": ["Y"],
                 "R1": ["R2"],
                 "R2": ["R3"],
-                "Y": ["R3"]
+                "Y": ["R3"],
             },
             undirected={"Y": ["Z2"]},
         )
-        print(expected.directed.edges)
-        print(expected.undirected.edges)
-        print(actual.directed.edges)
-        print(actual.undirected.edges)
         self.assertNotIn(
             R1, set(actual.nodes()), msg="Nuisance variable R1 should have been removed"
         )

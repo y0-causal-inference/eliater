@@ -55,7 +55,7 @@ from y0.graph import NxMixedGraph
 from y0.struct import get_conditional_independence_tests
 
 __all__ = [
-    "fix_graph",
+    "repair_network",
 ]
 
 
@@ -86,17 +86,6 @@ def is_data_continuous(data: pd.DataFrame) -> bool:
     return variable_types == {"continuous"}
 
 
-def choose_default_test(data: pd.DataFrame) -> str:
-    """Choose the default statistical test for testing conditional independencies based on the data."""
-    if is_data_discrete(data):
-        return "chi-square"
-    if is_data_continuous(data):
-        return "pearson"
-    raise NotImplementedError(
-        "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
-    )
-
-
 CITest = Literal[
     "pearson",
     "chi-square",
@@ -110,17 +99,35 @@ CITest = Literal[
 ]
 
 
-def fix_graph(
+def choose_default_test(data: pd.DataFrame) -> CITest:
+    """Choose the default statistical test for testing conditional independencies based on the data."""
+    if is_data_discrete(data):
+        return "chi-square"
+    if is_data_continuous(data):
+        return "pearson"
+    raise NotImplementedError(
+        "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
+    )
+
+
+def repair_network(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     test: Optional[CITest] = None,
     significance_level: Optional[float] = 0.05,
 ) -> NxMixedGraph:
-    """Repairs the graph by adding undirected edges between the nodes that fail the conditional independency test.
+    """Repairs the network by adding undirected edges between the nodes that fail the conditional independency test.
 
-    .. todo:: rename to be more descriptive
-
-    .. todo:: document all parameters
+    :param graph: an NxMixedGraph
+    :param data: data
+    :param test: the conditional independency test to use.
+        Supported values are ["pearson", "chi-square", "cressie_read",
+        "freeman_tuckey", "g_sq", "log_likelihood", "modified_log_likelihood",
+        "power_divergence", "neyman"]
+    :param significance_level: significance level. Default is 0.05
+    :returns: The repaired network, in place
+    :raises ValueError: if the passed test is invalid / unsupported
+    :raises Exception: if the data and discrete and the chosen test is pearson
     """
     if not test:
         test = choose_default_test(data)
@@ -145,4 +152,3 @@ def fix_graph(
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
     return graph
-

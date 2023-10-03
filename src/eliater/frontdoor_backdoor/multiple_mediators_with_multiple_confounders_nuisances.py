@@ -54,17 +54,17 @@ def generate(
     generator = np.random.default_rng(seed)
 
     # latent node between X and Z1
-    #u1 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
+    # u1 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
     # latent node between Y and Z2
     u2 = generator.normal(loc=50.0, scale=5.0, size=num_samples)
 
-    beta0_z1 = 50 #1.5
-    #beta_u1_to_z1 = 0.3
+    beta0_z1 = 50  # 1.5
+    # beta_u1_to_z1 = 0.3
 
     if Z1 in treatments:
         z1 = np.full(num_samples, treatments[Z1])
     else:
-        loc_z1 = beta0_z1 #+ u1 * beta_u1_to_z1
+        loc_z1 = beta0_z1  # + u1 * beta_u1_to_z1
         z1 = generator.normal(loc=loc_z1, scale=10.0, size=num_samples)
 
     beta0_z2 = 3
@@ -88,12 +88,12 @@ def generate(
 
     beta0_x = 1
     beta_z1_to_x = 0.6
-    #beta_u1_to_x = 0.3
+    # beta_u1_to_x = 0.3
 
     if X in treatments:
         x = np.full(num_samples, treatments[X])
     else:
-        loc_x = beta0_x + z1 * beta_z1_to_x #+ u1 * beta_u1_to_x
+        loc_x = beta0_x + z1 * beta_z1_to_x  # + u1 * beta_u1_to_x
         x = generator.normal(loc=loc_x, scale=4.0, size=num_samples)
 
     beta0_m1 = 2
