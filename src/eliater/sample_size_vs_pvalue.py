@@ -55,7 +55,7 @@ def estimate_p_val(
     samples = []
     for _ in range(boot_size):
         sample = sample_p_val(
-            full_data, sample_size, left, right, conditions, significance_level, tests[test]
+            full_data, sample_size, left, right, conditions, test, significance_level
         )
         samples.append(sample)
     positive_tests = [p_val > significance_level for p_val in samples]
@@ -67,7 +67,7 @@ def estimate_p_val(
     return p_estimate, lower_error, higher_error, prob_conclude_indep
 
 
-from eliater.frontdoor_backdoor import multiple_mediators_confounders_example
+from frontdoor_backdoor import multiple_mediators_confounders_example
 
 full_data = multiple_mediators_confounders_example.generate_data(num_samples=1000)
 
