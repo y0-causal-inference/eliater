@@ -40,7 +40,7 @@ this overlooked bidirectional edge and incorporate it into the corrected ADMG.
     observational_data = generate(100)
 
     from eliater.repair import fix_graph
-    repaired_graph = fix_graph(graph, observational_data)
+    repaired_graph = repair_network(graph, observational_data)
 
 """
 
@@ -114,20 +114,24 @@ def repair_network(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     test: Optional[CITest] = None,
-    significance_level: Optional[float] = 0.05,
+    significance_level: Optional[float] = 0.01,
 ) -> NxMixedGraph:
-    """Repairs the network by adding undirected edges between the nodes that fail the conditional independency test.
-
+    """Repairs the network structure by introducing bidirectional edges between
+     any pairs of variables when the conditional independence implied by the network
+    is not supported by the data through a statistical conditional independence test.
     :param graph: an NxMixedGraph
-    :param data: data
+    :param data: observational data corresponding to the graph
     :param test: the conditional independency test to use.
         Supported values are ["pearson", "chi-square", "cressie_read",
         "freeman_tuckey", "g_sq", "log_likelihood", "modified_log_likelihood",
-        "power_divergence", "neyman"]
-    :param significance_level: significance level. Default is 0.05
+        "power_divergence", "neyman"]. Default is "pearson" for continuous data
+        and chi-square for discrete data.
+    :param significance_level: The statistical tests employ this value for
+    comparison with the p-value of the test to determine the independence of
+    the tested variables. Default is 0.01
     :returns: The repaired network, in place
     :raises ValueError: if the passed test is invalid / unsupported
-    :raises Exception: if the data and discrete and the chosen test is pearson
+    :raises Exception: if the data is discrete and the chosen test is pearson
     """
     if not test:
         test = choose_default_test(data)
