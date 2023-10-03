@@ -116,19 +116,20 @@ def repair_network(
     test: Optional[CITest] = None,
     significance_level: Optional[float] = 0.01,
 ) -> NxMixedGraph:
-    """Repairs the network structure by introducing bidirectional edges between
-     any pairs of variables when the conditional independence implied by the network
+    """Repairs the network structure.
+
+    Repairs the network structure by introducing bidirectional edges between
+    any pairs of variables when the conditional independence implied by the network
     is not supported by the data through a statistical conditional independence test.
+
     :param graph: an NxMixedGraph
     :param data: observational data corresponding to the graph
-    :param test: the conditional independency test to use.
-        Supported values are ["pearson", "chi-square", "cressie_read",
-        "freeman_tuckey", "g_sq", "log_likelihood", "modified_log_likelihood",
-        "power_divergence", "neyman"]. Default is "pearson" for continuous data
-        and chi-square for discrete data.
+    :param test: the conditional independency test to use. Supported values are ["pearson",
+        "chi-square","cressie_read", "freeman_tuckey", "g_sq", "log_likelihood", "modified_log_likelihood",
+        "power_divergence", "neyman"]. Default is "pearson" for continuous data and chi-square for discrete data.
     :param significance_level: The statistical tests employ this value for
-    comparison with the p-value of the test to determine the independence of
-    the tested variables. Default is 0.01
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. Default is 0.01
     :returns: The repaired network, in place
     :raises ValueError: if the passed test is invalid / unsupported
     :raises Exception: if the data is discrete and the chosen test is pearson
