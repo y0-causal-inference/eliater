@@ -22,6 +22,14 @@ in the given ADMG. Our objective is to identify all the conditional independenci
 by this ADMG and pinpoint any inconsistencies with the data. The ultimate aim is to detect
 this overlooked bidirectional edge and incorporate it into the corrected ADMG.
 
+.. todo:: Why are we incorporating this edge? What does it help accomplish? Add explanation to paragraph above
+
+.. todo::
+
+    Test that the code block below actually works (it doesn't)
+    by pasting it into a Jupyter notebook or python REPL. Fix the issues such
+    as broken imports
+
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
