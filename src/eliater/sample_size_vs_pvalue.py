@@ -22,11 +22,11 @@ tests = {
 
 def sample_p_val(
     full_data: pd.DataFrame,
-    sample_size: chr,
-    left: chr,
-    right: chr,
+    sample_size: int,
+    left: str,
+    right: str,
     conditions: list,
-    test: chr,
+    test: str,
     significance_level: Optional[float] = None,
 ) -> int:
     bootstrap_data = full_data.sample(n=sample_size, replace=True)
@@ -45,10 +45,10 @@ def sample_p_val(
 def estimate_p_val(
     full_data: pd.DataFrame,
     sample_size: int,
-    left: chr,
-    right: chr,
+    left: str,
+    right: str,
     conditions: list,
-    test: CITests,
+    test: str,
     significance_level: Optional[float] = None,
     boot_size: int = 1000,
 ):
@@ -69,7 +69,7 @@ def estimate_p_val(
 
 from frontdoor_backdoor import multiple_mediators_confounders_example
 
-full_data = multiple_mediators_confounders_example.generate_data(num_samples=1000)
+full_data = multiple_mediators_confounders_example.generate_data(num_samples=1000, seed=1)
 
 data_size = range(30, 1000, 50)
 p_vals, lower_errors, higher_errors, probs_conclude_indep = zip(
@@ -80,7 +80,7 @@ p_vals, lower_errors, higher_errors, probs_conclude_indep = zip(
             left="M2",
             right="Z2",
             conditions=["M1"],
-            test= "pearson",
+            test="pearson",
             significance_level=0.05,
             boot_size=1000,
         )
@@ -88,7 +88,7 @@ p_vals, lower_errors, higher_errors, probs_conclude_indep = zip(
     ]
 )
 
-plt.title("Amount of data vs. expected p-value (Ind. of M2 & Z2 given M1)")
+plt.title("# data points vs. expected p-value (Ind. of M2 & Z2 given M1)")
 plt.xlabel("Number of data points")
 plt.ylabel("Expected p-value")
 plt.errorbar(
