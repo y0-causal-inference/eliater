@@ -23,7 +23,11 @@ by this ADMG and pinpoint any inconsistencies with the data. The ultimate aim is
 this overlooked bidirectional edge and incorporate it into the corrected ADMG.
 
 .. code-block:: python
+
     from y0.graph import NxMixedGraph
+    from frontdoor_backdoor.multiple_mediators_single_confounder import generate
+    from eliater.repair import fix_graph
+
     graph = NxMixedGraph.from_edges(
         directed=[
             ('X', 'M1'),
@@ -36,10 +40,8 @@ this overlooked bidirectional edge and incorporate it into the corrected ADMG.
     )
 
     # Generate observational data for this graph (this is a special example)
-    from frontdoor_backdoor.multiple_mediators_single_confounder import generate
     observational_data = generate(100)
 
-    from eliater.repair import fix_graph
     repaired_graph = repair_network(graph, observational_data)
 
 """
