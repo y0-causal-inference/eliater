@@ -72,7 +72,12 @@ __all__ = [
 def get_state_space_map(
     data: pd.DataFrame, threshold: Optional[int] = 10
 ) -> Dict[Variable, Literal["discrete", "continuous"]]:
-    """Get a dictionary from each variable to its type."""
+    """Get a dictionary from each variable to its type.
+
+    .. todo:: document parameters
+
+    .. todo:: This thresholding doesn't make sense. what if the values are 0, 1, 2?
+    """
     column_values_unique_count = {
         column_name: data[column_name].nunique() for column_name in data.columns
     }
@@ -147,6 +152,10 @@ def repair_network(
     :returns: The repaired network, in place
     :raises ValueError: if the passed test is invalid / unsupported
     :raises Exception: if the data is discrete and the chosen test is pearson
+
+    .. todo:: Use a real exception and not the base Exception. ValueError is fine.
+
+    .. todo:: Why is it warning when there is continuous data and pearson test is used? Raise an error.
     """
     if significance_level is None:
         significance_level = 0.01
