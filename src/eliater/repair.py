@@ -116,9 +116,14 @@ def repair_network(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     test: Optional[CITest] = None,
-    significance_level: Optional[float] = 0.01,
+    significance_level: Optional[float] = None,
 ) -> NxMixedGraph:
     """Repairs the network structure.
+
+    .. todo::
+
+        rename this function to be more descriptive. There are many possible things that could be "repair",
+        so this isn't specific enough
 
     Repairs the network structure by introducing bidirectional edges between
     any pairs of variables when the conditional independence implied by the network
@@ -126,16 +131,17 @@ def repair_network(
 
     :param graph: an NxMixedGraph
     :param data: observational data corresponding to the graph
-    :param test: the conditional independency test to use. Supported values are ["pearson",
-        "chi-square","cressie_read", "freeman_tuckey", "g_sq", "log_likelihood", "modified_log_likelihood",
-        "power_divergence", "neyman"]. Default is "pearson" for continuous data and chi-square for discrete data.
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
     :param significance_level: The statistical tests employ this value for
         comparison with the p-value of the test to determine the independence of
-        the tested variables. Default is 0.01
+        the tested variables. If none, defaults to 0.01.
     :returns: The repaired network, in place
     :raises ValueError: if the passed test is invalid / unsupported
     :raises Exception: if the data is discrete and the chosen test is pearson
     """
+    if significance_level is None:
+        significance_level = 0.01
     if not test:
         test = choose_default_test(data)
 
