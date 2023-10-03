@@ -70,7 +70,7 @@ class TestRepair(unittest.TestCase):
             Exception,
             repair_network,
             multiple_mediators_single_confounder_example,
-            multiple_mediators_single_confounder_example.generate_data(),
+            multiple_mediators_single_confounder_example.generate_data(100),
             "abc",
         )
 
