@@ -28,29 +28,32 @@ bidirected edge ('M2', 'Y').
 
     Test that the code block below actually works (it doesn't)
     by pasting it into a Jupyter notebook or python REPL. Fix the issues such
-    as broken imports
+    as broken imports.
 
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
+    from y0.dsl import Variable, X, Y
+    M1 = Variable("M1")
+    M2 = Variable("M2")
     from frontdoor_backdoor.multiple_mediators_single_confounder import generate
     from eliater.repair import repair_network
 
     graph = NxMixedGraph.from_edges(
         directed=[
-            ('X', 'M1'),
-            ('M1', 'M2'),
-            ('M2', 'Y'),
+            (X, M1),
+            (M1, M2),
+            (M2, Y),
         ],
         undirected=[
-            ('X', 'Y'),
+            (X, Y),
         ],
     )
 
     # Generate observational data for this graph (this is a special example)
     observational_data = generate(100)
 
-    repaired_graph = repair_network(graph, observational_data)
+    repaired_graph = add_conditional_dependency_edges(graph, observational_data)
 
 .. todo::
 
@@ -94,17 +97,19 @@ increases. Here is an example that illustrates this:
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
+    from y0.dsl import Variable, X, Y
+    M1 = Variable("M1")
+    M2 = Variable("M2")
     from frontdoor_backdoor.multiple_mediators_single_confounder import generate
-    from eliater.repair import repair_network
 
     graph = NxMixedGraph.from_edges(
         directed=[
-            ('X', 'M1'),
-            ('M1', 'M2'),
-            ('M2', 'Y'),
+            (X, M1),
+            (M1, M2),
+            (M2, Y),
         ],
         undirected=[
-            ('X', 'Y'),
+            (X, Y),
         ],
     )
 
@@ -133,7 +138,7 @@ increases. Here is an example that illustrates this:
     plt.ylabel("expected p-value")
     plt.errorbar(
     data_size, p_vals, yerr=np.array([lower_errors, higher_errors]), ecolor="grey", elinewidth=0.5
-)
+    )
     plt.hlines(0.05, 0, 10000, linestyles="dashed")
     plt.show()
 
@@ -269,3 +274,4 @@ def add_conditional_dependency_edges(
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
     return graph
+
