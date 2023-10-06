@@ -57,8 +57,6 @@ def estimate_p_val(
             full_data, sample_size, left, right, conditions, test, significance_level
         )
         samples.append(sample)
-    positive_tests = [p_val > significance_level for p_val in samples]
-    prob_conclude_indep = mean(positive_tests)
     p_estimate = mean(samples)  # Calculate the mean of the p-values to get the bootstrap mean.
     quantile_05, quantile_95 = quantile(samples, q=[0.05, 0.95])
     lower_error = p_estimate - quantile_05  # Calculate the 5th percentile
@@ -67,7 +65,7 @@ def estimate_p_val(
     higher_error = quantile_95 - p_estimate  # Calculate the 95th percentile
     if higher_error < 0:
         print(higher_error)
-    return p_estimate, lower_error, higher_error, prob_conclude_indep
+    return p_estimate, lower_error, higher_error
 
 
 from frontdoor_backdoor import multiple_mediators_confounders_example
@@ -76,7 +74,7 @@ full_data = multiple_mediators_confounders_example.generate_data(num_samples=100
 
 
 data_size = range(50, 10000, 100)
-p_vals, lower_errors, higher_errors, probs_conclude_indep = zip(
+p_vals, lower_errors, higher_errors = zip(
     *[
         estimate_p_val(
             full_data=full_data,
@@ -93,8 +91,8 @@ p_vals, lower_errors, higher_errors, probs_conclude_indep = zip(
 )
 
 plt.title("# data points vs. expected p-value (Ind. of M2 & Z2 given M1)")
-plt.xlabel("Log transform of number of data points")
-plt.ylabel("Lop transform of expected p-value")
+plt.xlabel("number of data points")
+plt.ylabel("expected p-value")
 plt.errorbar(
     data_size, p_vals, yerr=np.array([lower_errors, higher_errors]), ecolor="grey", elinewidth=0.5
 )

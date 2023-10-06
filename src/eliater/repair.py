@@ -11,18 +11,18 @@ of the statistical test suggests the presence of a latent confounder between the
 variables for which the test failed. In such cases, this workflow adds a bidirectional
 edge between the affected variables.
 
-This process allows for unbiased estimation of causal queries in cases where the
-overall ADMG structure over the observed variables is correct, but the number and location of
+This process allows for unbiased estimation of causal queries in cases where the overall ADMG
+structure over the observed variables is correct, but the number and location of
 latent variables is unknown.
 
 Here is an example of an ADMG with its corresponding observational data. This ADMG has one
 bi-directed edge between X and Y. The observational data is generated with the assumption
 that there exists an additional bidirectional edge between M2 and Y, which is not depicted
-in the given ADMG. Our objective is to identify all the conditional independencies implied
-by this ADMG and pinpoint any inconsistencies with the data. The ultimate aim is to detect
-this overlooked bidirectional edge and incorporate it into the corrected ADMG.
-
-.. todo:: Why are we incorporating this edge? What does it help accomplish? Add explanation to paragraph above
+in the given ADMG. The incorporation of this additional edge is for testing purposes. The
+goal of this example is to detect this missed bidirectional edge by testing the conditional
+independences implied by the network against the data. Once the missed edge is detected it
+will be incorporated into the ADMG. Hence the output is the rapired ADMG containing the
+bidirected edge ('M2', 'Y').
 
 .. todo::
 
@@ -34,7 +34,7 @@ this overlooked bidirectional edge and incorporate it into the corrected ADMG.
 
     from y0.graph import NxMixedGraph
     from frontdoor_backdoor.multiple_mediators_single_confounder import generate
-    from eliater.repair import fix_graph
+    from eliater.repair import repair_network
 
     graph = NxMixedGraph.from_edges(
         directed=[
@@ -52,7 +52,6 @@ this overlooked bidirectional edge and incorporate it into the corrected ADMG.
 
     repaired_graph = repair_network(graph, observational_data)
 
-
 .. todo::
 
     Sara said on Slack:
@@ -67,6 +66,84 @@ this overlooked bidirectional edge and incorporate it into the corrected ADMG.
     documentation on what a user should do in this situation.
     DO NOT DELETE THIS TO-DO until several end-to-end runnable examples are given below
 
+This module relies on statistical tests, and statistical tests always have chances
+of producing false negatives, i.e., a pair of variables that are conditionally
+independent, be concluded as conditional dependent by the test, or producing false
+positives, i.e., a pair of variables that are conditionally dependent be concluded
+as conditionally independent by the test. Hence, the results obtained from this module
+should be regarded more as heuristics approach rather than a systematic, strict step that
+provides precise results.
+
+Here are some reasons that the result of the test may be false negative or false positive:
+
+1) In pgmpy, the conditional independence tests assume that the
+alternative hypothesis is dependence, while the null hypothesis is conditional
+independence. However, when dealing with an ADMG and hypothetically assuming that
+the ADMG has the correct structure, it is more appropriate for the null hypothesis
+to be the hypothesis of dependence. This distinction can be significant as the p-value
+relies on the null hypothesis.
+
+It's worth noting that this module employs traditional tests where the null hypothesis is
+conditional independence.
+
+2) In addition, p-values decrease as the number of data points used in the conditional
+independency test increases, i.e., the larger the data, more conditional independences
+implied by the network will be considered as dependent. Hence, chances of false negatives
+increases. Here is an example that illustrates this:
+
+.. code-block:: python
+
+    from y0.graph import NxMixedGraph
+    from frontdoor_backdoor.multiple_mediators_single_confounder import generate
+    from eliater.repair import repair_network
+
+    graph = NxMixedGraph.from_edges(
+        directed=[
+            ('X', 'M1'),
+            ('M1', 'M2'),
+            ('M2', 'Y'),
+        ],
+        undirected=[
+            ('X', 'Y'),
+        ],
+    )
+
+    # Generate observational data for this graph (this is a special example)
+    observational_data = generate(100)
+
+    data_size = range(50, 10000, 100)
+    p_vals, lower_errors, higher_errors, probs_conclude_indep = zip(
+        *[
+            estimate_p_val(
+                full_data=full_data,
+                sample_size=size,
+                left="M1",
+                right="Y",
+                conditions=["M2", "X],
+                test="pearson",
+                significance_level=0.05,
+                boot_size=1000,
+            )
+            for size in data_size
+        ]
+    )
+
+    plt.title("Independece of M1 & Y given M2 & X")
+    plt.xlabel("number of data points")
+    plt.ylabel("expected p-value")
+    plt.errorbar(
+    data_size, p_vals, yerr=np.array([lower_errors, higher_errors]), ecolor="grey", elinewidth=0.5
+)
+    plt.hlines(0.05, 0, 10000, linestyles="dashed")
+    plt.show()
+
+
+3) Conditional independence tests rely on probability assumptions regarding the data distribution.
+For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
+that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
+utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
+assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
+
 """
 
 import warnings
@@ -80,7 +157,7 @@ from y0.graph import NxMixedGraph
 from y0.struct import get_conditional_independence_tests
 
 __all__ = [
-    "repair_network",
+    "add_conditional_dependency_edges",
 ]
 
 
@@ -140,18 +217,13 @@ def choose_default_test(data: pd.DataFrame) -> CITest:
     )
 
 
-def repair_network(
+def add_conditional_dependency_edges(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     test: Optional[CITest] = None,
     significance_level: Optional[float] = None,
 ) -> NxMixedGraph:
     """Repairs the network structure.
-
-    .. todo::
-
-        rename this function to be more descriptive. There are many possible things that could be "repair",
-        so this isn't specific enough
 
     Repairs the network structure by introducing bidirectional edges between
     any pairs of variables when the conditional independence implied by the network
