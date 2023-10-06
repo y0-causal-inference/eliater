@@ -9,7 +9,7 @@ from eliater.frontdoor_backdoor import (
     multiple_mediators_confounders_example,
     multiple_mediators_single_confounder_example,
 )
-from eliater.repair import choose_default_test, get_state_space_map, repair_network
+from eliater.repair import choose_default_test, get_state_space_map, add_conditional_dependency_edges
 from y0.dsl import Variable
 from y0.examples import frontdoor_backdoor
 from y0.examples.frontdoor import generate_data_for_frontdoor
@@ -20,7 +20,8 @@ R1, R2, R3 = (Variable("R{i}") for i in (1, 2, 3))
 
 
 class TestRepair(unittest.TestCase):
-    """This class implements tests to verify the correctness of steps involved in repairing the network structure."""
+    """This class implements tests to verify the correctness of steps involved in repairing the network structure
+    by conditional independence tests."""
 
     def test_get_space_map_for_frontdoor(self):
         """Test get_space_map for frontdoor."""
@@ -64,20 +65,20 @@ class TestRepair(unittest.TestCase):
         frontdoor_data = generate_data_for_frontdoor(1000)
         self.assertRaises(NotImplementedError, choose_default_test, frontdoor_data)
 
-    def test_repair_network_for_invalid_input_test(self):
-        """Test repair_network for invalid input test."""
+    def test_add_conditional_dependency_edges_for_invalid_input_test(self):
+        """Test add_conditional_dependency_edges for invalid input test."""
         self.assertRaises(
             Exception,
-            repair_network,
+            add_conditional_dependency_edges,
             multiple_mediators_single_confounder_example,
             multiple_mediators_single_confounder_example.generate_data(100),
             "abc",
         )
 
-    def test_repair_network_for_continuous_data_and_not_pearson(self):
-        """Test repair_network for continuous data when pearson is not chosen."""
+    def test_add_conditional_dependency_edges_for_continuous_data_and_not_pearson(self):
+        """Test add_conditional_dependency_edges for continuous data when pearson is not chosen."""
         with warnings.catch_warnings(record=True) as w:
-            repair_network(base_example.graph, base_example.generate_data(), "chi-square")
+            add_conditional_dependency_edges(base_example.graph, base_example.generate_data(), "chi-square")
             self.assertTrue(len(w) > 0)
             # Iterate through the captured warnings and check for the specific message
             specific_warning_found = False
@@ -94,19 +95,19 @@ class TestRepair(unittest.TestCase):
             # Assert that the specific warning was found
             self.assertTrue(specific_warning_found)
 
-    def test_repair_network_for_discrete_data_and_pearson(self):
-        """Test repair_network for discrete data when pearson is chosen."""
+    def test_add_conditional_dependency_edges_for_discrete_data_and_pearson(self):
+        """Test add_conditional_dependency_edges for discrete data when pearson is chosen."""
         self.assertRaises(
             Exception,
-            repair_network,
+            add_conditional_dependency_edges,
             frontdoor_backdoor,
             generate_data_for_frontdoor_backdoor(1000),
             "pearson",
         )
 
-    def test_repair_network_for_multi_mediators(self):
-        """Test repair_network for multi_mediators."""
-        actual_fixed_graph = repair_network(
+    def test_add_conditional_dependency_edges_for_multi_mediators(self):
+        """Test add_conditional_dependency_edges for multi_mediators."""
+        actual_fixed_graph = add_conditional_dependency_edges(
             multiple_mediators_single_confounder_example.graph,
             multiple_mediators_single_confounder_example.generate_data(),
         )
@@ -136,9 +137,9 @@ class TestRepair(unittest.TestCase):
             msg="Graphs have different undirected edges",
         )
 
-    def test_repair_network_for_multi_mediators_confounder(self):
-        """Test repair_network for multi_mediators_confounder."""
-        actual_fixed_graph = repair_network(
+    def test_add_conditional_dependency_edges_for_multi_mediators_confounder(self):
+        """Test add_conditional_dependency_edges for multi_mediators_confounder."""
+        actual_fixed_graph = add_conditional_dependency_edges(
             graph=multiple_mediators_confounders_example.graph,
             data=multiple_mediators_confounders_example.generate_data(100, seed=1),
             significance_level=0.05,
@@ -156,9 +157,9 @@ class TestRepair(unittest.TestCase):
         )
         self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
 
-    def test_repair_network_for_multi_mediators_confounder_nuisance_var(self):
-        """Test repair_network for multi_mediators_confounder_nuisance_var."""
-        actual = repair_network(
+    def test_add_conditional_dependency_edges_for_multi_mediators_confounder_nuisance_var(self):
+        """Test add_conditional_dependency_edges for multi_mediators_confounder_nuisance_var."""
+        actual = add_conditional_dependency_edges(
             graph=multi_mediators_confounders_nuisance_vars_example.graph,
             data=multi_mediators_confounders_nuisance_vars_example.generate_data(100, seed=2),
             significance_level=0.01,
