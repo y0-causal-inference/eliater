@@ -137,3 +137,39 @@ class TestDiscoverAndMarkLatentNodes(unittest.TestCase):
             graph=ecoli.graph, treatments=Variable("fur"), outcomes=Variable("dpiA")
         )
         self.assertEqual(expected_graph, actual_graph)
+
+    def test_find_nodes_on_all_causal_paths_for_t_cell_signaling_pathway_with_multiple_outcomes(
+        self,
+    ):
+        """Test finding nodes in all causal paths for t_cell_signaling_pathway with multiple outcomes."""
+        expected_nodes = {
+            Variable("PIP2"),
+            Variable("PIP3"),
+            Variable("PKC"),
+            Variable("PKA"),
+            Variable("Raf"),
+            Variable("Mek"),
+            Variable("Erk"),
+            Variable("Akt"),
+        }
+        actual_nodes = find_all_nodes_in_causal_paths(
+            graph=t_cell_signaling_pathway.graph,
+            treatments={Variable("PIP2"), Variable("PIP3")},
+            outcomes={Variable("Erk"), Variable("Akt")},
+        )
+        self.assertEqual(expected_nodes, actual_nodes)
+
+    def test_mark_latent_for_t_cell_signaling_pathway_with_multiple_outcomes(self):
+        """Test marking nodes as latent.
+
+        Test marking the descendants of nodes in all causal paths that are not ancestors of the outcome as latent
+        nodes for t_cell_signaling_pathway with multiple outcomes.
+        """
+        expected_graph = deepcopy(t_cell_signaling_pathway.graph)
+        set_latent(expected_graph.directed, {Variable("Jnk"), Variable("P38")})
+        actual_graph = mark_latent(
+            graph=t_cell_signaling_pathway.graph,
+            treatments={Variable("PIP2"), Variable("PIP3")},
+            outcomes={Variable("Erk"), Variable("Akt")},
+        )
+        self.assertEqual(expected_graph, actual_graph)
