@@ -1,4 +1,4 @@
-"""This module contains a method to generate testing data for the multi_mediators case study."""
+"""This module contains a method to generate continuous testing data for the multi_mediators case study."""
 
 import numpy as np
 import pandas as pd

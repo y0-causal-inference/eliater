@@ -1,4 +1,4 @@
-"""This module contains a method to generate testing data for the multi_mediators_confounder_nuisance_var case study."""
+"""This module contains a method to generate continuous testing data for the multi_mediators_confounder_nuisance_var case study."""
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,7 @@ def generate(
     *,
     seed: int | None = None,
 ) -> pd.DataFrame:
-    """Generate testing data for the multi_mediators_confounder_nuisance_var case study.
+    """Generate continuous testing data for the multi_mediators_confounder_nuisance_var case study.
 
     :param num_samples: The number of samples to generate. Try 1000.
     :param treatments: An optional dictionary of the values to fix each variable to.
