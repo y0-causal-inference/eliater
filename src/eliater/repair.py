@@ -163,7 +163,13 @@ from y0.struct import get_conditional_independence_tests
 
 __all__ = [
     "add_conditional_dependency_edges",
+    "get_state_space_map",
+    "is_data_discrete",
+    "is_data_continuous",
+    "CITest",
+    "choose_default_test"
 ]
+
 
 
 def get_state_space_map(
@@ -275,3 +281,4 @@ def add_conditional_dependency_edges(
 
     return graph
 
+from eliater.
