@@ -1,9 +1,9 @@
 from typing import Optional
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from numpy import mean, quantile
-import numpy as np
 from pgmpy.estimators import CITests
 
 tests = {

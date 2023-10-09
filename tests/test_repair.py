@@ -1,7 +1,6 @@
 """This module tests the steps involved in repairing the network structure."""
 
 import unittest
-import warnings
 
 from eliater.frontdoor_backdoor import (
     base_example,
@@ -9,7 +8,11 @@ from eliater.frontdoor_backdoor import (
     multiple_mediators_confounders_example,
     multiple_mediators_single_confounder_example,
 )
-from eliater.repair import choose_default_test, get_state_space_map, add_conditional_dependency_edges
+from eliater.repair import (
+    add_conditional_dependency_edges,
+    choose_default_test,
+    get_state_space_map,
+)
 from y0.dsl import Variable
 from y0.examples import frontdoor_backdoor
 from y0.examples.frontdoor import generate_data_for_frontdoor
@@ -20,8 +23,11 @@ R1, R2, R3 = (Variable("R{i}") for i in (1, 2, 3))
 
 
 class TestRepair(unittest.TestCase):
-    """This class implements tests to verify the correctness of steps involved in repairing the network structure
-    by conditional independence tests."""
+    """Tests for repairing the network structure.
+
+    This class implements tests to verify the correctness of steps involved in repairing the network structure
+    by conditional independence tests.
+    """
 
     def test_get_space_map_for_frontdoor(self):
         """Test get_space_map for frontdoor."""
@@ -68,7 +74,7 @@ class TestRepair(unittest.TestCase):
     def test_add_conditional_dependency_edges_for_invalid_input_test(self):
         """Test add_conditional_dependency_edges for invalid input test."""
         self.assertRaises(
-            Exception,
+            ValueError,
             add_conditional_dependency_edges,
             multiple_mediators_single_confounder_example,
             multiple_mediators_single_confounder_example.generate_data(100),
@@ -77,28 +83,18 @@ class TestRepair(unittest.TestCase):
 
     def test_add_conditional_dependency_edges_for_continuous_data_and_not_pearson(self):
         """Test add_conditional_dependency_edges for continuous data when pearson is not chosen."""
-        with warnings.catch_warnings(record=True) as w:
-            add_conditional_dependency_edges(base_example.graph, base_example.generate_data(), "chi-square")
-            self.assertTrue(len(w) > 0)
-            # Iterate through the captured warnings and check for the specific message
-            specific_warning_found = False
-            for warning in w:
-                if issubclass(warning.category, UserWarning):
-                    warning_message = str(warning.message)
-                    expected_message = (
-                        "The data is continuous. Either discretize and use chi-square or use the "
-                        "pearson."
-                    )
-                    if warning_message == expected_message:
-                        specific_warning_found = True
-                        break
-            # Assert that the specific warning was found
-            self.assertTrue(specific_warning_found)
+        self.assertRaises(
+            ValueError,
+            add_conditional_dependency_edges,
+            base_example.graph,
+            base_example.generate_data(),
+            "chi-square",
+        )
 
     def test_add_conditional_dependency_edges_for_discrete_data_and_pearson(self):
         """Test add_conditional_dependency_edges for discrete data when pearson is chosen."""
         self.assertRaises(
-            Exception,
+            ValueError,
             add_conditional_dependency_edges,
             frontdoor_backdoor,
             generate_data_for_frontdoor_backdoor(1000),
