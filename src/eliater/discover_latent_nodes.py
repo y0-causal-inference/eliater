@@ -131,4 +131,3 @@ def mark_latent(
     if descendants_not_ancestors:
         set_latent(graph.directed, descendants_not_ancestors)
     return graph
-
