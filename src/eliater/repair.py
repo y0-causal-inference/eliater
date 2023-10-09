@@ -151,7 +151,6 @@ assumptions are not satisfied by the data, the outcomes may lead to both false p
 
 """
 
-import warnings
 from typing import Dict, Literal, Optional
 
 import pandas as pd
@@ -177,7 +176,10 @@ def get_state_space_map(
 ) -> Dict[Variable, Literal["discrete", "continuous"]]:
     """Get a dictionary from each variable to its type.
 
-    .. todo:: document parameters
+    :param data: the observed data
+    :param threshold: The threshold for determining a column as discrete
+        based on the number of unique values
+    :return: the mapping from column name to its type
 
     .. todo:: This thresholding doesn't make sense. what if the values are 0, 1, 2?
     """
@@ -248,12 +250,8 @@ def add_conditional_dependency_edges(
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.01.
     :returns: The repaired network, in place
-    :raises ValueError: if the passed test is invalid / unsupported
-    :raises Exception: if the data is discrete and the chosen test is pearson
-
-    .. todo:: Use a real exception and not the base Exception. ValueError is fine.
-
-    .. todo:: Why is it warning when there is continuous data and pearson test is used? Raise an error.
+    :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
+        chi-square is used for continuous data
     """
     if significance_level is None:
         significance_level = 0.01
@@ -265,13 +263,12 @@ def add_conditional_dependency_edges(
         raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
 
     if is_data_continuous(data) and test != "pearson":
-        warnings.warn(
-            message="The data is continuous. Either discretize and use chi-square or use the pearson.",
-            stacklevel=2,
+        raise ValueError(
+            "The data is continuous. Either discretize and use chi-square or use the pearson."
         )
 
     if is_data_discrete(data) and test == "pearson":
-        raise Exception("Cannot run pearson on discrete data. Use chi-square instead.")
+        raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
 
     for conditional_independency in get_conditional_independencies(graph):
         if not conditional_independency.test(
@@ -281,4 +278,3 @@ def add_conditional_dependency_edges(
 
     return graph
 
-from eliater.
