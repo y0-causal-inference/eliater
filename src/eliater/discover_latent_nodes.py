@@ -20,6 +20,7 @@ that are ancestors of the outcome are R1, R2, and R3. The goal of this example i
 nuisance variables and mark them as latent.
 
 .. code-block:: python
+
     import y0
     import eliater
     from y0.graph import NxMixedGraph
