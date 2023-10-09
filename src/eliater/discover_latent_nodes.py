@@ -14,19 +14,23 @@ This process enables us to concentrate on the fundamental variables needed to es
 treatment's impact on the outcome. This focus results in more precise estimates with reduced
 variance and bias.
 
-Here is an example:
-
-.. todo::
-
-    Don't just give some random example. Motivate it. Explain the characteristics of the
-    example ADMG that are important. Explain what the algorithm does to it.
-
-.. todo::
-
-    Make sure to include correct imports such that this example can be directly
-    copy-pasted into a repl/jupyter
+Here is an example of an ADMG where X is the treatment and Y is the outcome is Y. This ADMG has
+only one causal path from X to Y which is X -> M1 -> M2 -> Y. The descendants of these variables
+that are ancestors of the outcome are R1, R2, and R3. The goal of this example is to identify these
+nuisance variables and mark them as latent.
 
 .. code-block:: python
+    import y0
+    import eliater
+    from y0.graph import NxMixedGraph
+    from y0.dsl import Variable, X, Y
+    from eliater.discover_latent_nodes import mark_latent
+
+    M1 = Variable("M1")
+    M2 = Variable("M2")
+    R1 = Variable("R1")
+    R2 = Variable("R2")
+    R3 = Variable("R3")
 
     graph = NxMixedGraph.from_edges(
         directed=[
@@ -43,11 +47,11 @@ Here is an example:
         ],
     )
 
-    new_graph = mark_latent(graph, treatments = 'X', outcome: 'Y')
+    new_graph = mark_latent(graph, treatments = Variable("X"), outcome: Variable("Y"))
 
-.. todo::
-
-    And then what? what do we do with an ADMG that has variables marked as latent?
+The new graph now has R1, R2, and R3 marked as latent. Hence, these variables can't be
+part of the estimation of the causal query. This decreases the estimation variance and
+increases the accuracy of the query estimation.
 """
 
 from typing import Set, Union
@@ -127,3 +131,4 @@ def mark_latent(
     if descendants_not_ancestors:
         set_latent(graph.directed, descendants_not_ancestors)
     return graph
+
