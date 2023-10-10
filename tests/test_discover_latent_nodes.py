@@ -4,7 +4,7 @@ import unittest
 from copy import deepcopy
 
 from eliater.discover_latent_nodes import find_all_nodes_in_causal_paths, mark_latent
-from eliater.examples import ecoli, sars, t_cell_signaling_pathway
+from eliater.examples import sars, simple, t_cell_signaling_pathway
 from eliater.frontdoor_backdoor import (
     multi_mediators_confounders_nuisance_vars_example,
     multiple_mediators_single_confounder_example,
@@ -15,6 +15,48 @@ from y0.graph import set_latent
 
 class TestDiscoverAndMarkLatentNodes(unittest.TestCase):
     """This class implements tests to verify the correctness of methods to discover and mark latent nodes."""
+
+    def test_find_nodes_on_all_causal_paths_for_simple_graph(self):
+        """Test finding nodes in all causal paths for a simple graph.
+
+        A causal path is defined as any simple directed path from any of the treatments to any of the outcomes.
+        In the example provided in this test case, there are three treatments,
+        namely X1, X2, and X3, and one outcome, Y.
+
+        The following causal paths exist from treatments to outcomes:
+        1. X1 -> X3 -> A -> B -> Y
+        2. X1 -> A -> B -> Y
+        3. X2 -> A -> C -> D -> Y
+
+        Therefore, the nodes present in all causal paths are: X1, X2, X3, A, B, C, D and Y.
+        """
+        expected_nodes = {Variable(x) for x in ["X1", "X2", "X3", "A", "B", "C", "D", "Y"]}
+        actual_nodes = find_all_nodes_in_causal_paths(
+            graph=simple.graph,
+            treatments={Variable("X1"), Variable("X2"), Variable("X3")},
+            outcomes={Variable("Y")},
+        )
+        self.assertEqual(expected_nodes, actual_nodes)
+
+    def test_mark_latent_for_simple_graph(self):
+        """Test marking nodes as latent for a simple graph.
+
+        In this test case, we mark the descendants of nodes on causal paths
+        that are not ancestors of the outcome variable as latent.
+
+        Considering the example provided, the nodes on all causal paths are: X1, X2, X3, A, B, C, D, and Y.
+
+        The descendants of these nodes that are not ancestors of the outcome variable are: E, F, G, and H.
+        Consequently, we mark these nodes as latent.
+        """
+        expected_graph = deepcopy(simple.graph)
+        set_latent(expected_graph.directed, {Variable(v) for v in ["E", "F", "G", "H"]})
+        actual_graph = mark_latent(
+            graph=simple.graph,
+            treatments={Variable("X1"), Variable("X2"), Variable("X3")},
+            outcomes={Variable("Y")},
+        )
+        self.assertEqual(expected_graph, actual_graph)
 
     def test_find_nodes_on_all_paths_for_multi_med(self):
         """Test finding nodes in all causal paths for multi_med."""
@@ -79,62 +121,6 @@ class TestDiscoverAndMarkLatentNodes(unittest.TestCase):
         expected_graph = deepcopy(sars.graph)
         actual_graph = mark_latent(
             graph=sars.graph, treatments=Variable("EGFR"), outcomes=Variable("cytok")
-        )
-        self.assertEqual(expected_graph, actual_graph)
-
-    def test_find_nodes_on_all_paths_for_ecoli(self):
-        """Test finding nodes in all causal paths for ecoli."""
-        expected_nodes = {
-            Variable("dcuR"),
-            Variable("dpiA"),
-            Variable("fnr"),
-            Variable("fur"),
-            Variable("narL"),
-        }
-        actual_nodes = find_all_nodes_in_causal_paths(
-            ecoli.graph, Variable("fur"), Variable("dpiA")
-        )
-        self.assertEqual(expected_nodes, actual_nodes)
-
-    def test_mark_latent_for_ecoli(self):
-        """Test marking nodes as latent.
-
-        Test marking the descendants of nodes in all causal paths that are not ancestors of the outcome as latent
-        nodes for ecoli.
-        """
-        expected_graph = deepcopy(ecoli.graph)
-        descendants_not_ancestors = {
-            "citX",
-            "dpiB",
-            "srIR",
-            "citC",
-            "citD",
-            "appB",
-            "appX",
-            "hyaF",
-            "hyaA",
-            "cydD",
-            "aceE",
-            "hyaB",
-            "mdh",
-            "exuT",
-            "hcp",
-            "aspC",
-            "gutM",
-            "appY",
-            "ydeO",
-            "appA",
-            "amtB",
-            "cyoA",
-            "gadX",
-            "cirA",
-            "hns",
-            "yjjQ",
-        }
-        descendants_not_ancestors = {Variable(node) for node in descendants_not_ancestors}
-        set_latent(expected_graph.directed, descendants_not_ancestors)
-        actual_graph = mark_latent(
-            graph=ecoli.graph, treatments=Variable("fur"), outcomes=Variable("dpiA")
         )
         self.assertEqual(expected_graph, actual_graph)
 
