@@ -21,10 +21,11 @@ nuisance variables and mark them as latent.
 
 .. code-block:: python
 
-    import y0
     import eliater
-    from y0.graph import NxMixedGraph
+    import y0
+    from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
+    from y0.graph import NxMixedGraph
     from eliater.discover_latent_nodes import mark_latent
 
     M1 = Variable("M1")
@@ -48,11 +49,21 @@ nuisance variables and mark them as latent.
         ],
     )
 
-    new_graph = mark_latent(graph, treatments = Variable("X"), outcome: Variable("Y"))
+    new_graph = mark_latent(graph, treatments=Variable("X"), outcomes=Variable("Y"))
+
+    # FIXME some unknown magic happens
+
+    estimand = identify_outcomes(new_graph, treatments=X, outcomes=Y)
+
 
 The new graph now has R1, R2, and R3 marked as latent. Hence, these variables can't be
 part of the estimation of the causal query. This decreases the estimation variance and
 increases the accuracy of the query estimation.
+
+.. todo::
+
+    I still don't see what happens after you mark nodes as latent. This needs to explicitly show all of the steps
+    required to get to identification.
 """
 
 from typing import Set, Union
@@ -132,4 +143,3 @@ def mark_latent(
     if descendants_not_ancestors:
         set_latent(graph.directed, descendants_not_ancestors)
     return graph
-
