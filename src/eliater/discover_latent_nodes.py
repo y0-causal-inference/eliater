@@ -60,7 +60,7 @@ nuisance variables.
     simplified_lv_dag = simplify_latent_dag(lv_dag)
 
     #convert the simplified latent variable dag to a NxMixedGraph object
-    new_graph = NxMixedGraph.from_latent_variable_dag(simplified_lv_dag)
+    new_graph = NxMixedGraph.from_latent_variable_dag(simplified_lv_dag.graph)
 
 The nuisance variables are identified as R1, R2, and R3. The input ADMG is converted to a latent variable DAG where
 bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
