@@ -151,31 +151,3 @@ def find_nuisance_variables(
 
     return descendants_not_ancestors
 
-
-
-def mark_latent(graph: NxMixedGraph,
-                treatments: Union[Variable, Set[Variable]],
-                outcomes: Union[Variable, Set[Variable]],
-                ) -> NxMixedGraph:
-    """Mark the latent nodes in the graph.
-
-    Marks the descendants of nodes in all causal paths that are not ancestors of the outcome variables as latent
-    nodes.
-
-    :param graph: an NxMixedGraph
-    :param treatments: a list of treatments
-    :param outcomes: a list of outcomes
-    :returns: The modified graph marked with latent nodes.
-    """
-    
-    nuisance_variables = find_nuisance_variables(graph, treatments, outcomes)
-
-    #  going through the Latent DAG workflow
-    if nuisance_variables:
-        lv_dag = NxMixedGraph.to_latent_variable_dag(graph)
-        set_latent(lv_dag, nuisance_variables)  # set the nuisance variables as latent
-        simplified_lv_dag = simplify_latent_dag(lv_dag)
-        #convert the simplified lavent variable dag to a NxMixedGraph object
-        graph = NxMixedGraph.from_latent_variable_dag(simplified_lv_dag)
-        
-    return graph
