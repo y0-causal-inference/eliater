@@ -1,4 +1,4 @@
-"""This module contains methods to discover and mark nuisance nodes in a network.
+"""This module contains methods to discover nuisance nodes in a network.
 
 Given an acyclic directed mixed graph (ADMG), along with the treatment and the outcome
 of interest, certain observable variables can be regarded as nuisances. This
@@ -7,17 +7,18 @@ be involved in the estimation of the treatment's effect on the outcome. These sp
 variables are descendants of the variables on all causal paths that are not ancestors of
 the outcome. A causal path, in this context, refers to a directed path that starts from the
 treatment and leads to the outcome such that all the arrows on the path have the same direction.
-This module is designed to identify these variables and produce a new ADMG in which they are
-designated as latent.
+This module is designed to identify these variables.
 
 This process enables us to concentrate on the fundamental variables needed to estimate the
 treatment's impact on the outcome. This focus results in more precise estimates with reduced
-variance and bias.
+variance and bias. In addition, if this process is combined with the simplification module in y0:
+y0.algorithm.simplify_latent.simplify_latent_dag() it can help to remove the nuisance variables
+from the graph which leads to simpler, more interpretable, and visually more appealing result.
 
-Here is an example of an ADMG where X is the treatment and Y is the outcome is Y. This ADMG has
+Here is an example of an ADMG where X is the treatment and Y is the outcome. This ADMG has
 only one causal path from X to Y which is X -> M1 -> M2 -> Y. The descendants of these variables
-that are ancestors of the outcome are R1, R2, and R3. The goal of this example is to identify these
-nuisance variables and mark them as latent.
+that are not ancestors of the outcome are R1, R2, and R3. The goal of this example is to identify these
+nuisance variables.
 
 .. code-block:: python
 
@@ -25,8 +26,9 @@ nuisance variables and mark them as latent.
     import y0
     from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
-    from y0.graph import NxMixedGraph
-    from eliater.discover_latent_nodes import mark_latent
+    from y0.graph import NxMixedGraph, set_latent
+    from y0.algorithm.simplify_latent import simplify_latent_dag
+    from eliater.discover_latent_nodes import find_nuisance_variables
 
     M1 = Variable("M1")
     M2 = Variable("M2")
@@ -48,22 +50,30 @@ nuisance variables and mark them as latent.
             (X, Y),
         ],
     )
+    
+    nuisance_variables = find_nuisance_variables(graph, treatments=X, outcomes=Y)
 
-    new_graph = mark_latent(graph, treatments=Variable("X"), outcomes=Variable("Y"))
+    lv_dag = NxMixedGraph.to_latent_variable_dag(graph)
 
-    # FIXME some unknown magic happens
+    set_latent(lv_dag, nuisance_variables)  # set the nuisance variables as latent
+
+    simplified_lv_dag = simplify_latent_dag(lv_dag)
+
+    #convert the simplified latent variable dag to a NxMixedGraph object
+    new_graph = NxMixedGraph.from_latent_variable_dag(simplified_lv_dag)
+
+The nuisance variables are identified as R1, R2, and R3. The input ADMG is converted to a latent variable DAG where
+bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
+marked as latent in the latent variable DAG. The simplification rules is then applied to the latent variable DAG to
+remove the nuisance variables from the graph. The latent variable DAG is then converted back to an ADMG. The new graph
+is simpler than the original graph and only contains variables necessary for estimation of the causal effect of interest.
+
+.. code-block:: python
 
     estimand = identify_outcomes(new_graph, treatments=X, outcomes=Y)
 
+The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
 
-The new graph now has R1, R2, and R3 marked as latent. Hence, these variables can't be
-part of the estimation of the causal query. This decreases the estimation variance and
-increases the accuracy of the query estimation.
-
-.. todo::
-
-    I still don't see what happens after you mark nodes as latent. This needs to explicitly show all of the steps
-    required to get to identification.
 """
 
 from typing import Set, Union
@@ -72,6 +82,7 @@ import networkx as nx
 
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph, set_latent
+from y0.algorithm.simplify_latent import simplify_latent_dag
 
 __all__ = [
     "find_all_nodes_in_causal_paths",
@@ -103,22 +114,21 @@ def find_all_nodes_in_causal_paths(
                     nodes.add(node)
     return nodes
 
-
-def mark_latent(
+def find_nuisance_variables(
     graph: NxMixedGraph,
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
-) -> NxMixedGraph:
-    """Mark the latent nodes in the graph.
+) -> Iterable[Variable]:
+    """find the nuisance nodes in the graph.
 
-    Marks the descendants of nodes in all causal paths that are not ancestors of the outcome variables as latent
-    nodes.
+        finds the descendants of nodes in all causal paths that are not ancestors of the outcome variables'
+        nodes. These nodes should not be included in the estimation of the causal effect.
 
-    :param graph: an NxMixedGraph
-    :param treatments: a list of treatments
-    :param outcomes: a list of outcomes
-    :returns: The modified graph marked with latent nodes.
-    """
+        :param graph: an NxMixedGraph
+        :param treatments: a list of treatments
+        :param outcomes: a list of outcomes
+        :returns: The nuisance variables.
+        """
     if isinstance(treatments, Variable):
         treatments = {treatments}
     if isinstance(outcomes, Variable):
@@ -138,8 +148,34 @@ def mark_latent(
     # Remove treatments and outcomes
     descendants_not_ancestors = descendants_not_ancestors.difference(treatments.union(outcomes))
     # Mark nodes as latent
-    # FIXME this operation is currently meaningless in ADMGs, it's supposed to be used on graphs
+
+    return descendants_not_ancestors
+
+
+
+def mark_latent(graph: NxMixedGraph,
+                treatments: Union[Variable, Set[Variable]],
+                outcomes: Union[Variable, Set[Variable]],
+                ) -> NxMixedGraph:
+    """Mark the latent nodes in the graph.
+
+    Marks the descendants of nodes in all causal paths that are not ancestors of the outcome variables as latent
+    nodes.
+
+    :param graph: an NxMixedGraph
+    :param treatments: a list of treatments
+    :param outcomes: a list of outcomes
+    :returns: The modified graph marked with latent nodes.
+    """
+    
+    nuisance_variables = find_nuisance_variables(graph, treatments, outcomes)
+
     #  going through the Latent DAG workflow
-    if descendants_not_ancestors:
-        set_latent(graph.directed, descendants_not_ancestors)
+    if nuisance_variables:
+        lv_dag = NxMixedGraph.to_latent_variable_dag(graph)
+        set_latent(lv_dag, nuisance_variables)  # set the nuisance variables as latent
+        simplified_lv_dag = simplify_latent_dag(lv_dag)
+        #convert the simplified lavent variable dag to a NxMixedGraph object
+        graph = NxMixedGraph.from_latent_variable_dag(simplified_lv_dag)
+        
     return graph
