@@ -22,19 +22,12 @@ nuisance variables.
 
 .. code-block:: python
 
-    import eliater
-    import y0
+    from eliater import remove_latent_variables
     from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
-    from y0.graph import NxMixedGraph, set_latent
-    from y0.algorithm.simplify_latent import simplify_latent_dag
-    from eliater.discover_latent_nodes import find_nuisance_variables
+    from y0.graph import NxMixedGraph
 
-    M1 = Variable("M1")
-    M2 = Variable("M2")
-    R1 = Variable("R1")
-    R2 = Variable("R2")
-    R3 = Variable("R3")
+    M1, M2, R1, R2, R3 = (Variable(x) for x in ("M1", "M2", "R1", "R2", "R3"))
 
     graph = NxMixedGraph.from_edges(
         directed=[
@@ -50,17 +43,8 @@ nuisance variables.
             (X, Y),
         ],
     )
-    
-    nuisance_variables = find_nuisance_variables(graph, treatments=X, outcomes=Y)
 
-    lv_dag = NxMixedGraph.to_latent_variable_dag(graph)
-
-    set_latent(lv_dag, nuisance_variables)  # set the nuisance variables as latent
-
-    simplified_lv_dag = simplify_latent_dag(lv_dag)
-
-    #convert the simplified latent variable dag to a NxMixedGraph object
-    new_graph = NxMixedGraph.from_latent_variable_dag(simplified_lv_dag.graph)
+    new_graph = remove_latent_variables(graph, treatments=X, outcomes=Y)
 
 The nuisance variables are identified as R1, R2, and R3. The input ADMG is converted to a latent variable DAG where
 bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
@@ -73,7 +57,6 @@ is simpler than the original graph and only contains variables necessary for est
     estimand = identify_outcomes(new_graph, treatments=X, outcomes=Y)
 
 The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
-
 """
 
 from typing import Set, Union
@@ -85,9 +68,25 @@ from y0.graph import NxMixedGraph, set_latent
 from y0.algorithm.simplify_latent import simplify_latent_dag
 
 __all__ = [
+    "remove_latent_variables",
     "find_all_nodes_in_causal_paths",
-    "mark_latent",
 ]
+
+
+def remove_latent_variables(
+    graph: NxMixedGraph,
+    treatments: Union[Variable, Set[Variable]],
+    outcomes: Union[Variable, Set[Variable]],
+) -> NxMixedGraph:
+    """Run the entire workflow.
+
+    .. todo:: docs
+    """
+    nuisance_variables = find_nuisance_variables(graph, treatments=treatments, outcomes=outcomes)
+    lv_dag = NxMixedGraph.to_latent_variable_dag(graph)
+    set_latent(lv_dag, nuisance_variables)  # set the nuisance variables as latent
+    simplified_lv_dag = simplify_latent_dag(lv_dag)
+    return NxMixedGraph.from_latent_variable_dag(simplified_lv_dag.graph)
 
 
 def find_all_nodes_in_causal_paths(
@@ -106,6 +105,8 @@ def find_all_nodes_in_causal_paths(
         treatments = {treatments}
     if isinstance(outcomes, Variable):
         outcomes = {outcomes}
+
+    # TODO use itertools.product + list comprehension
     nodes = set()
     for treatment in treatments:
         for outcome in outcomes:
