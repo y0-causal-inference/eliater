@@ -58,14 +58,14 @@ is simpler than the original graph and only contains variables necessary for est
 
 The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
 """
-
-from typing import Set, Union
+import itertools
+from typing import Iterable, Set, Union
 
 import networkx as nx
 
+from eliater.simplify_latent import simplify_latent_dag
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph, set_latent
-from y0.algorithm.simplify_latent import simplify_latent_dag
 
 __all__ = [
     "remove_latent_variables",
@@ -107,13 +107,13 @@ def find_all_nodes_in_causal_paths(
         outcomes = {outcomes}
 
     # TODO use itertools.product + list comprehension
-    nodes = set()
-    for treatment in treatments:
-        for outcome in outcomes:
-            for causal_path in nx.all_simple_paths(graph.directed, treatment, outcome):
-                for node in causal_path:
-                    nodes.add(node)
-    return nodes
+    return {
+        node
+        for treatment, outcome in itertools.product(treatments, outcomes)
+        for causal_path in nx.all_simple_paths(graph.directed, treatment, outcome)
+        for node in causal_path
+    }
+
 
 def find_nuisance_variables(
     graph: NxMixedGraph,
@@ -122,33 +122,37 @@ def find_nuisance_variables(
 ) -> Iterable[Variable]:
     """find the nuisance nodes in the graph.
 
-        finds the descendants of nodes in all causal paths that are not ancestors of the outcome variables'
-        nodes. These nodes should not be included in the estimation of the causal effect.
+    finds the descendants of nodes in all causal paths that are not ancestors of the outcome variables'
+    nodes. These nodes should not be included in the estimation of the causal effect.
 
-        :param graph: an NxMixedGraph
-        :param treatments: a list of treatments
-        :param outcomes: a list of outcomes
-        :returns: The nuisance variables.
-        """
+    :param graph: an NxMixedGraph
+    :param treatments: a list of treatments
+    :param outcomes: a list of outcomes
+    :returns: The nuisance variables.
+    """
     if isinstance(treatments, Variable):
         treatments = {treatments}
     if isinstance(outcomes, Variable):
         outcomes = {outcomes}
+
     # Find the nodes on causal paths
     nodes_on_causal_paths = find_all_nodes_in_causal_paths(
         graph=graph, treatments=treatments, outcomes=outcomes
     )
-    # Find the descendants for the nodes on the causal paths
+
+    # Find the descendants to consider
     descendants_of_nodes_on_causal_paths = graph.descendants_inclusive(nodes_on_causal_paths)
-    # Find the ancestors of outcome variables
+    descendants_of_treatments = graph.descendants_inclusive(treatments)
+    descendants_of_outcomes = graph.descendants_inclusive(outcomes)
+    descendants_to_consider = descendants_of_nodes_on_causal_paths.difference(descendants_of_treatments).union(
+        descendants_of_outcomes
+    )
+
     ancestors_of_outcome = graph.ancestors_inclusive(outcomes)
-    # Descendants of nodes on causal paths that are not ancestors of outcome variables
-    descendants_not_ancestors = descendants_of_nodes_on_causal_paths.difference(
+
+    descendants_not_ancestors = descendants_to_consider.difference(
         ancestors_of_outcome
     )
-    # Remove treatments and outcomes
-    descendants_not_ancestors = descendants_not_ancestors.difference(treatments.union(outcomes))
-    # Mark nodes as latent
 
-    return descendants_not_ancestors
-
+    nuisance_variables = descendants_not_ancestors.difference(treatments.union(outcomes))
+    return nuisance_variables
