@@ -34,6 +34,7 @@ graph = NxMixedGraph.from_edges(
     ],
 )
 
+
 def _r_exp(x):
     return 1 / (1 + np.exp(x))
 
@@ -61,7 +62,7 @@ def generate(
     # latent node between Y and Z2
     u2 = generator.normal(loc=1.0, scale=1.0, size=num_samples)
 
-    values_z1 = [0,1]
+    values_z1 = [0, 1]
     probs_z1 = [0.4, 0.6]
 
     if Z1 in treatments:
@@ -72,7 +73,6 @@ def generate(
     beta0_z2 = 1
     beta_z1_to_z2 = 0.3
     beta_u2_to_z2 = 0.6
-
 
     if Z2 in treatments:
         z2 = np.full(num_samples, treatments[Z2])
