@@ -52,7 +52,7 @@ def generate(
     # latent confounder between x and y
     u = generator.normal(loc=50.0, scale=10.0, size=num_samples)
 
-    # latent confounder between m2 and y
+    # latent confounder between m1 and y
     u2 = generator.normal(loc=40.0, scale=10.0, size=num_samples)
 
     beta0_x = 1
@@ -91,7 +91,7 @@ def generate(
         y = np.full(num_samples, treatments[Y])
     else:
         y = generator.normal(
-            loc=beta0_y + u * beta_u_to_y + m2 * beta_m2_to_y + u2 * beta_u2_to_y,
+            loc=beta0_y + u * beta_u_to_y + m2 * beta_m2_to_y+ u2 * beta_u2_to_y,
             scale=10.0,
             size=num_samples,
         )
