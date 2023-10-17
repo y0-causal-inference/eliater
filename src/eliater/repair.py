@@ -57,14 +57,6 @@ bidirected edge ('M2', 'Y').
 
 .. todo::
 
-    Sara said on Slack:
-
-    > This is also explained in Robert's book and it is not a step that one should
-    > highly rely on for several reasons. First, these tests make distributional
-    > assumptions about the data generation process. For example assume they follow
-    > the X-square distribution where in reality it may not be the case, or for
-    > continuous data make the assumption that the data is from Gaussian distribution.
-
     Let's see some examples where this methodology doesn't work that also includes
     documentation on what a user should do in this situation.
     DO NOT DELETE THIS TO-DO until several end-to-end runnable examples are given below
@@ -79,12 +71,11 @@ provides precise results.
 
 Here are some reasons that the result of the test may be false negative or false positive:
 
-1) In pgmpy, the conditional independence tests assume that the
-alternative hypothesis is dependence, while the null hypothesis is conditional
-independence. However, when dealing with an ADMG and hypothetically assuming that
-the ADMG has the correct structure, it is more appropriate for the null hypothesis
-to be the hypothesis of dependence. This distinction can be significant as the p-value
-relies on the null hypothesis.
+1) In pgmpy, the conditional independence tests assume that the alternative hypothesis is
+dependence, while the null hypothesis is conditional independence. However, when dealing
+with an ADMG and hypothetically assuming that the ADMG has the correct structure, it is
+more appropriate for the null hypothesis to be the hypothesis of dependence. This distinction
+can be significant as the p-value relies on the null hypothesis.
 
 It's worth noting that this module employs traditional tests where the null hypothesis is
 conditional independence.
@@ -92,7 +83,11 @@ conditional independence.
 2) In addition, p-values decrease as the number of data points used in the conditional
 independency test increases, i.e., the larger the data, more conditional independences
 implied by the network will be considered as dependent. Hence, chances of false negatives
-increases. Here is an example that illustrates this:
+increases.
+
+Here is an example that illustrates this point. In the provided graph, M2 is independent of
+Z2 given M1. The data has been generated based on this assumption, Hence, we expect the p-value
+to be above 0.05, i.e., not rejecting the null hypothesis of conditional independence.
 
 .. code-block:: python
 
@@ -100,31 +95,34 @@ increases. Here is an example that illustrates this:
     from y0.dsl import Variable, X, Y
     M1 = Variable("M1")
     M2 = Variable("M2")
-    from frontdoor_backdoor.multiple_mediators_single_confounder import generate
+    from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders import generate
+    from eliater.sample_size_vs_pvalue import estimate_p_val
 
     graph = NxMixedGraph.from_edges(
         directed=[
+            (Z1, X),
             (X, M1),
             (M1, M2),
             (M2, Y),
-        ],
-        undirected=[
-            (X, Y),
+            (Z1, Z2),
+            (Z2, Z3),
+            (Z3, Y),
         ],
     )
 
     # Generate observational data for this graph (this is a special example)
-    observational_data = generate(100)
+    num_samples = 5000
+    observational_data = generate(num_samples, seed=1)
 
-    data_size = range(50, 10000, 100)
-    p_vals, lower_errors, higher_errors, probs_conclude_indep = zip(
+    data_size = range(50, num_samples, 100)
+    p_vals, lower_errors, higher_errors = zip(
         *[
             estimate_p_val(
-                full_data=full_data,
+                full_data=observational_data,
                 sample_size=size,
-                left="M1",
-                right="Y",
-                conditions=["M2", "X],
+                left="M2",
+                right="Z2",
+                conditions="M1",
                 test="pearson",
                 significance_level=0.05,
                 boot_size=1000,
@@ -133,15 +131,18 @@ increases. Here is an example that illustrates this:
         ]
     )
 
-    plt.title("Independece of M1 & Y given M2 & X")
+    plt.title("Independence of M2 & Z2 given M1")
     plt.xlabel("number of data points")
     plt.ylabel("expected p-value")
     plt.errorbar(
     data_size, p_vals, yerr=np.array([lower_errors, higher_errors]), ecolor="grey", elinewidth=0.5
     )
-    plt.hlines(0.05, 0, 10000, linestyles="dashed")
+    plt.hlines(0.05, 0, num_samples, linestyles="dashed")
     plt.show()
 
+This plot shows that the expected p-value will decrease as number of data points increases. For number
+of data points greater than 2500, the tests almost always reject the null hypothesis, i.e., the data will
+no longer support that M2 is independant of Z2 given M1, where it should have.
 
 3) Conditional independence tests rely on probability assumptions regarding the data distribution.
 For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
