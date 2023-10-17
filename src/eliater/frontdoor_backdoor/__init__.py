@@ -4,7 +4,9 @@ from y0.examples import Example
 
 from .base import base_example
 from .multiple_mediators_single_confounder import multiple_mediators_single_confounder_example
-from .multiple_mediators_with_multiple_confounders import multiple_mediators_with_multiple_confounders_example
+from .multiple_mediators_with_multiple_confounders import (
+    multiple_mediators_with_multiple_confounders_example,
+)
 from .multiple_mediators_with_multiple_confounders_nuisances import (
     multiple_mediators_confounders_nuisance_vars_example,
 )

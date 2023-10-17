@@ -15,7 +15,7 @@ R2 = Variable("R2")
 R3 = Variable("R3")
 
 __all__ = [
-    "multi_mediators_confounders_nuisance_vars_example",
+    "multiple_mediators_confounders_nuisance_vars_example",
 ]
 
 graph = NxMixedGraph.from_edges(
@@ -171,7 +171,7 @@ def generate(
     )
 
 
-multi_mediators_confounders_nuisance_vars_example = Example(
+multiple_mediators_confounders_nuisance_vars_example = Example(
     name="frontdoor with multiple mediators, confounders and nuisance variables",
     reference="Causal workflow paper, figure 4 (a).",
     description="This is an extension of the frontdoor_backdoor example from y0 module"
