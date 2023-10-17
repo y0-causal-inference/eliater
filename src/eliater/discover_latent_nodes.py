@@ -50,7 +50,8 @@ The nuisance variables are identified as R1, R2, and R3. The input ADMG is conve
 bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
 marked as latent in the latent variable DAG. The simplification rules is then applied to the latent variable DAG to
 remove the nuisance variables from the graph. The latent variable DAG is then converted back to an ADMG. The new graph
-is simpler than the original graph and only contains variables necessary for estimation of the causal effect of interest.
+is simpler than the original graph and only contains variables necessary for estimation of the causal effect of
+interest.
 
 .. code-block:: python
 
@@ -79,6 +80,11 @@ def remove_latent_variables(
     outcomes: Union[Variable, Set[Variable]],
 ) -> NxMixedGraph:
     """Run the entire workflow.
+
+    :param graph: an NxMixedGraph
+    :param treatments: a list of treatments
+    :param outcomes: a list of outcomes
+    :return: the modified graph after simplification, in place
 
     .. todo:: docs
     """
@@ -120,7 +126,7 @@ def find_nuisance_variables(
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
 ) -> Iterable[Variable]:
-    """find the nuisance nodes in the graph.
+    """Find the nuisance nodes in the graph.
 
     finds the descendants of nodes in all causal paths that are not ancestors of the outcome variables'
     nodes. These nodes should not be included in the estimation of the causal effect.
@@ -144,15 +150,13 @@ def find_nuisance_variables(
     descendants_of_nodes_on_causal_paths = graph.descendants_inclusive(nodes_on_causal_paths)
     descendants_of_treatments = graph.descendants_inclusive(treatments)
     descendants_of_outcomes = graph.descendants_inclusive(outcomes)
-    descendants_to_consider = descendants_of_nodes_on_causal_paths.difference(descendants_of_treatments).union(
-        descendants_of_outcomes
-    )
+    descendants_to_consider = descendants_of_nodes_on_causal_paths.difference(
+        descendants_of_treatments
+    ).union(descendants_of_outcomes)
 
     ancestors_of_outcome = graph.ancestors_inclusive(outcomes)
 
-    descendants_not_ancestors = descendants_to_consider.difference(
-        ancestors_of_outcome
-    )
+    descendants_not_ancestors = descendants_to_consider.difference(ancestors_of_outcome)
 
     nuisance_variables = descendants_not_ancestors.difference(treatments.union(outcomes))
     return nuisance_variables
