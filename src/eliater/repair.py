@@ -24,20 +24,14 @@ independences implied by the network against the data. Once the missed edge is d
 will be incorporated into the ADMG. Hence the output is the rapired ADMG containing the
 bidirected edge ('M2', 'Y').
 
-.. todo::
-
-    Test that the code block below actually works (it doesn't)
-    by pasting it into a Jupyter notebook or python REPL. Fix the issues such
-    as broken imports.
-
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
     from y0.dsl import Variable, X, Y
     M1 = Variable("M1")
     M2 = Variable("M2")
-    from frontdoor_backdoor.multiple_mediators_single_confounder import generate
-    from eliater.repair import repair_network
+    from eliater.frontdoor_backdoor.multiple_mediators_single_confounder import generate
+    from eliater.repair import add_conditional_dependency_edges
 
     graph = NxMixedGraph.from_edges(
         directed=[
@@ -65,9 +59,7 @@ This module relies on statistical tests, and statistical tests always have chanc
 of producing false negatives, i.e., a pair of variables that are conditionally
 independent, be concluded as conditional dependent by the test, or producing false
 positives, i.e., a pair of variables that are conditionally dependent be concluded
-as conditionally independent by the test. Hence, the results obtained from this module
-should be regarded more as heuristics approach rather than a systematic, strict step that
-provides precise results.
+as conditionally independent by the test.
 
 Here are some reasons that the result of the test may be false negative or false positive:
 
@@ -85,9 +77,10 @@ independency test increases, i.e., the larger the data, more conditional indepen
 implied by the network will be considered as dependent. Hence, chances of false negatives
 increases.
 
-Here is an example that illustrates this point. In the provided graph, M2 is independent of
-Z2 given M1. The data has been generated based on this assumption, Hence, we expect the p-value
-to be above 0.05, i.e., not rejecting the null hypothesis of conditional independence.
+Here is an example that illustrates this point. In the provided graph, R2 is independent of
+Z1 given R1. In addition, M1 is independent of R2 given R1. The data has been generated based
+on these assumption, Hence, we expect the p-value to be above 0.05, i.e., not rejecting the null
+hypothesis of conditional independence.
 
 .. code-block:: python
 
@@ -95,7 +88,7 @@ to be above 0.05, i.e., not rejecting the null hypothesis of conditional indepen
     from y0.dsl import Variable, X, Y
     M1 = Variable("M1")
     M2 = Variable("M2")
-    from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders import generate
+    from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders_nuisances import generate
     from eliater.sample_size_vs_pvalue import estimate_p_val
 
     graph = NxMixedGraph.from_edges(
@@ -107,42 +100,53 @@ to be above 0.05, i.e., not rejecting the null hypothesis of conditional indepen
             (Z1, Z2),
             (Z2, Z3),
             (Z3, Y),
+            (M1, R1),
+            (R1, R2),
+            (R2, R3),
+            (Y, R3),
         ],
     )
 
     # Generate observational data for this graph (this is a special example)
-    num_samples = 5000
-    observational_data = generate(num_samples, seed=1)
+    observational_data = generate(num_samples=2000, seed=1)
 
-    data_size = range(50, num_samples, 100)
-    p_vals, lower_errors, higher_errors = zip(
-        *[
-            estimate_p_val(
-                full_data=observational_data,
-                sample_size=size,
-                left="M2",
-                right="Z2",
-                conditions="M1",
-                test="pearson",
-                significance_level=0.05,
-                boot_size=1000,
-            )
-            for size in data_size
-        ]
-    )
-
-    plt.title("Independence of M2 & Z2 given M1")
-    plt.xlabel("number of data points")
-    plt.ylabel("expected p-value")
-    plt.errorbar(
-    data_size, p_vals, yerr=np.array([lower_errors, higher_errors]), ecolor="grey", elinewidth=0.5
-    )
-    plt.hlines(0.05, 0, num_samples, linestyles="dashed")
-    plt.show()
+    generate_plot_expected_p_value_vs_num_data_points(full_data=observational_data,
+                                                  min_number_of_sampled_data_points=50,
+                                                  max_number_of_sampled_data_points=2000,
+                                                  step=50,
+                                                  left="R2",
+                                                  right="X",
+                                                  conditions=["R1"],
+                                                  test="pearson",
+                                                  significance_level=0.05,
+                                                  boot_size=1000
+                                                  )
 
 This plot shows that the expected p-value will decrease as number of data points increases. For number
-of data points greater than 2500, the tests almost always reject the null hypothesis, i.e., the data will
-no longer support that M2 is independant of Z2 given M1, where it should have.
+of data points greater than 750, the test is more likely to reject the null hypothesis, and for number
+of data points greater than 1600, the test always rejects the null hypothesis, i.e., the data will
+no longer support that R2 is independent of Z1 given R1, where it should be.
+
+Now let's test the conditional independence of M1 and R2 given R1:
+
+.. code-block:: python
+
+    generate_plot_expected_p_value_vs_num_data_points(full_data=observational_data,
+                                                  min_number_of_sampled_data_points=50,
+                                                  max_number_of_sampled_data_points=2000,
+                                                  step=50,
+                                                  left="R2",
+                                                  right="M1",
+                                                  conditions=["R1"],
+                                                  test="pearson",
+                                                  significance_level=0.05,
+                                                  boot_size=1000
+                                                  )
+
+This plot shows that the expected p-value will again decrease as number of data points increases. For number
+of data points greater than 500, the test is more likely to reject the null hypothesis, and for number
+of data points greater than 900, the test always rejects the null hypothesis, i.e., the data will
+no longer support that R2 is independent of M1 given R1, where it should be.
 
 3) Conditional independence tests rely on probability assumptions regarding the data distribution.
 For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
@@ -150,6 +154,8 @@ that conforms to the Chi-squared probability distribution. Similarly, in the cas
 utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
 assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
 
+As a result, the results obtained from this module should be regarded more as heuristics approach rather than a
+systematic, strict step that provides precise results.
 """
 
 from typing import Dict, Literal, Optional
@@ -167,9 +173,8 @@ __all__ = [
     "is_data_discrete",
     "is_data_continuous",
     "CITest",
-    "choose_default_test"
+    "choose_default_test",
 ]
-
 
 
 def get_state_space_map(
@@ -278,4 +283,3 @@ def add_conditional_dependency_edges(
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
     return graph
-
