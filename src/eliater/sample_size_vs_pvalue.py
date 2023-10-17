@@ -48,7 +48,7 @@ def estimate_p_val(
     right: str,
     conditions: list,
     test: str,
-    significance_level: Optional[float] = None,
+    significance_level: int,
     boot_size: int = 1000,
 ):
     samples = []
@@ -57,44 +57,89 @@ def estimate_p_val(
             full_data, sample_size, left, right, conditions, test, significance_level
         )
         samples.append(sample)
-    p_estimate = mean(samples)  # Calculate the mean of the p-values to get the bootstrap mean.
+    p_val = mean(samples)  # Calculate the mean of the p-values to get the bootstrap mean.
+    if p_val < 0.05:
+        print(sample_size)
     quantile_05, quantile_95 = quantile(samples, q=[0.05, 0.95])
-    lower_error = p_estimate - quantile_05  # Calculate the 5th percentile
-    if lower_error < 0:
-        print(lower_error)
-    higher_error = quantile_95 - p_estimate  # Calculate the 95th percentile
-    if higher_error < 0:
-        print(higher_error)
-    return p_estimate, lower_error, higher_error
+    lower_error = np.absolute(p_val - quantile_05)  # Calculate the 5th percentile
+    higher_error = np.absolute(quantile_95 - p_val)  # Calculate the 95th percentile
+
+    return p_val, lower_error, higher_error
 
 
-from frontdoor_backdoor import multiple_mediators_confounders_example
+def generate_plot_expected_p_value_vs_num_data_points(
+    full_data: pd.DataFrame,
+    min_number_of_sampled_data_points: int,
+    max_number_of_sampled_data_points: int,
+    step: int,
+    left: str,
+    right: str,
+    conditions: list,
+    test: str,
+    significance_level: float,
+    boot_size: int,
+):
+    data_size = range(min_number_of_sampled_data_points, max_number_of_sampled_data_points, step)
+    p_vals, lower_errors, higher_errors = zip(
+        *[
+            estimate_p_val(
+                full_data=full_data,
+                sample_size=size,
+                left=left,
+                right=right,
+                conditions=conditions,
+                test=test,
+                significance_level=significance_level,
+                boot_size=boot_size,
+            )
+            for size in data_size
+        ]
+    )
 
-full_data = multiple_mediators_confounders_example.generate_data(num_samples=10000, seed=1)
-
-
-data_size = range(50, 10000, 100)
-p_vals, lower_errors, higher_errors = zip(
-    *[
-        estimate_p_val(
-            full_data=full_data,
-            sample_size=size,
-            left="M2",
-            right="Z2",
-            conditions=["M1"],
-            test="pearson",
-            significance_level=0.05,
-            boot_size=1000,
+    if len(conditions) < 1:
+        plt.title("# data points vs. expected p-value (Independence of" + left + "&" + right)
+    else:
+        conditions_string = ""
+        for i in range(len(conditions)):
+            if len(conditions) == 1:
+                conditions_string = conditions[i]
+            else:
+                conditions_string = conditions_string + conditions[i] + ", "
+        plt.title(
+            "# data points vs. expected p-value (Ind. of "
+            + left
+            + " & "
+            + right
+            + " given "
+            + conditions_string
         )
-        for size in data_size
-    ]
+
+    plt.xlabel("number of data points")
+    plt.ylabel("expected p-value")
+    plt.errorbar(
+        data_size,
+        p_vals,
+        yerr=np.array([lower_errors, higher_errors]),
+        ecolor="grey",
+        elinewidth=0.5,
+    )
+    plt.hlines(0.05, 0, max_number_of_sampled_data_points, linestyles="dashed")
+    return plt.show()
+
+
+from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders_nuisances import (
+    generate,
 )
 
-plt.title("# data points vs. expected p-value (Ind. of M2 & Z2 given M1)")
-plt.xlabel("number of data points")
-plt.ylabel("expected p-value")
-plt.errorbar(
-    data_size, p_vals, yerr=np.array([lower_errors, higher_errors]), ecolor="grey", elinewidth=0.5
+generate_plot_expected_p_value_vs_num_data_points(
+    full_data=generate(num_samples=2000, seed=1),
+    min_number_of_sampled_data_points=50,
+    max_number_of_sampled_data_points=2000,
+    step=50,
+    left="M2",
+    right="R2",
+    conditions=["M1"],
+    test="pearson",
+    significance_level=0.05,
+    boot_size=1000,
 )
-plt.hlines(0.05, 0, 10000, linestyles="dashed")
-plt.show()
