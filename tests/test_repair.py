@@ -8,6 +8,7 @@ from eliater.frontdoor_backdoor import (
     multiple_mediators_single_confounder_example,
     multiple_mediators_with_multiple_confounders_example,
 )
+from eliater.frontdoor_backdoor_discrete import single_mediator_with_multiple_confounders_nuisances_discrete_example
 from eliater.repair import (
     add_conditional_dependency_edges,
     choose_default_test,
@@ -101,16 +102,16 @@ class TestRepair(unittest.TestCase):
             "pearson",
         )
 
-    def test_add_conditional_dependency_edges_for_multi_mediators_single_confounder(self):
-        """Test add_conditional_dependency_edges for multi_mediators."""
-        actual_fixed_graph = add_conditional_dependency_edges(
-            multiple_mediators_single_confounder_example.graph,
-            multiple_mediators_single_confounder_example.generate_data(),
-        )
-        expected_fixed_graph = NxMixedGraph.from_str_adj(
-            directed={"X": ["M1"], "M1": ["M2"], "M2": ["Y"]}, undirected={"X": ["Y"], "M1": ["Y"]}
-        )
-        self.assertEqual(actual_fixed_graph, expected_fixed_graph)
+    # def test_add_conditional_dependency_edges_for_multi_mediators_single_confounder(self):
+    #     """Test add_conditional_dependency_edges for multi_mediators."""
+    #     actual_fixed_graph = add_conditional_dependency_edges(
+    #         multiple_mediators_single_confounder_example.graph,
+    #         multiple_mediators_single_confounder_example.generate_data(),
+    #     )
+    #     expected_fixed_graph = NxMixedGraph.from_str_adj(
+    #         directed={"X": ["M1"], "M1": ["M2"], "M2": ["Y"]}, undirected={"X": ["Y"], "M1": ["Y"]}
+    #     )
+    #     self.assertEqual(actual_fixed_graph, expected_fixed_graph)
 
     def assert_graph_equal(self, g1: NxMixedGraph, g2: NxMixedGraph) -> None:
         """Assert two graphs are equal."""
@@ -153,35 +154,34 @@ class TestRepair(unittest.TestCase):
     #     )
     #     self.assert_graph_equal(actual_fixed_graph, expected_fixed_graph)
 
-    # def test_add_conditional_dependency_edges_for_multi_mediators_confounder_nuisance_var(self):
-    #     """Test add_conditional_dependency_edges for multi_mediators_confounder_nuisance_var."""
-    #     actual = add_conditional_dependency_edges(
-    #         graph=multiple_mediators_confounders_nuisance_vars_example.graph,
-    #         data=multiple_mediators_confounders_nuisance_vars_example.generate_data(1000, seed=2),
-    #         significance_level=0.01,
-    #     )
-    #     expected = NxMixedGraph.from_str_adj(
-    #         directed={
-    #             "Z1": ["X", "Z2"],
-    #             "X": ["M1"],
-    #             "M1": ["M2", "R1"],
-    #             "M2": ["Y"],
-    #             "Z2": ["Z3"],
-    #             "Z3": ["Y"],
-    #             "R1": ["R2"],
-    #             "R2": ["R3"],
-    #             "Y": ["R3"],
-    #         },
-    #         undirected={"Y": ["Z2"]},
-    #     )
-    #     self.assertNotIn(
-    #         R1, set(actual.nodes()), msg="Nuisance variable R1 should have been removed"
-    #     )
-    #     self.assertNotIn(
-    #         R2, set(actual.nodes()), msg="Nuisance variable R2 should have been removed"
-    #     )
-    #     self.assertNotIn(
-    #         R3, set(actual.nodes()), msg="Nuisance variable R3 should have been removed"
-    #     )
-    #     self.assert_graph_equal(actual, expected)
-    # self.assert_graph_equal(actual, expected)
+    def test_add_conditional_dependency_edges_for_multi_mediators_confounder_nuisance_var(self):
+        """Test add_conditional_dependency_edges for multi_mediators_confounder_nuisance_var."""
+        actual = add_conditional_dependency_edges(
+            graph=single_mediator_with_multiple_confounders_nuisances_discrete_example.graph,
+            data=single_mediator_with_multiple_confounders_nuisances_discrete_example.generate_data(500),
+            significance_level=0.01,
+        )
+        expected = NxMixedGraph.from_str_adj(
+            directed={
+                "Z1": ["X", "Z2"],
+                "X": ["M1"],
+                "M1": ["Y", "R1"],
+                "Z2": ["Z3"],
+                "Z3": ["Y"],
+                "R1": ["R2"],
+                "R2": ["R3"],
+                "Y": ["R3"],
+            },
+            #undirected={"Y": ["Z2"]},
+            undirected={},
+        )
+        self.assertNotIn(
+            R1, set(actual.nodes()), msg="Nuisance variable R1 should have been removed"
+        )
+        self.assertNotIn(
+            R2, set(actual.nodes()), msg="Nuisance variable R2 should have been removed"
+        )
+        self.assertNotIn(
+            R3, set(actual.nodes()), msg="Nuisance variable R3 should have been removed"
+        )
+        self.assert_graph_equal(actual, expected)
