@@ -122,7 +122,7 @@ def generate(
         y = np.full(num_samples, treatments[Y])
     else:
         y = generator.normal(
-            loc=beta0_y + z3 * beta_z3_to_y + m2 * beta_m2_to_y, + u2 * beta_u2_to_y,
+            loc=beta0_y + z3 * beta_z3_to_y + m2 * beta_m2_to_y + u2 * beta_u2_to_y,
             scale=10.0,
             size=num_samples,
         )
