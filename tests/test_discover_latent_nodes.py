@@ -2,7 +2,7 @@
 
 import unittest
 
-from eliater.discover_latent_nodes import find_all_nodes_in_causal_paths
+from eliater.discover_latent_nodes import find_all_nodes_in_causal_paths, find_nuisance_variables
 from eliater.examples import sars, simple, t_cell_signaling_pathway
 from eliater.frontdoor_backdoor import multiple_mediators_single_confounder_example
 from y0.dsl import Variable
@@ -38,7 +38,7 @@ class TestDiscoverAndMarkLatentNodes(unittest.TestCase):
         )
         self.assertEqual(expected_nodes, actual_nodes)
 
-    # def test_mark_latent_for_simple_graph(self):
+    # def test_remove_latent_variables_for_simple_graph(self):
     #     """Test marking nodes as latent for a simple graph.
     #
     #     In this test case, we mark the descendants of nodes on causal paths
@@ -161,17 +161,44 @@ class TestDiscoverAndMarkLatentNodes(unittest.TestCase):
     #     self.assertEqual(expected_graph, actual_graph)
 
     def test_find_nuisance_variables_for_simple_graph(self):
-        """Test find nuisance variable for a simple graph."""
+        """Test finding nuisance variables for a simple graph."""
         pass
 
     def test_find_nuisance_variables_for_multi_med(self):
-        """Test find nuisance variable for multi_med example."""
+        """Test finding nuisance variables for multi_med example."""
         pass
 
     def test_find_nuisance_variables_for_sars(self):
-        """Test find nuisance variable for sars example."""
+        """Test finding nuisance variables for sars example."""
         pass
 
     def test_find_nuisance_variables_for_t_cell(self):
-        """Test find nuisance variable for t_cell_signaling_pathway example."""
+        """Test finding nuisance variables for t_cell_signaling_pathway example."""
+        pass
+
+    def test_find_nuisance_variables_for_t_cell_signaling_pathway_with_multiple_outcomes(
+        self,
+    ):
+        """Test finding nuisance variables for t_cell_signaling_pathway with multiple outcomes."""
+
+    def test_remove_latent_variables_for_simple_graph(self):
+        """Test removing latents variables for a simple graph."""
+        pass
+
+    def test_remove_latent_variables_for_multi_med(self):
+        """Test removing latents variables for multi_med example."""
+        pass
+
+    def test_remove_latent_variables_for_sars(self):
+        """Test removing latents variables for sars example."""
+        pass
+
+    def test_remove_latent_variables_for_t_cell(self):
+        """Test removing latents variables for t_cell_signaling_pathway example."""
+        pass
+
+    def test_remove_latent_variables_for_t_cell_signaling_pathway_with_multiple_outcomes(
+            self,
+    ):
+        """Test removing latents variables for t_cell_signaling_pathway with multiple outcomes."""
         pass
