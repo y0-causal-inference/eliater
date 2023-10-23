@@ -283,3 +283,76 @@ def add_conditional_dependency_edges(
             graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
 
     return graph
+
+
+def get_failed_tests(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    test: Optional[CITest] = None,
+    significance_level: Optional[float] = None,
+):
+    # TODO: Add test cases. The return type is missing
+    """Retrieves the list of conditional independencies that fail a given test for the given network and data.
+
+    :param graph: an NxMixedGraph
+    :param data: observational data corresponding to the graph
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.01.
+    :returns: the list of conditional independencies that fail a given test for the given network and data
+    :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
+        chi-square is used for continuous data
+    """
+    if significance_level is None:
+        significance_level = 0.01
+    if not test:
+        test = choose_default_test(data)
+
+    tests = get_conditional_independence_tests()
+    if test not in tests:
+        raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
+
+    if is_data_continuous(data) and test != "pearson":
+        raise ValueError(
+            "The data is continuous. Either discretize and use chi-square or use the pearson."
+        )
+
+    if is_data_discrete(data) and test == "pearson":
+        raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
+
+    failed_tests = [
+        conditional_independency
+        for conditional_independency in get_conditional_independencies(graph)
+        if not conditional_independency.test(
+            data, boolean=True, method=test, significance_level=significance_level
+        )
+    ]
+
+    return failed_tests
+
+
+def failed_tests_summary(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    test: Optional[CITest] = None,
+    significance_level: Optional[float] = None
+) -> None:
+    # TODO: This function is incomplete. Write test cases
+    """Prints the summary of failed conditional independency tests.
+
+    Prints out the conditional independencies that fail the given test for a given network and data.
+    Also, prints out the percentage of failed tests."""
+    total_no_of_conditional_independencies = len(get_conditional_independencies(graph))
+    failed_tests = get_failed_tests(graph=graph,
+                                    data=data,
+                                    test=test,
+                                    significance_level=significance_level
+                                    )
+    total_no_of_failed_tests = len(failed_tests)
+    percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_conditional_independencies * 100
+    print(total_no_of_failed_tests)
+    print(total_no_of_conditional_independencies)
+    print(failed_tests)
+    print(percentage_of_failed_tests)
