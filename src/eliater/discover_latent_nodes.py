@@ -79,7 +79,7 @@ def remove_latent_variables(
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
 ) -> NxMixedGraph:
-    """Run the entire workflow.
+    """Simplify the network by identifying and removing nuisance variables..
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
@@ -146,17 +146,19 @@ def find_nuisance_variables(
         graph=graph, treatments=treatments, outcomes=outcomes
     )
 
-    # Find the descendants to consider
+    # Find the descendants of interest
     descendants_of_nodes_on_causal_paths = graph.descendants_inclusive(nodes_on_causal_paths)
     descendants_of_treatments = graph.descendants_inclusive(treatments)
     descendants_of_outcomes = graph.descendants_inclusive(outcomes)
-    descendants_to_consider = descendants_of_nodes_on_causal_paths.difference(
+    # Descendants of interest = Descendants of all nodes - Descendants of treatments + Descendants of outcomes
+    descendants_of_interest = descendants_of_nodes_on_causal_paths.difference(
         descendants_of_treatments
     ).union(descendants_of_outcomes)
 
-    ancestors_of_outcome = graph.ancestors_inclusive(outcomes)
+    # Find the ancestors of outcome variables
+    ancestors_of_outcomes = graph.ancestors_inclusive(outcomes)
 
-    descendants_not_ancestors = descendants_to_consider.difference(ancestors_of_outcome)
+    descendants_not_ancestors = descendants_of_interest.difference(ancestors_of_outcomes)
 
     nuisance_variables = descendants_not_ancestors.difference(treatments.union(outcomes))
     return nuisance_variables
