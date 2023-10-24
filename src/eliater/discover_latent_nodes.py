@@ -82,7 +82,7 @@ def remove_latent_variables(
 ) -> NxMixedGraph:
     """Simplify the graph by removing unwanted latent variables.
 
-    Simplify the graph by first identifying nuisance variables and later applying Robin Evans'
+    Simplify the graph by first identifying nuisance variables, marking them as latent and later applying Robin Evans'
     algorithms to remove unwanted latent nodes. These nodes should not be included in the estimation
     of the causal effect.
 

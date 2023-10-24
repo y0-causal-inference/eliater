@@ -84,7 +84,16 @@ class TestDiscoverAndMarkLatentNodes(unittest.TestCase):
         self.assertEqual(expected_nodes, actual_nodes)
 
     def test_find_nuisance_variables_for_simple_graph(self):
-        """Test finding nuisance variables for a simple network with multiple causal paths."""
+        """Test finding nuisance variables for a simple network with multiple causal paths.
+
+        In the example provided in this test case, there are three treatments,
+        namely X1, X2, and X3, and one outcome, Y.
+
+        The nodes on causal paths are: X1, X2, X3, A, B, C, D and Y.
+
+        Descendants of the aforementioned nodes that are not ancestors of the outcomes are: E, F, G, H.
+        Hence, they will be identified as nuisance variables.
+        """
         expected_nuisance_variables = {Variable(v) for v in ["E", "F", "G", "H"]}
         actual_nuisance_variables = find_nuisance_variables(
             graph=multi_causal_path.graph,
