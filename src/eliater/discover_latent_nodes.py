@@ -60,13 +60,13 @@ interest.
 The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
 """
 import itertools
-from typing import Iterable, Set, Union
+from typing import Iterable, Optional, Set, Union
 
 import networkx as nx
 
 from eliater.simplify_latent import simplify_latent_dag
 from y0.dsl import Variable
-from y0.graph import NxMixedGraph, set_latent
+from y0.graph import DEFAULT_TAG, NxMixedGraph
 
 __all__ = [
     "remove_latent_variables",
@@ -78,21 +78,28 @@ def remove_latent_variables(
     graph: NxMixedGraph,
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
+    tag: Optional[str] = None,
 ) -> NxMixedGraph:
-    """Simplify the network by identifying and removing nuisance variables..
+    """Simplify the graph by first identifying nuisance variables and later applying Robin Evans' algorithms.
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
     :param outcomes: a list of outcomes
+    :param tag: The tag for which variables are latent
     :return: the modified graph after simplification, in place
 
     .. todo:: docs
     """
+    if tag is None:
+        tag = DEFAULT_TAG
     nuisance_variables = find_nuisance_variables(graph, treatments=treatments, outcomes=outcomes)
-    lv_dag = NxMixedGraph.to_latent_variable_dag(graph)
-    set_latent(lv_dag, nuisance_variables)  # set the nuisance variables as latent
-    simplified_lv_dag = simplify_latent_dag(lv_dag)
-    return NxMixedGraph.from_latent_variable_dag(simplified_lv_dag.graph)
+    lv_dag = NxMixedGraph.to_latent_variable_dag(graph, tag=tag)
+    # Set nuisance variables as latent
+    for node, data in lv_dag.nodes(data=True):
+        if Variable(node) in nuisance_variables:
+            data[tag] = True
+    simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
+    return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
 
 
 def find_all_nodes_in_causal_paths(
@@ -141,24 +148,20 @@ def find_nuisance_variables(
     if isinstance(outcomes, Variable):
         outcomes = {outcomes}
 
-    # Find the nodes on causal paths
+    # Find the nodes on all causal paths
     nodes_on_causal_paths = find_all_nodes_in_causal_paths(
         graph=graph, treatments=treatments, outcomes=outcomes
     )
 
     # Find the descendants of interest
     descendants_of_nodes_on_causal_paths = graph.descendants_inclusive(nodes_on_causal_paths)
-    descendants_of_treatments = graph.descendants_inclusive(treatments)
-    descendants_of_outcomes = graph.descendants_inclusive(outcomes)
-    # Descendants of interest = Descendants of all nodes - Descendants of treatments + Descendants of outcomes
-    descendants_of_interest = descendants_of_nodes_on_causal_paths.difference(
-        descendants_of_treatments
-    ).union(descendants_of_outcomes)
 
     # Find the ancestors of outcome variables
     ancestors_of_outcomes = graph.ancestors_inclusive(outcomes)
 
-    descendants_not_ancestors = descendants_of_interest.difference(ancestors_of_outcomes)
+    descendants_not_ancestors = descendants_of_nodes_on_causal_paths.difference(
+        ancestors_of_outcomes
+    )
 
     nuisance_variables = descendants_not_ancestors.difference(treatments.union(outcomes))
     return nuisance_variables

@@ -7,7 +7,6 @@ import unittest
 import networkx as nx
 
 from eliater.simplify_latent import (
-    DEFAULT_SUFFIX,
     iter_latents,
     remove_redundant_latents,
     remove_unidirectional_latents,
@@ -375,7 +374,7 @@ class TestSimplify(unittest.TestCase):
                 "PKA": ["Raf", "Mek", "Erk", "Akt", "Jnk", "P38"],
                 "Raf": ["Mek"],
                 "Mek": ["Erk"],
-                "Erk": ["Akt"]
+                "Erk": ["Akt"],
             }
         )
         # Mark the latent nodes
@@ -393,7 +392,7 @@ class TestSimplify(unittest.TestCase):
                 "PIP2": ["PKC"],
                 "PKC": ["Mek", "Erk"],
                 "PKA": ["Mek", "Erk"],
-                "Mek": ["Erk"]
+                "Mek": ["Erk"],
             }
         )
 
@@ -414,7 +413,7 @@ class TestSimplify(unittest.TestCase):
                 "PKA": ["Raf", "Mek", "Erk", "Akt", "Jnk", "P38"],
                 "Raf": ["Mek"],
                 "Mek": ["Erk"],
-                "Erk": ["Akt"]
+                "Erk": ["Akt"],
             }
         )
         # Mark the latent nodes
@@ -433,7 +432,7 @@ class TestSimplify(unittest.TestCase):
                 "PKC": ["Mek", "Raf", "Erk", "Jnk", "P38"],
                 "PKA": ["Raf", "Mek", "Erk", "Jnk", "P38"],
                 "Mek": ["Erk"],
-                "Raf": ["Mek"]
+                "Raf": ["Mek"],
             }
         )
 
@@ -454,7 +453,7 @@ class TestSimplify(unittest.TestCase):
                 "PKA": ["Raf", "Mek", "Erk", "Akt", "Jnk", "P38"],
                 "Raf": ["Mek"],
                 "Mek": ["Erk"],
-                "Erk": ["Akt"]
+                "Erk": ["Akt"],
             }
         )
         # Mark the latent nodes
@@ -474,7 +473,7 @@ class TestSimplify(unittest.TestCase):
                 "PKA": ["Raf", "Mek", "Erk", "Jnk", "P38", "Akt"],
                 "Mek": ["Erk"],
                 "Raf": ["Mek"],
-                "Erk": ["Akt"]
+                "Erk": ["Akt"],
             }
         )
 
