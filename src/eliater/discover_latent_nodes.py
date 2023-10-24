@@ -80,15 +80,17 @@ def remove_latent_variables(
     outcomes: Union[Variable, Set[Variable]],
     tag: Optional[str] = None,
 ) -> NxMixedGraph:
-    """Simplify the graph by first identifying nuisance variables and later applying Robin Evans' algorithms.
+    """Simplify the graph by removing unwanted latent variables.
+
+    Simplify the graph by first identifying nuisance variables and later applying Robin Evans'
+    algorithms to remove unwanted latent nodes. These nodes should not be included in the estimation
+    of the causal effect.
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
     :param outcomes: a list of outcomes
     :param tag: The tag for which variables are latent
     :return: the modified graph after simplification, in place
-
-    .. todo:: docs
     """
     if tag is None:
         tag = DEFAULT_TAG
@@ -119,7 +121,6 @@ def find_all_nodes_in_causal_paths(
     if isinstance(outcomes, Variable):
         outcomes = {outcomes}
 
-    # TODO use itertools.product + list comprehension
     return {
         node
         for treatment, outcome in itertools.product(treatments, outcomes)
