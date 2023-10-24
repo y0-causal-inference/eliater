@@ -440,7 +440,6 @@ class TestSimplify(unittest.TestCase):
 
     def test_simplify_latent_dag_for_sample_graph_7(self):
         """Test latent simplification for a simple network."""
-        # FIXME: Test case is failing
         # Original graph
         actual_graph = NxMixedGraph.from_str_adj(
             directed={
