@@ -6,7 +6,7 @@ from copy import deepcopy
 from eliater.discover_latent_nodes import (
     find_all_nodes_in_causal_paths,
     find_nuisance_variables,
-    mark_nuisance_variables_as_latent,
+    remove_latent_variables,
 )
 from eliater.examples import multi_causal_path, sars, t_cell_signaling_pathway
 from eliater.frontdoor_backdoor import multiple_mediators_single_confounder_example
@@ -142,56 +142,56 @@ class TestDiscoverAndMarkLatentNodes(unittest.TestCase):
         )
         self.assertEqual(expected_nuisance_variables, actual_nuisance_variables)
 
-    def test_mark_nuisance_variables_as_latent_for_simple_graph(self):
+    def test_remove_latent_variables_for_simple_graph(self):
         """Test removing latents variables for a simple network with multiple causal paths."""
         expected_graph = deepcopy(multi_causal_path.graph)
         expected_graph = expected_graph.remove_in_edges([Variable(v) for v in ["E", "F", "G", "H"]])
         expected_graph = expected_graph.remove_nodes_from(
             [Variable(v) for v in ["E", "F", "G", "H"]]
         )
-        actual_graph = mark_nuisance_variables_as_latent(
+        actual_graph = remove_latent_variables(
             graph=multi_causal_path.graph,
             treatments={Variable(v) for v in ["X1", "X2", "X3"]},
             outcomes={Variable("Y")},
         )
         self.assertEqual(actual_graph, expected_graph)
 
-    def test_mark_nuisance_variables_as_latent_for_multi_med(self):
+    def test_remove_latent_variables_for_multi_med(self):
         """Test removing latents variables for multi_med example."""
         expected_graph = deepcopy(multiple_mediators_single_confounder_example.graph)
-        actual_graph = mark_nuisance_variables_as_latent(
+        actual_graph = remove_latent_variables(
             graph=multiple_mediators_single_confounder_example.graph,
             treatments={Variable("X")},
             outcomes={Variable("Y")},
         )
         self.assertEqual(actual_graph, expected_graph)
 
-    def test_mark_nuisance_variables_as_latent_for_sars(self):
+    def test_remove_latent_variables_for_sars(self):
         """Test removing latents variables for sars example."""
         expected_graph = deepcopy(sars.graph)
-        actual_graph = mark_nuisance_variables_as_latent(
+        actual_graph = remove_latent_variables(
             graph=sars.graph, treatments=Variable("EGFR"), outcomes=Variable("cytok")
         )
         self.assertEqual(actual_graph, expected_graph)
 
-    def test_mark_nuisance_variables_as_latent_for_t_cell(self):
+    def test_remove_latent_variables_for_t_cell(self):
         """Test removing latents variables for t_cell_signaling_pathway example."""
         expected_graph = deepcopy(t_cell_signaling_pathway.graph)
         expected_graph = expected_graph.remove_in_edges(Variable("Akt"))
         expected_graph = expected_graph.remove_nodes_from(Variable("Akt"))
-        actual_graph = mark_nuisance_variables_as_latent(
+        actual_graph = remove_latent_variables(
             graph=t_cell_signaling_pathway.graph,
             treatments={Variable(v) for v in ["Raf", "Mek", "Erk"]},
             outcomes={Variable("Erk")},
         )
         self.assertEqual(actual_graph, expected_graph)
 
-    def test_mark_nuisance_variables_as_latent_for_t_cell_signaling_pathway_with_multiple_outcomes(
+    def test_remove_latent_variables_for_t_cell_signaling_pathway_with_multiple_outcomes(
         self,
     ):
         """Test removing latents variables for t_cell_signaling_pathway with multiple outcomes."""
         expected_graph = deepcopy(t_cell_signaling_pathway.graph)
-        actual_graph = mark_nuisance_variables_as_latent(
+        actual_graph = remove_latent_variables(
             graph=t_cell_signaling_pathway.graph,
             treatments={Variable(v) for v in ["Raf", "Mek", "Erk"]},
             outcomes={Variable("Erk"), Variable("Akt")},
