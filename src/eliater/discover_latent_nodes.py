@@ -22,8 +22,7 @@ nuisance variables.
 
 .. code-block:: python
 
-    from eliater import mark_nuisance_variables_as_latent
-    from eliater.simplify_latent import simplify_latent_dag
+    from eliater.discover_latent_nodes import remove_latent_variables
     from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
     from y0.graph import NxMixedGraph
@@ -47,18 +46,8 @@ nuisance variables.
 
     new_graph = remove_latent_variables(graph, treatments=X, outcomes=Y)
 
-The nuisance variables are identified as R1, R2, and R3. The input ADMG is converted to a latent variable DAG where
-bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
-marked as latent in the latent variable DAG.
-
-.. code-block:: python
-
-    simplified_latent_dag = simplify_latent_dag(lv_dag)
-    new_graph = NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
-
-The simplification rules can then be applied to the latent variable DAG to simplify the dag. The simplified
-latent dag does not include the nuisance variables. The latent variable DAG can then be converted back to an ADMG.
-The new graph is simpler than the original graph and only contains variables necessary for estimation of the
+The nuisance variables are identified as R1, R2, and R3. The new graph does not contain these variables.
+It is simpler than the original graph and only contains variables necessary for estimation of the
 causal effect of interest.
 
 .. code-block:: python
@@ -98,8 +87,6 @@ def remove_latent_variables(
     :param tag: The tag for which variables are latent
     :return: the new graph after simplification
     """
-    # This is the high-level access point, the only function anyone will ever want
-    # to directly use from this module.
     lv_dag = mark_nuisance_variables_as_latent(
         graph=graph, treatments=treatments, outcomes=outcomes, tag=tag
     )
