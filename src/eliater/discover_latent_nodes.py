@@ -45,21 +45,11 @@ nuisance variables.
         ],
     )
 
-    lv_dag = mark_nuisance_variables_as_latent(graph, treatments=X, outcomes=Y)
+    new_graph = remove_latent_variables(graph, treatments=X, outcomes=Y)
 
-The nuisance variables are identified as R1, R2, and R3. The input ADMG is converted to a latent variable DAG where
-bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
-marked as latent in the latent variable DAG.
-
-.. code-block:: python
-
-    simplified_latent_dag = simplify_latent_dag(lv_dag)
-    new_graph = NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
-
-The simplification rules can then be applied to the latent variable DAG to simplify the dag. The simplified
-latent dag does not include the nuisance variables. The latent variable DAG can then be converted back to an ADMG.
-The new graph is simpler than the original graph and only contains variables necessary for estimation of the causal effect of
-interest.
+The nuisance variables are identified as R1, R2, and R3 and removed from the output graph.
+The new graph is simpler than the original graph and only contains variables necessary for estimation
+of the causal effect of interest.
 
 .. code-block:: python
 
@@ -92,17 +82,7 @@ def remove_latent_variables(
 ) -> NxMixedGraph:
     """Find all nuissance variables and remove them based on Evans' simplification rules.
 
-    .. todo::
-
-        This is the single high-level access point that people will want to interact with.
-        People who want to work with NxMixedGraphs will not be interested in the LV-DAG
-        structure, so they will not want to use :func:`mark_nuisance_variables_as_latent`
-        directly. They just want to put their graph in and get a new graph out. During
-        development, it's fine to focus on :func:`mark_nuisance_variables_as_latent`,
-        but all high-level documentation needs to point to this function.
     """
-    # This is the high-level access point, the only function anyone will ever want
-    # to directly use from this module.
     lv_dag = mark_nuisance_variables_as_latent(
         graph=graph, treatments=treatments, outcomes=outcomes, tag=tag
     )
