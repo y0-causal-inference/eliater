@@ -45,7 +45,7 @@ nuisance variables.
         ],
     )
 
-    lv_dag = mark_nuisance_variables_as_latent(graph, treatments=X, outcomes=Y)
+    new_graph = remove_latent_variables(graph, treatments=X, outcomes=Y)
 
 The nuisance variables are identified as R1, R2, and R3. The input ADMG is converted to a latent variable DAG where
 bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
@@ -107,8 +107,6 @@ def remove_latent_variables(
         development, it's fine to focus on :func:`mark_nuisance_variables_as_latent`,
         but all high-level documentation needs to point to this function.
     """
-    # This is the high-level access point, the only function anyone will ever want
-    # to directly use from this module.
     lv_dag = mark_nuisance_variables_as_latent(
         graph=graph, treatments=treatments, outcomes=outcomes, tag=tag
     )
