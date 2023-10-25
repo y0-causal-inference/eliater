@@ -97,15 +97,6 @@ def remove_latent_variables(
     :param outcomes: a list of outcomes
     :param tag: The tag for which variables are latent
     :return: the new graph after simplification
-
-    .. todo::
-
-        This is the single high-level access point that people will want to interact with.
-        People who want to work with NxMixedGraphs will not be interested in the LV-DAG
-        structure, so they will not want to use :func:`mark_nuisance_variables_as_latent`
-        directly. They just want to put their graph in and get a new graph out. During
-        development, it's fine to focus on :func:`mark_nuisance_variables_as_latent`,
-        but all high-level documentation needs to point to this function.
     """
     # This is the high-level access point, the only function anyone will ever want
     # to directly use from this module.
