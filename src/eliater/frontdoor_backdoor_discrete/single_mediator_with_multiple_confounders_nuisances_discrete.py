@@ -120,7 +120,6 @@ def generate(
     beta0_r2 = 1.4
     beta_r1_to_r2 = 0.4
 
-
     if R2 in treatments:
         r2 = np.full(num_samples, treatments[R2])
     else:

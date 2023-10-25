@@ -158,17 +158,22 @@ As a result, the results obtained from this module should be regarded more as he
 systematic, strict step that provides precise results.
 """
 
+import logging
 from typing import Dict, Literal, Optional
 
 import pandas as pd
 
-from y0.algorithm.falsification import get_conditional_independencies
+from y0.algorithm.falsification import get_graph_falsifications
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 from y0.struct import get_conditional_independence_tests
 
+logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+
+
 __all__ = [
-    "add_conditional_dependency_edges",
+    "conditional_independence_test_summary",
+    "validate_test",
     "get_state_space_map",
     "is_data_discrete",
     "is_data_continuous",
@@ -236,123 +241,79 @@ def choose_default_test(data: pd.DataFrame) -> CITest:
     )
 
 
-def add_conditional_dependency_edges(
-    graph: NxMixedGraph,
+def validate_test(
     data: pd.DataFrame,
-    test: Optional[CITest] = None,
-    significance_level: Optional[float] = None,
-) -> NxMixedGraph:
-    """Repairs the network structure.
-
-    Repairs the network structure by introducing bidirectional edges between
-    any pairs of variables when the conditional independence implied by the network
-    is not supported by the data through a statistical conditional independence test.
-
-    :param graph: an NxMixedGraph
-    :param data: observational data corresponding to the graph
-    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
-        and ``chi-square`` for discrete data.
-    :param significance_level: The statistical tests employ this value for
-        comparison with the p-value of the test to determine the independence of
-        the tested variables. If none, defaults to 0.01.
-    :returns: The repaired network, in place
-    :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
-        chi-square is used for continuous data
-    """
-    if significance_level is None:
-        significance_level = 0.01
-    if not test:
-        test = choose_default_test(data)
-
-    tests = get_conditional_independence_tests()
-    if test not in tests:
-        raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
-
-    if is_data_continuous(data) and test != "pearson":
-        raise ValueError(
-            "The data is continuous. Either discretize and use chi-square or use the pearson."
-        )
-
-    if is_data_discrete(data) and test == "pearson":
-        raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
-
-    for conditional_independency in get_conditional_independencies(graph):
-        if not conditional_independency.test(
-            data, boolean=True, method=test, significance_level=significance_level
-        ):
-            graph.add_undirected_edge(conditional_independency.left, conditional_independency.right)
-
-    return graph
-
-
-def get_failed_tests(
-    graph: NxMixedGraph,
-    data: pd.DataFrame,
-    test: Optional[CITest] = None,
-    significance_level: Optional[float] = None,
-):
-    # TODO: Add test cases. The return type is missing
-    """Retrieves the list of conditional independencies that fail a given test for the given network and data.
-
-    :param graph: an NxMixedGraph
-    :param data: observational data corresponding to the graph
-    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
-        and ``chi-square`` for discrete data.
-    :param significance_level: The statistical tests employ this value for
-        comparison with the p-value of the test to determine the independence of
-        the tested variables. If none, defaults to 0.01.
-    :returns: the list of conditional independencies that fail a given test for the given network and data
-    :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
-        chi-square is used for continuous data
-    """
-    if significance_level is None:
-        significance_level = 0.01
-    if not test:
-        test = choose_default_test(data)
-
-    tests = get_conditional_independence_tests()
-    if test not in tests:
-        raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
-
-    if is_data_continuous(data) and test != "pearson":
-        raise ValueError(
-            "The data is continuous. Either discretize and use chi-square or use the pearson."
-        )
-
-    if is_data_discrete(data) and test == "pearson":
-        raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
-
-    failed_tests = [
-        conditional_independency
-        for conditional_independency in get_conditional_independencies(graph)
-        if not conditional_independency.test(
-            data, boolean=True, method=test, significance_level=significance_level
-        )
-    ]
-
-    return failed_tests
-
-
-def failed_tests_summary(
-    graph: NxMixedGraph,
-    data: pd.DataFrame,
-    test: Optional[CITest] = None,
-    significance_level: Optional[float] = None
+    test: Optional[CITest],
 ) -> None:
-    # TODO: This function is incomplete. Write test cases
-    """Prints the summary of failed conditional independency tests.
+    """Validate the conditional independency test passed by the user.
 
-    Prints out the conditional independencies that fail the given test for a given network and data.
-    Also, prints out the percentage of failed tests."""
-    total_no_of_conditional_independencies = len(get_conditional_independencies(graph))
-    failed_tests = get_failed_tests(graph=graph,
-                                    data=data,
-                                    test=test,
-                                    significance_level=significance_level
-                                    )
+    :param data: observational data corresponding to the graph.
+    :param test: the conditional independency test passed by the user.
+    :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
+        chi-square is used for continuous data
+    """
+    tests = get_conditional_independence_tests()
+    if test not in tests:
+        raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
+
+    if is_data_continuous(data) and test != "pearson":
+        raise ValueError(
+            "The data is continuous. Either discretize and use chi-square or use the pearson."
+        )
+
+    if is_data_discrete(data) and test == "pearson":
+        raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
+
+
+def conditional_independence_test_summary(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    test: Optional[CITest] = None,
+    significance_level: Optional[float] = None,
+    verbose: Optional[bool] = False,
+) -> None:
+    """Print the summary of conditional independency test results.
+
+    Prints the summary to the console, which includes the total number of conditional independence tests,
+    the number and percentage of failed tests, and information about each test such as the left
+    and right sets of variables, conditions, p-values, and test results.
+
+    :param graph: an NxMixedGraph
+    :param data: observational data corresponding to the graph
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.01.
+    :param verbose: If `False`, only print the details of failed tests.
+        If 'True', print the details of all the conditional independency results. Defaults to `False`
+    """
+    if significance_level is None:
+        significance_level = 0.01
+    if not test:
+        test = choose_default_test(data)
+    else:
+        validate_test(data=data, test=test)
+    test_results = get_graph_falsifications(
+        graph=graph, df=data, method=test, significance_level=significance_level
+    ).evidence
+    # Find the result based on p-value
+    test_results["result"] = test_results["p"].apply(
+        lambda p_value: "fail" if p_value < significance_level else "pass"
+    )
+    # Selecting columns of interest
+    test_results = test_results[["left", "right", "given", "p", "result"]]
+    # Sorting the rows by index
+    test_results = test_results.sort_index()
+    test_results = test_results.rename(columns={"p": "p-value"})
+    failed_tests = test_results[test_results["result"] == "fail"]
+    total_no_of_tests = len(test_results)
     total_no_of_failed_tests = len(failed_tests)
-    percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_conditional_independencies * 100
-    print(total_no_of_failed_tests)
-    print(total_no_of_conditional_independencies)
-    print(failed_tests)
-    print(percentage_of_failed_tests)
+    percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_tests * 100
+    logging.info("Total number of conditional independencies: " + str(total_no_of_tests))
+    logging.info("Total number of failed tests: " + str(total_no_of_failed_tests))
+    logging.info("Percentage of failed tests: " + str(percentage_of_failed_tests))
+    if verbose:
+        logging.info(test_results.to_string(index=False))
+    else:
+        logging.info(failed_tests.to_string(index=False))
