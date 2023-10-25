@@ -77,10 +77,25 @@ from y0.dsl import Variable
 from y0.graph import DEFAULT_TAG, NxMixedGraph
 
 __all__ = [
+    "remove_latent_variables",
     "mark_nuisance_variables_as_latent",
     "find_all_nodes_in_causal_paths",
-    "find_nuisance_variables"
+    "find_nuisance_variables",
 ]
+
+
+def remove_latent_variables(
+    graph: NxMixedGraph,
+    treatments: Union[Variable, Set[Variable]],
+    outcomes: Union[Variable, Set[Variable]],
+    tag: Optional[str] = None,
+) -> NxMixedGraph:
+    # This is the high-level access point, the only function anyone will ever want
+    # to directly use from this module.
+    lv_dag = mark_nuisance_variables_as_latent(
+        graph=graph, treatments=treatments, outcomes=outcomes, tag=tag
+    )
+    return NxMixedGraph.from_latent_variable_dag(lv_dag, tag=tag)
 
 
 def mark_nuisance_variables_as_latent(
@@ -88,7 +103,6 @@ def mark_nuisance_variables_as_latent(
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
     tag: Optional[str] = None,
-#) -> NxMixedGraph:
 ) -> nx.DiGraph:
     """Find all the nuisance variables and mark them as latent.
 
@@ -112,8 +126,8 @@ def mark_nuisance_variables_as_latent(
     for node, data in lv_dag.nodes(data=True):
         if Variable(node) in nuisance_variables:
             data[tag] = True
-    #simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
-    #return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
+    # simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
+    # return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
     return lv_dag
 
 
