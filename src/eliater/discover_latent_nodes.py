@@ -58,8 +58,8 @@ marked as latent in the latent variable DAG.
 
 The simplification rules can then be applied to the latent variable DAG to simplify the dag. The simplified
 latent dag does not include the nuisance variables. The latent variable DAG can then be converted back to an ADMG.
-The new graph is simpler than the original graph and only contains variables necessary for estimation of the causal effect of
-interest.
+The new graph is simpler than the original graph and only contains variables necessary for estimation of the
+causal effect of interest.
 
 .. code-block:: python
 
@@ -91,6 +91,12 @@ def remove_latent_variables(
     tag: Optional[str] = None,
 ) -> NxMixedGraph:
     """Find all nuissance variables and remove them based on Evans' simplification rules.
+
+    :param graph: an NxMixedGraph
+    :param treatments: a list of treatments
+    :param outcomes: a list of outcomes
+    :param tag: The tag for which variables are latent
+    :return: the new graph after simplification
 
     .. todo::
 
