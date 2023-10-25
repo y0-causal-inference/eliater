@@ -19,7 +19,7 @@ tests = {
 }
 
 
-def sample_p_val(
+def p_value_of_bootstrap_data(
     full_data: pd.DataFrame,
     sample_size: int,
     left: str,
@@ -28,6 +28,19 @@ def sample_p_val(
     test: str,
     significance_level: Optional[float] = None,
 ) -> int:
+    """Calculates the p-value for a bootstrap data.
+
+    :param full_data: observational data
+    :param sample_size: number of data points to sample a bootstrap data from full_data
+    :param left: first variable name positioned at the left side of a conditional independence test
+    :param right: second variable name positioned at the right side of a conditional independence test
+    :param conditions: variables names to condition on in the conditional independence test
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.01.
+    """
     bootstrap_data = full_data.sample(n=sample_size, replace=True)
     result = tests[test](
         X=left,
@@ -41,7 +54,7 @@ def sample_p_val(
     return p_val
 
 
-def estimate_p_val(
+def p_value_statistics(
     full_data: pd.DataFrame,
     sample_size: int,
     left: str,
@@ -51,15 +64,27 @@ def estimate_p_val(
     significance_level: int,
     boot_size: int = 1000,
 ):
+    """Calculates mean of p-value, the 5th percentile and 95 percentile error, for several bootstrap data.
+
+    :param full_data: observational data
+    :param sample_size: number of data points to sample a bootstrap data from full_data
+    :param left: first variable name positioned at the left side of a conditional independence test
+    :param right: second variable name positioned at the right side of a conditional independence test
+    :param conditions: variables names to condition on in the conditional independence test
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.01.
+    :param boot_size: total number of times a bootstrap data is sampled
+    """
     samples = []
     for _ in range(boot_size):
-        sample = sample_p_val(
+        sample = p_value_of_bootstrap_data(
             full_data, sample_size, left, right, conditions, test, significance_level
         )
         samples.append(sample)
     p_val = mean(samples)  # Calculate the mean of the p-values to get the bootstrap mean.
-    if p_val < 0.05:
-        print(sample_size)
     quantile_05, quantile_95 = quantile(samples, q=[0.05, 0.95])
     lower_error = np.absolute(p_val - quantile_05)  # Calculate the 5th percentile
     higher_error = np.absolute(quantile_95 - p_val)  # Calculate the 95th percentile
@@ -79,10 +104,26 @@ def generate_plot_expected_p_value_vs_num_data_points(
     significance_level: float,
     boot_size: int,
 ):
+    """generates the plot of expected p-value versus number of data points.
+
+    :param full_data: observational data
+    :param min_number_of_sampled_data_points: minimum number of data points to sample from full_data
+    :param max_number_of_sampled_data_points: maximum number of data points to sample from full_data
+    :param step: minimum number of sampled data points increments by step number, and stops before maximum number of sampled data points
+    :param left: first variable name positioned at the left side of a conditional independence test
+    :param right: second variable name positioned at the right side of a conditional independence test
+    :param conditions: variables names to condition on in the conditional independence test
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.01.
+    :param boot_size: total number of times a bootstrap data is sampled
+    """
     data_size = range(min_number_of_sampled_data_points, max_number_of_sampled_data_points, step)
     p_vals, lower_errors, higher_errors = zip(
         *[
-            estimate_p_val(
+            p_value_statistics(
                 full_data=full_data,
                 sample_size=size,
                 left=left,
@@ -125,21 +166,3 @@ def generate_plot_expected_p_value_vs_num_data_points(
     )
     plt.hlines(0.05, 0, max_number_of_sampled_data_points, linestyles="dashed")
     return plt.show()
-
-
-from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders_nuisances import (
-    generate,
-)
-
-generate_plot_expected_p_value_vs_num_data_points(
-    full_data=generate(num_samples=2000, seed=1),
-    min_number_of_sampled_data_points=50,
-    max_number_of_sampled_data_points=2000,
-    step=50,
-    left="M2",
-    right="R2",
-    conditions=["M1"],
-    test="pearson",
-    significance_level=0.05,
-    boot_size=1000,
-)

@@ -206,13 +206,19 @@ def get_state_space_map(
 
 
 def is_data_discrete(data: pd.DataFrame) -> bool:
-    """Check if all the columns in the dataframe has discrete data."""
+    """Check if all the columns in the dataframe has discrete data.
+
+    :param data: observational data.
+    """
     variable_types = set(get_state_space_map(data=data).values())
     return variable_types == {"discrete"}
 
 
 def is_data_continuous(data: pd.DataFrame) -> bool:
-    """Check if all the columns in the dataframe has continuous data."""
+    """Check if all the columns in the dataframe has continuous data.
+
+    :param data: observational.
+    """
     variable_types = set(get_state_space_map(data).values())
     return variable_types == {"continuous"}
 
@@ -231,7 +237,10 @@ CITest = Literal[
 
 
 def choose_default_test(data: pd.DataFrame) -> CITest:
-    """Choose the default statistical test for testing conditional independencies based on the data."""
+    """Choose the default statistical test for testing conditional independencies based on the data.
+
+    :param data: observational data.
+    """
     if is_data_discrete(data):
         return "chi-square"
     if is_data_continuous(data):
@@ -247,7 +256,7 @@ def validate_test(
 ) -> None:
     """Validate the conditional independency test passed by the user.
 
-    :param data: observational data corresponding to the graph.
+    :param data: observational data.
     :param test: the conditional independency test passed by the user.
     :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
         chi-square is used for continuous data
@@ -275,8 +284,8 @@ def conditional_independence_test_summary(
     """Print the summary of conditional independency test results.
 
     Prints the summary to the console, which includes the total number of conditional independence tests,
-    the number and percentage of failed tests, and information about each test such as the left
-    and right sets of variables, conditions, p-values, and test results.
+    the number and percentage of failed tests, and statistical information about each test such as p-values,
+    and test results.
 
     :param graph: an NxMixedGraph
     :param data: observational data corresponding to the graph
