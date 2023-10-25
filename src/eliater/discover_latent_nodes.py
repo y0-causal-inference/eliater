@@ -107,6 +107,8 @@ def remove_latent_variables(
         development, it's fine to focus on :func:`mark_nuisance_variables_as_latent`,
         but all high-level documentation needs to point to this function.
     """
+    # This is the high-level access point, the only function anyone will ever want
+    # to directly use from this module.
     lv_dag = mark_nuisance_variables_as_latent(
         graph=graph, treatments=treatments, outcomes=outcomes, tag=tag
     )
