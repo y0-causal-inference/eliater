@@ -2,7 +2,8 @@
 
 """Implement Robin Evans' simplification algorithms.
 
-.. seealso:: https://www.fields.utoronto.ca/programs/scientific/11-12/graphicmodels/Evans.pdf slides 34-43
+.. see also:: https://www.fields.utoronto.ca/programs/scientific/11-12/graphicmodels/Evans.pdf slides 34-43
+
 """
 
 import itertools as itt
@@ -37,7 +38,7 @@ class SimplifyResults(NamedTuple):
 
 
 def simplify_latent_dag(graph: nx.DiGraph, tag: Optional[str] = None):
-    """Apply Robin Evans' four algorithms in succession."""
+    """Apply Robin Evans' four rules in succession."""
     if tag is None:
         tag = DEFAULT_TAG
 
@@ -128,7 +129,9 @@ def transform_latents_with_parents(
     tag: Optional[str] = None,
     suffix: Optional[str] = None,
 ) -> nx.DiGraph:
-    """Transform latent variables with parents into latent variables with no parents.
+    """Transform latent variables with parents into exogenous latent variables.
+
+     An exogenous latent variable is a node with no parents.
 
     :param graph: A latent variable DAG
     :param tag: The tag for which variables are latent
@@ -174,6 +177,9 @@ def remove_redundant_latents(
     graph: nx.DiGraph, tag: Optional[str] = None
 ) -> Tuple[nx.DiGraph, Set[Variable]]:
     """Remove redundant latent variables.
+
+    W is a redundant latent variable if children of W are
+    a subset of another latent variable.
 
     :param graph: A latent variable DAG
     :param tag: The tag for which variables are latent
