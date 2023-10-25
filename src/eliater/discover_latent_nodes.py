@@ -22,7 +22,8 @@ nuisance variables.
 
 .. code-block:: python
 
-    from eliater import remove_latent_variables
+    from eliater import mark_nuisance_variables_as_latent
+    from eliater.simplify_latent import simplify_latent_dag
     from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
     from y0.graph import NxMixedGraph
@@ -44,13 +45,20 @@ nuisance variables.
         ],
     )
 
-    new_graph = remove_latent_variables(graph, treatments=X, outcomes=Y)
+    lv_dag = mark_nuisance_variables_as_latent(graph, treatments=X, outcomes=Y)
 
 The nuisance variables are identified as R1, R2, and R3. The input ADMG is converted to a latent variable DAG where
 bi-directed edges are assigned as latent nodes upstream of their two incident nodes. R1, R2, and R3 are
-marked as latent in the latent variable DAG. The simplification rules is then applied to the latent variable DAG to
-remove the nuisance variables from the graph. The latent variable DAG is then converted back to an ADMG. The new graph
-is simpler than the original graph and only contains variables necessary for estimation of the causal effect of
+marked as latent in the latent variable DAG.
+
+.. code-block:: python
+
+    simplified_latent_dag = simplify_latent_dag(lv_dag)
+    new_graph = NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
+
+The simplification rules can then be applied to the latent variable DAG to simplify the dag. The simplified
+latent dag does not include the nuisance variables. The latent variable DAG can then be converted back to an ADMG.
+The new graph is simpler than the original graph and only contains variables necessary for estimation of the causal effect of
 interest.
 
 .. code-block:: python
@@ -69,22 +77,26 @@ from y0.dsl import Variable
 from y0.graph import DEFAULT_TAG, NxMixedGraph
 
 __all__ = [
-    "remove_latent_variables",
+    "mark_nuisance_variables_as_latent",
     "find_all_nodes_in_causal_paths",
+    "find_nuisance_variables"
 ]
 
 
-def remove_latent_variables(
+def mark_nuisance_variables_as_latent(
     graph: NxMixedGraph,
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
     tag: Optional[str] = None,
-) -> NxMixedGraph:
-    """Simplify the graph by removing unwanted latent variables.
+#) -> NxMixedGraph:
+) -> nx.DiGraph:
+    """Find all the nuisance variables and mark them as latent.
 
-    Simplify the graph by first identifying nuisance variables, marking them as latent and later applying Robin Evans'
-    algorithms to remove unwanted latent nodes. These nodes should not be included in the estimation
-    of the causal effect.
+    Mark nuisance variables as latent by first identifying them, then creating a new graph where these
+    nodes are marked as latent. Nuisance variables are the descendants of nodes in all proper causal paths
+    that are not ancestors of the outcome variables nodes. A proper causal path is a directed path from
+    treatments to the outcome. Nuisance variables should not be included in the estimation of the causal
+    effect as they increase the variance.
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
@@ -100,8 +112,9 @@ def remove_latent_variables(
     for node, data in lv_dag.nodes(data=True):
         if Variable(node) in nuisance_variables:
             data[tag] = True
-    simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
-    return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
+    #simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
+    #return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
+    return lv_dag
 
 
 def find_all_nodes_in_causal_paths(
@@ -109,7 +122,9 @@ def find_all_nodes_in_causal_paths(
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
 ) -> Set[Variable]:
-    """Find all the nodes in causal paths from treatments to outcomes.
+    """Find all the nodes in proper causal paths from treatments to outcomes.
+
+    A proper causal path is a directed path from treatments to the outcome.
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
@@ -134,10 +149,12 @@ def find_nuisance_variables(
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
 ) -> Iterable[Variable]:
-    """Find the nuisance nodes in the graph.
+    """Find the nuisance variables in the graph.
 
-    finds the descendants of nodes in all causal paths that are not ancestors of the outcome variables'
-    nodes. These nodes should not be included in the estimation of the causal effect.
+    Nuisance variables are the descendants of nodes in all proper causal paths that are
+    not ancestors of the outcome variables' nodes. A proper causal path is a directed path
+    from treatments to the outcome. Nuisance variables should not be included in the estimation
+    of the causal effect as they increase the variance.
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
