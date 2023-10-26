@@ -1,4 +1,4 @@
-"""This module contains a method to generate discrete data for the multi_mediators_confounder_nuisance_var case study."""
+"""This module generates discrete data for the multi_mediators_confounder_nuisance_var case study."""
 
 import numpy as np
 import pandas as pd

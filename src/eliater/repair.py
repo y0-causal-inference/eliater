@@ -20,26 +20,24 @@ in T cell activation, proliferation, and function.
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
-    from y0.dsl import Variable, X, Y
-    M1 = Variable("M1")
-    M2 = Variable("M2")
-    from eliater.frontdoor_backdoor.multiple_mediators_single_confounder import generate
-    from eliater.repair import add_conditional_dependency_edges
+    from eliater.repair import conditional_independence_test_summary
 
-    graph = NxMixedGraph.from_edges(
-        directed=[
-            (X, M1),
-            (M1, M2),
-            (M2, Y),
-        ],
-        undirected=[
-            (X, Y),
-        ],
+    graph = NxMixedGraph.from_str_adj(
+        directed={
+            "PKA": ["Raf", "Mek", "Erk", "Akt", "Jnk", "P38"],
+            "PKC": ["Mek", "Raf", "PKA", "Jnk", "P38"],
+            "Raf": ["Mek"],
+            "Mek": ["Erk"],
+            "Erk": ["Akt"],
+            "Plcg": ["PKC", "PIP2", "PIP3"],
+            "PIP3": ["PIP2", "Akt"],
+            "PIP2": ["PKC"],
+        }
     )
 
     # Get the data
-    ::todo
-        fill out
+    import pandas as pd
+    data = pd.read_csv("")
 
     test_summary = conditional_independence_test_summary(graph, data, verbose=True)
 
@@ -137,6 +135,7 @@ def is_data_discrete(data: pd.DataFrame) -> bool:
     """Check if all the columns in the dataframe has discrete data.
 
     :param data: observational data.
+    :return: True, if all the columns have discrete data, False, otherwise
     """
     variable_types = set(get_state_space_map(data=data).values())
     return variable_types == {"discrete"}
@@ -146,6 +145,7 @@ def is_data_continuous(data: pd.DataFrame) -> bool:
     """Check if all the columns in the dataframe has continuous data.
 
     :param data: observational.
+    :return: True, if all the columns have continuous data, False, otherwise
     """
     variable_types = set(get_state_space_map(data).values())
     return variable_types == {"continuous"}
@@ -168,6 +168,8 @@ def choose_default_test(data: pd.DataFrame) -> CITest:
     """Choose the default statistical test for testing conditional independencies based on the data.
 
     :param data: observational data.
+    :return: the default test based on data
+    :raises NotImplementedError: if data is of mixed type (contains both discrete and continuous columns)
     """
     if is_data_discrete(data):
         return "chi-square"

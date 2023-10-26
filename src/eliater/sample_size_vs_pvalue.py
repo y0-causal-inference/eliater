@@ -1,4 +1,4 @@
-"""This module shows the relationship between p-value and sample size
+"""This module shows the relationship between p-value and sample size.
 
 p-values decrease as the number of data points used in the conditional independency test
 increases, i.e., the larger the data, more conditional independences implied by the network
@@ -83,6 +83,7 @@ import numpy as np
 import pandas as pd
 from numpy import mean, quantile
 from pgmpy.estimators import CITests
+from repair import CITest, choose_default_test, validate_test
 
 tests = {
     "pearson": CITests.pearsonr,
@@ -103,10 +104,10 @@ def p_value_of_bootstrap_data(
     left: str,
     right: str,
     conditions: list,
-    test: str,
+    test: Optional[CITest],
     significance_level: Optional[float] = None,
 ) -> int:
-    """Calculates the p-value for a bootstrap data.
+    """Calculate the p-value for a bootstrap data.
 
     :param full_data: observational data
     :param sample_size: number of data points to sample a bootstrap data from full_data
@@ -119,6 +120,12 @@ def p_value_of_bootstrap_data(
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.01.
     """
+    if significance_level is None:
+        significance_level = 0.01
+    if not test:
+        test = choose_default_test(full_data)
+    else:
+        validate_test(data=full_data, test=test)
     bootstrap_data = full_data.sample(n=sample_size, replace=True)
     result = tests[test](
         X=left,
@@ -138,11 +145,11 @@ def p_value_statistics(
     left: str,
     right: str,
     conditions: list,
-    test: str,
+    test: Optional[CITest],
     significance_level: int,
     boot_size: int = 1000,
 ):
-    """Calculates mean of p-value, the 5th percentile and 95 percentile error, for several bootstrap data.
+    """Calculate mean of p-value, the 5th percentile and 95 percentile error, for several bootstrap data.
 
     :param full_data: observational data
     :param sample_size: number of data points to sample a bootstrap data from full_data
@@ -156,6 +163,12 @@ def p_value_statistics(
         the tested variables. If none, defaults to 0.01.
     :param boot_size: total number of times a bootstrap data is sampled
     """
+    if significance_level is None:
+        significance_level = 0.01
+    if not test:
+        test = choose_default_test(full_data)
+    else:
+        validate_test(data=full_data, test=test)
     samples = []
     for _ in range(boot_size):
         sample = p_value_of_bootstrap_data(
@@ -178,16 +191,17 @@ def generate_plot_expected_p_value_vs_num_data_points(
     left: str,
     right: str,
     conditions: list,
-    test: str,
+    test: Optional[CITest],
     significance_level: float,
     boot_size: int,
 ):
-    """generates the plot of expected p-value versus number of data points.
+    """Generate the plot of expected p-value versus number of data points.
 
     :param full_data: observational data
     :param min_number_of_sampled_data_points: minimum number of data points to sample from full_data
     :param max_number_of_sampled_data_points: maximum number of data points to sample from full_data
-    :param step: minimum number of sampled data points increments by step number, and stops before maximum number of sampled data points
+    :param step: minimum number of sampled data points increments by step number, and stops
+        before maximum number of sampled data points
     :param left: first variable name positioned at the left side of a conditional independence test
     :param right: second variable name positioned at the right side of a conditional independence test
     :param conditions: variables names to condition on in the conditional independence test
@@ -198,6 +212,12 @@ def generate_plot_expected_p_value_vs_num_data_points(
         the tested variables. If none, defaults to 0.01.
     :param boot_size: total number of times a bootstrap data is sampled
     """
+    if significance_level is None:
+        significance_level = 0.01
+    if not test:
+        test = choose_default_test(full_data)
+    else:
+        validate_test(data=full_data, test=test)
     data_size = range(min_number_of_sampled_data_points, max_number_of_sampled_data_points, step)
     p_vals, lower_errors, higher_errors = zip(
         *[
