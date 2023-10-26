@@ -37,15 +37,14 @@ in T cell activation, proliferation, and function.
     # Get the data
     import pandas as pd
     data = pd.read_csv(
-    "https://raw.githubusercontent.com/y0-causal-inference/eliater/conditional_independency_tests/src/data"
-    "/sachs_discretized_2bin.csv"
+    "https://raw.githubusercontent.com/y0-causal-inference/eliater/conditional_independency_tests/src/data/sachs_discretized_2bin.csv",
+    index_col = False
     )
 
-    test_summary = conditional_independence_test_summary(graph, data, test="chi verbose=True)
+    conditional_independence_test_summary(graph, data, verbose=True)
 
-The results show that
-::todo
-    fill out
+The results show that out of 35 cases,
+the conditional independence between P38 and PIP2, given PKC, fails with a p-value of 0.00425.
 
 This module relies on statistical tests, and statistical tests always have chances
 of producing false negatives, i.e., a pair of variables that are conditionally
