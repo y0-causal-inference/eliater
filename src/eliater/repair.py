@@ -19,7 +19,6 @@ in T cell activation, proliferation, and function.
 
 .. code-block:: python
 
-    from y0.graph import NxMixedGraph
     from eliater.repair import conditional_independence_test_summary
 
     graph = NxMixedGraph.from_str_adj(
@@ -37,9 +36,12 @@ in T cell activation, proliferation, and function.
 
     # Get the data
     import pandas as pd
-    data = pd.read_csv("")
+    data = pd.read_csv(
+    "https://raw.githubusercontent.com/y0-causal-inference/eliater/conditional_independency_tests/src/data"
+    "/sachs_discretized_2bin.csv"
+    )
 
-    test_summary = conditional_independence_test_summary(graph, data, verbose=True)
+    test_summary = conditional_independence_test_summary(graph, data, test="chi verbose=True)
 
 The results show that
 ::todo
@@ -226,13 +228,19 @@ def conditional_independence_test_summary(
         the tested variables. If none, defaults to 0.01.
     :param verbose: If `False`, only print the details of failed tests.
         If 'True', print the details of all the conditional independency results. Defaults to `False`
+    :raises NotImplementedError: if data is of mixed type (contains both discrete and continuous columns)
     """
     if significance_level is None:
         significance_level = 0.01
     if not test:
         test = choose_default_test(data)
     else:
+        # Validate test and data
         validate_test(data=data, test=test)
+        if len(set(get_state_space_map(data).values())) > 1:
+            raise NotImplementedError(
+                "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
+            )
     test_results = get_graph_falsifications(
         graph=graph, df=data, method=test, significance_level=significance_level
     ).evidence
