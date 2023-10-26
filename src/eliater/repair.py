@@ -78,11 +78,7 @@ assumptions are not satisfied by the data, the outcomes may lead to both false p
 
 As a result, the results obtained from this module should be regarded more as heuristics approach rather
 than a systematic, strict step that provides precise results. For more reference on this topic, please see
-chapter 4 of
-<https://livebook.manning.com/book/causal-ai/welcome/v-4/>.
-
-::todo
-    please double check how the reference is showing
+chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 """
 
 import logging
