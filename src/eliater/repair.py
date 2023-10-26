@@ -1,4 +1,4 @@
-"""This module defines the steps for repairing the network structure.
+"""This module checks the validity of network structure against observational data.
 
 Given an acyclic directed mixed graph (ADMG) and corresponding observational data,
 one can assess whether the conditional independences implied by the structure of the
@@ -6,23 +6,16 @@ ADMG are supported by the data with a statistical test for conditional independe
 By default, this workflow uses a chi-square test for discrete data and a Pearson test
 for continuous data from :mod:`pgmpy.estimators.CITests`.
 
-Any conditional independency implied by the ADMG that fails to reject the null hypothesis
-of the statistical test suggests the presence of a latent confounder between the two
-variables for which the test failed. In such cases, this workflow adds a bidirectional
-edge between the affected variables.
+This module provides a summary statistics for the total number of tests, percentage of failed
+tests, and a list of all (or the failed tests) with their corresponding p-value.
 
-This process allows for unbiased estimation of causal queries in cases where the overall ADMG
-structure over the observed variables is correct, but the number and location of
-latent variables is unknown.
+This process allows for checking the validity of network structure with respect to data.
+If the percentage of failed tests is higher than the user expects, additional experiments
+is required to change the model.
 
-Here is an example of an ADMG with its corresponding observational data. This ADMG has one
-bi-directed edge between X and Y. The observational data is generated with the assumption
-that there exists an additional bidirectional edge between M2 and Y, which is not depicted
-in the given ADMG. The incorporation of this additional edge is for testing purposes. The
-goal of this example is to detect this missed bidirectional edge by testing the conditional
-independences implied by the network against the data. Once the missed edge is detected it
-will be incorporated into the ADMG. Hence the output is the rapired ADMG containing the
-bidirected edge ('M2', 'Y').
+Here is an example of a protein signalling network of the T cell signaling pathway presented
+in (Sachs et al., 2005). It models the molecular mechanisms and regulatory processes involved
+in T cell activation, proliferation, and function.
 
 .. code-block:: python
 
@@ -44,16 +37,15 @@ bidirected edge ('M2', 'Y').
         ],
     )
 
-    # Generate observational data for this graph (this is a special example)
-    observational_data = generate(100)
+    # Get the data
+    ::todo
+        fill out
 
-    repaired_graph = add_conditional_dependency_edges(graph, observational_data)
+    test_summary = conditional_independence_test_summary(graph, data, verbose=True)
 
-.. todo::
-
-    Let's see some examples where this methodology doesn't work that also includes
-    documentation on what a user should do in this situation.
-    DO NOT DELETE THIS TO-DO until several end-to-end runnable examples are given below
+The results show that
+::todo
+    fill out
 
 This module relies on statistical tests, and statistical tests always have chances
 of producing false negatives, i.e., a pair of variables that are conditionally
@@ -76,77 +68,8 @@ conditional independence.
 independency test increases, i.e., the larger the data, more conditional independences
 implied by the network will be considered as dependent. Hence, chances of false negatives
 increases.
-
-Here is an example that illustrates this point. In the provided graph, R2 is independent of
-Z1 given R1. In addition, M1 is independent of R2 given R1. The data has been generated based
-on these assumption, Hence, we expect the p-value to be above 0.05, i.e., not rejecting the null
-hypothesis of conditional independence.
-
-.. code-block:: python
-
-    from y0.graph import NxMixedGraph
-    from y0.dsl import Variable, X, Y
-    M1 = Variable("M1")
-    M2 = Variable("M2")
-    from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders_nuisances import generate
-    from eliater.sample_size_vs_pvalue import estimate_p_val
-
-    graph = NxMixedGraph.from_edges(
-        directed=[
-            (Z1, X),
-            (X, M1),
-            (M1, M2),
-            (M2, Y),
-            (Z1, Z2),
-            (Z2, Z3),
-            (Z3, Y),
-            (M1, R1),
-            (R1, R2),
-            (R2, R3),
-            (Y, R3),
-        ],
-    )
-
-    # Generate observational data for this graph (this is a special example)
-    observational_data = generate(num_samples=2000, seed=1)
-
-    generate_plot_expected_p_value_vs_num_data_points(full_data=observational_data,
-                                                  min_number_of_sampled_data_points=50,
-                                                  max_number_of_sampled_data_points=2000,
-                                                  step=50,
-                                                  left="R2",
-                                                  right="X",
-                                                  conditions=["R1"],
-                                                  test="pearson",
-                                                  significance_level=0.05,
-                                                  boot_size=1000
-                                                  )
-
-This plot shows that the expected p-value will decrease as number of data points increases. For number
-of data points greater than 750, the test is more likely to reject the null hypothesis, and for number
-of data points greater than 1600, the test always rejects the null hypothesis, i.e., the data will
-no longer support that R2 is independent of Z1 given R1, where it should be.
-
-Now let's test the conditional independence of M1 and R2 given R1:
-
-.. code-block:: python
-
-    generate_plot_expected_p_value_vs_num_data_points(full_data=observational_data,
-                                                  min_number_of_sampled_data_points=50,
-                                                  max_number_of_sampled_data_points=2000,
-                                                  step=50,
-                                                  left="R2",
-                                                  right="M1",
-                                                  conditions=["R1"],
-                                                  test="pearson",
-                                                  significance_level=0.05,
-                                                  boot_size=1000
-                                                  )
-
-This plot shows that the expected p-value will again decrease as number of data points increases. For number
-of data points greater than 500, the test is more likely to reject the null hypothesis, and for number
-of data points greater than 900, the test always rejects the null hypothesis, i.e., the data will
-no longer support that R2 is independent of M1 given R1, where it should be.
+::todo
+    How can I refer the user to sample_size_vs_pvalue module?
 
 3) Conditional independence tests rely on probability assumptions regarding the data distribution.
 For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
@@ -154,8 +77,13 @@ that conforms to the Chi-squared probability distribution. Similarly, in the cas
 utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
 assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
 
-As a result, the results obtained from this module should be regarded more as heuristics approach rather than a
-systematic, strict step that provides precise results.
+As a result, the results obtained from this module should be regarded more as heuristics approach rather
+than a systematic, strict step that provides precise results. For more reference on this topic, please see
+chapter 4 of
+<https://livebook.manning.com/book/causal-ai/welcome/v-4/>.
+
+::todo
+    please double check how the reference is showing
 """
 
 import logging

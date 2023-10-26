@@ -1,3 +1,81 @@
+"""This module shows the relationship between p-value and sample size
+
+p-values decrease as the number of data points used in the conditional independency test
+increases, i.e., the larger the data, more conditional independences implied by the network
+will be considered as dependent. Hence, chances of false negatives increases.
+
+Here is an example that illustrates this point. In the provided graph, R2 is independent of
+Z1 given R1. In addition, M1 is independent of R2 given R1. The data has been generated based
+on these assumption, Hence, we expect the p-value to be above 0.05, i.e., not rejecting the null
+hypothesis of conditional independence.
+
+.. code-block:: python
+
+    from y0.graph import NxMixedGraph
+    from y0.dsl import Variable, X, Y
+    M1 = Variable("M1")
+    M2 = Variable("M2")
+    from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders_nuisances import generate
+    from eliater.sample_size_vs_pvalue import estimate_p_val
+
+    graph = NxMixedGraph.from_edges(
+        directed=[
+            (Z1, X),
+            (X, M1),
+            (M1, M2),
+            (M2, Y),
+            (Z1, Z2),
+            (Z2, Z3),
+            (Z3, Y),
+            (M1, R1),
+            (R1, R2),
+            (R2, R3),
+            (Y, R3),
+        ],
+    )
+
+    # Generate observational data for this graph (this is a special example)
+    observational_data = generate(num_samples=2000, seed=1)
+
+    generate_plot_expected_p_value_vs_num_data_points(full_data=observational_data,
+                                                  min_number_of_sampled_data_points=50,
+                                                  max_number_of_sampled_data_points=2000,
+                                                  step=50,
+                                                  left="R2",
+                                                  right="X",
+                                                  conditions=["R1"],
+                                                  test="pearson",
+                                                  significance_level=0.05,
+                                                  boot_size=1000
+                                                  )
+
+This plot shows that the expected p-value will decrease as number of data points increases. For number
+of data points greater than 750, the test is more likely to reject the null hypothesis, and for number
+of data points greater than 1600, the test always rejects the null hypothesis, i.e., the data will
+no longer support that R2 is independent of Z1 given R1, where it should be.
+
+Now let's test the conditional independence of M1 and R2 given R1:
+
+.. code-block:: python
+
+    generate_plot_expected_p_value_vs_num_data_points(full_data=observational_data,
+                                                  min_number_of_sampled_data_points=50,
+                                                  max_number_of_sampled_data_points=2000,
+                                                  step=50,
+                                                  left="R2",
+                                                  right="M1",
+                                                  conditions=["R1"],
+                                                  test="pearson",
+                                                  significance_level=0.05,
+                                                  boot_size=1000
+                                                  )
+
+This plot shows that the expected p-value will again decrease as number of data points increases. For number
+of data points greater than 500, the test is more likely to reject the null hypothesis, and for number
+of data points greater than 900, the test always rejects the null hypothesis, i.e., the data will
+no longer support that R2 is independent of M1 given R1, where it should be.
+"""
+
 from typing import Optional
 
 import matplotlib.pyplot as plt
