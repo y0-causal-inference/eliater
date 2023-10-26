@@ -3,7 +3,7 @@
 import unittest
 
 from eliater.frontdoor_backdoor import base_example, multiple_mediators_single_confounder_example
-from eliater.repair import choose_default_test, get_state_space_map, validate_test
+from eliater.network_validation import choose_default_test, get_state_space_map, validate_test
 from y0.dsl import Variable
 from y0.examples.frontdoor import generate_data_for_frontdoor
 from y0.examples.frontdoor_backdoor import generate_data_for_frontdoor_backdoor

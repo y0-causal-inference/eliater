@@ -1,4 +1,4 @@
-"""This module shows the relationship between p-value and sample size when testing conditional independencies
+"""This module shows the relationship between p-value and sample size when testing conditional independencies.
 
 p-values decrease as the number of data points used in the conditional independency test
 increases, i.e., the larger the data, more conditional independences implied by the network
@@ -80,10 +80,9 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from network_validation import CITest, choose_default_test, validate_test
 from numpy import mean, quantile
 from pgmpy.estimators import CITests
-from repair import CITest, choose_default_test, validate_test
-
 
 __all__ = [
     "p_value_of_bootstrap_data",
