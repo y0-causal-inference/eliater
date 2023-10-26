@@ -19,7 +19,9 @@ in T cell activation, proliferation, and function.
 
 .. code-block:: python
 
+    from y0.graph import NxMixedGraph
     from eliater.repair import conditional_independence_test_summary
+    import pandas as pd
 
     graph = NxMixedGraph.from_str_adj(
         directed={
@@ -35,7 +37,6 @@ in T cell activation, proliferation, and function.
     )
 
     # Get the data
-    import pandas as pd
     data = pd.read_csv(
     "https://raw.githubusercontent.com/y0-causal-inference/eliater/conditional_independency_tests/src/data/sachs_discretized_2bin.csv",
     index_col = False
@@ -43,8 +44,8 @@ in T cell activation, proliferation, and function.
 
     conditional_independence_test_summary(graph, data, verbose=True)
 
-The results show that out of 35 cases,
-the conditional independence between P38 and PIP2, given PKC, fails with a p-value of 0.00425.
+The results show that out of 35 cases, 1 failed. The failed test is
+the conditional independence between P38 and PIP2, given PKC, with a p-value of 0.00425.
 
 This module relies on statistical tests, and statistical tests always have chances
 of producing false negatives, i.e., a pair of variables that are conditionally
