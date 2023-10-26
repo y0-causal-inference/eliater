@@ -67,8 +67,7 @@ conditional independence.
 independency test increases, i.e., the larger the data, more conditional independences
 implied by the network will be considered as dependent. Hence, chances of false negatives
 increases.
-::todo
-    How can I refer the user to sample_size_vs_pvalue module?
+..todo:: How can I refer the user to sample_size_vs_pvalue module?
 
 3) Conditional independence tests rely on probability assumptions regarding the data distribution.
 For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
@@ -114,8 +113,6 @@ def get_state_space_map(
     :param threshold: The threshold for determining a column as discrete
         based on the number of unique values
     :return: the mapping from column name to its type
-
-    .. todo:: This thresholding doesn't make sense. what if the values are 0, 1, 2?
     """
     column_values_unique_count = {
         column_name: data[column_name].nunique() for column_name in data.columns

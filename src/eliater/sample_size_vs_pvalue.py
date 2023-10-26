@@ -85,6 +85,14 @@ from numpy import mean, quantile
 from pgmpy.estimators import CITests
 from repair import CITest, choose_default_test, validate_test
 
+
+__all__ = [
+    "p_value_of_bootstrap_data",
+    "p_value_statistics",
+    "generate_plot_expected_p_value_vs_num_data_points",
+]
+
+
 tests = {
     "pearson": CITests.pearsonr,
     "chi-square": CITests.chi_square,
