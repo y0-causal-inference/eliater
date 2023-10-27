@@ -20,7 +20,7 @@ in T cell activation, proliferation, and function.
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
-    from eliater.repair import conditional_independence_test_summary
+    from eliater.network_validation import conditional_independence_test_summary
     import pandas as pd
 
     graph = NxMixedGraph.from_str_adj(
@@ -68,7 +68,6 @@ conditional independence.
 independency test increases, i.e., the larger the data, more conditional independences
 implied by the network will be considered as dependent. Hence, chances of false negatives
 increases.
-..todo:: How can I refer the user to sample_size_vs_pvalue module?
 
 3) Conditional independence tests rely on probability assumptions regarding the data distribution.
 For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
