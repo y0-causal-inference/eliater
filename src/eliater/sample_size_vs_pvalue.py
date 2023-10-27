@@ -135,8 +135,8 @@ def p_value_statistics(
 
     :param full_data: observational data
     :param sample_size: number of data points to sample a bootstrap data from full_data
-    :param left: first variable name positioned at the left side of a conditional independence test
-    :param right: second variable name positioned at the right side of a conditional independence test
+    :param left: first variable name positioned on the left side of a conditional independence test
+    :param right: second variable name positioned on the right side of a conditional independence test
     :param conditions: variables names to condition on in the conditional independence test
     :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
         and ``chi-square`` for discrete data.
