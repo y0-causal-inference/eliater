@@ -56,9 +56,10 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from eliater.network_validation import CITest, choose_default_test, validate_test
 from numpy import mean, quantile
 from pgmpy.estimators import CITests
+
+from eliater.network_validation import CITest, choose_default_test, validate_test
 
 __all__ = [
     "p_value_of_bootstrap_data",
