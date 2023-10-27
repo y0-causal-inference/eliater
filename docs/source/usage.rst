@@ -4,14 +4,20 @@ Frontdoor-Backdoor Example
     :no-heading:
     :include-all-objects:
 
+Frontdoor-Backdoor Discrete Example
+==========================
+.. automodapi:: eliater.frontdoor_backdoor_discrete
+    :no-heading:
+    :include-all-objects:
+
 Network Validation
-======
+===================
 .. automodapi:: eliater.network_validation
     :no-heading:
     :include-all-objects:
 
 Sample size vs p-value
-======
+=======================
 .. automodapi:: eliater.sample_size_vs_pvalue
     :no-heading:
     :include-all-objects:
