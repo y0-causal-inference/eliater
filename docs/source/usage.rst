@@ -4,8 +4,14 @@ Frontdoor-Backdoor Example
     :no-heading:
     :include-all-objects:
 
-Repair
+Network Validation
 ======
-.. automodapi:: eliater.repair
+.. automodapi:: eliater.network_validation
+    :no-heading:
+    :include-all-objects:
+
+Sample size vs p-value
+======
+.. automodapi:: eliater.sample_size_vs_pvalue
     :no-heading:
     :include-all-objects:

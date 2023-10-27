@@ -56,7 +56,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from network_validation import CITest, choose_default_test, validate_test
+from eliater.network_validation import CITest, choose_default_test, validate_test
 from numpy import mean, quantile
 from pgmpy.estimators import CITests
 
@@ -93,14 +93,15 @@ def p_value_of_bootstrap_data(
 
     :param full_data: observational data
     :param sample_size: number of data points to sample a bootstrap data from full_data
-    :param left: first variable name positioned at the left side of a conditional independence test
-    :param right: second variable name positioned at the right side of a conditional independence test
+    :param left: first variable name positioned on the left side of a conditional independence test
+    :param right: second variable name positioned on the right side of a conditional independence test
     :param conditions: variables names to condition on in the conditional independence test
     :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
         and ``chi-square`` for discrete data.
     :param significance_level: The statistical tests employ this value for
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.01.
+    :return: the p value for the given bootstrap data
     """
     if significance_level is None:
         significance_level = 0.01
@@ -128,7 +129,7 @@ def p_value_statistics(
     right: str,
     conditions: list,
     test: Optional[CITest],
-    significance_level: int,
+    significance_level: float,
     boot_size: int = 1000,
 ):
     """Calculate mean of p-value, the 5th percentile and 95 percentile error, for several bootstrap data.
@@ -144,6 +145,7 @@ def p_value_statistics(
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.01.
     :param boot_size: total number of times a bootstrap data is sampled
+    :return: the mean of p-value, the 5th percentile and 95 percentile error, for several bootstrap data
     """
     if significance_level is None:
         significance_level = 0.01
@@ -184,8 +186,8 @@ def generate_plot_expected_p_value_vs_num_data_points(
     :param max_number_of_sampled_data_points: maximum number of data points to sample from full_data
     :param step: minimum number of sampled data points increments by step number, and stops
         before maximum number of sampled data points
-    :param left: first variable name positioned at the left side of a conditional independence test
-    :param right: second variable name positioned at the right side of a conditional independence test
+    :param left: first variable name positioned on the left side of a conditional independence test
+    :param right: second variable name positioned on the right side of a conditional independence test
     :param conditions: variables names to condition on in the conditional independence test
     :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
         and ``chi-square`` for discrete data.
@@ -193,6 +195,7 @@ def generate_plot_expected_p_value_vs_num_data_points(
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.01.
     :param boot_size: total number of times a bootstrap data is sampled
+    :return: the plot of expected p-value versus number of data points
     """
     if significance_level is None:
         significance_level = 0.01
