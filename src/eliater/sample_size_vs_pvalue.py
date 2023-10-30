@@ -11,7 +11,12 @@ Z1 given R1. In addition, M1 is independent of R2 given R1. The data has been ge
 on these assumption, Hence, we expect the p-value to be above 0.05, i.e., not rejecting the null
 hypothesis of conditional independence.
 
-.. todo:: embed a nice screenshot of the graph
+.. image:: docs/source/img/multiple_mediators_with_multiple_confounders.pdf
+   :width: 200px
+   :height: 100px
+   :scale: 50 %
+   :alt: alternate text
+   :align: right
 
 .. code-block:: python
 
@@ -47,7 +52,13 @@ hypothesis of conditional independence.
         boot_size=1000
     )
 
-.. todo:: Embed results of this plot. Reader is not able to understand the point of this with just code
+.. todo:: I need to check if the plots are showing. Currently, my tox -e docs doesnt work
+.. image:: docs/source/img/pvalue_vs_sample_size.png
+   :width: 200px
+   :height: 100px
+   :scale: 50 %
+   :alt: alternate text
+   :align: right
 
 This plot shows that the expected p-value will decrease as number of data points increases. For number
 of data points greater than 1000, the test is more likely to reject the null hypothesis, and for number

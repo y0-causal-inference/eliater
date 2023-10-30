@@ -14,19 +14,22 @@ If the percentage of failed tests is higher than the user expects, additional ex
 is required to change the model.
 
 Here is an example of a protein signalling network of the T cell signaling pathway presented
-in (Sachs et al., 2005). It models the molecular mechanisms and regulatory processes involved
+in [Sachs2005]_. It models the molecular mechanisms and regulatory processes involved
 in T cell activation, proliferation, and function.
 
-.. todo:: use RST referencing system for Sachs et al., 2005
+.. image:: docs/source/img/Signaling.pdf
+   :width: 200px
+   :height: 100px
+   :scale: 50 %
+   :alt: alternate text
+   :align: right
 
-.. todo:: embed a nice screenshot of the graph
 
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
     from eliater.data import load_sachs_df
     from eliater.network_validation import conditional_independence_test_summary
-    import pandas as pd
 
     graph = NxMixedGraph.from_str_adj(
         directed={
@@ -67,6 +70,7 @@ Here are some reasons that the result of the test may be false negative or false
 
    It's worth noting that this module employs traditional tests where the null hypothesis is
    conditional independence.
+
 2. In addition, p-values decrease as the number of data points used in the conditional
    independency test increases, i.e., the larger the data, more conditional independences
    implied by the network will be considered as dependent. Hence, chances of false negatives
@@ -81,6 +85,9 @@ Here are some reasons that the result of the test may be false negative or false
 As a result, the results obtained from this module should be regarded more as heuristics approach rather
 than a systematic, strict step that provides precise results. For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
+
+.. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan.
+Causal protein-signaling networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 """
 
 import logging
@@ -259,3 +266,6 @@ def conditional_independence_test_summary(
         logging.info(test_results.to_string(index=False))
     else:
         logging.info(failed_tests.to_string(index=False))
+
+
+
