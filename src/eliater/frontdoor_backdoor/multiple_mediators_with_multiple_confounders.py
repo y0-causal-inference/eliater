@@ -1,4 +1,9 @@
-"""This module contains a method to generate continuous testing data for the multi_mediators_confounder case study."""
+"""This module contains a method to generate continuous testing data for the multiple_mediators_with_multiple_confounders case study.
+
+The multiple_mediators_with_multiple_confounders case study is a variation of the "frontdoor-backdoor" graph, where it contains an exposure variable (X),
+and an outcome (Y), two variables (M1, M2) on the directed path connecting exposure to the outcome, and three observed confounders (Z1, Z2, Z3).
+As the confounder(s) are observed, the effect of exposure on the outcome can be estimated using Pearl's frontdoor or backdoor criterion.
+"""
 
 import numpy as np
 import pandas as pd

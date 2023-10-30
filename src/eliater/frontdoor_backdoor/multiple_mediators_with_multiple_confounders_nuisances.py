@@ -1,4 +1,10 @@
-"""This module generates continuous testing data for the multi_mediators_confounder_nuisance_var case study."""
+"""This module generates continuous testing data for the multiple_mediators_with_multiple_confounders_nuisances case study.
+
+The multiple_mediators_with_multiple_confounders_nuisances case study is a variation of the "frontdoor-backdoor" graph, where it contains an exposure variable (X),
+and an outcome (Y), two mediator variables (M1, M2) on the directed path connecting exposure to the outcome, and three observed confounders (Z1, Z2, Z3). In addition,
+it contains three variables that are descendants of the mediators (R1, R2, R3).
+As the confounder(s) are observed, the effect of exposure on the outcome can be estimated using Pearl's frontdoor or backdoor criterion.
+"""
 
 import numpy as np
 import pandas as pd
