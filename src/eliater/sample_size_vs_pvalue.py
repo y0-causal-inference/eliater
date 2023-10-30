@@ -6,10 +6,9 @@ will be considered as dependent. Hence, chances of false negatives increases. Th
 illustrates this. The content of this module are relied on chapter 4 of this reference:
 https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 
-Here is an example that illustrates this point. In the provided graph, R2 is independent of
-Z1 given R1. In addition, M1 is independent of R2 given R1. The data has been generated based
-on these assumption, Hence, we expect the p-value to be above 0.05, i.e., not rejecting the null
-hypothesis of conditional independence.
+Here is an example that illustrates this point. In the provided graph, Y is independent of
+M1 given M2, Z2. The data has been generated based on this assumption. Hence, we expect the
+p-value to be above 0.05, i.e., not rejecting the null hypothesis of conditional independence.
 
 .. image:: docs/source/img/multiple_mediators_with_multiple_confounders.pdf
    :width: 200px
