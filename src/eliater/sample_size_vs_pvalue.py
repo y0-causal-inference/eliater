@@ -1,6 +1,6 @@
 """This module shows the relationship between p-value and sample size when testing conditional independencies.
 
-p-values decrease as the number of data points used in the conditional independency test
+*p*-values decrease as the number of data points used in the conditional independency test
 increases, i.e., the larger the data, more conditional independences implied by the network
 will be considered as dependent. Hence, chances of false negatives increases. This module
 illustrates this. The content of this module are relied on chapter 4 of this reference:
@@ -10,6 +10,8 @@ Here is an example that illustrates this point. In the provided graph, R2 is ind
 Z1 given R1. In addition, M1 is independent of R2 given R1. The data has been generated based
 on these assumption, Hence, we expect the p-value to be above 0.05, i.e., not rejecting the null
 hypothesis of conditional independence.
+
+.. todo:: embed a nice screenshot of the graph
 
 .. code-block:: python
 
@@ -32,17 +34,20 @@ hypothesis of conditional independence.
     # Generate observational data for this graph (this is a special example)
     observational_data = generate(num_samples=2000, seed=1)
 
-    generate_plot_expected_p_value_vs_num_data_points(full_data=observational_data,
-                                                  min_number_of_sampled_data_points=50,
-                                                  max_number_of_sampled_data_points=2000,
-                                                  step=100,
-                                                  left="Y",
-                                                  right="M1",
-                                                  conditions=["M2","Z2"],
-                                                  test="pearson",
-                                                  significance_level=0.05,
-                                                  boot_size=1000
-                                                  )
+    generate_plot_expected_p_value_vs_num_data_points(
+        full_data=observational_data,
+        min_number_of_sampled_data_points=50,
+        max_number_of_sampled_data_points=2000,
+        step=100,
+        left="Y",
+        right="M1",
+        conditions=["M2", "Z2"],
+        test="pearson",
+        significance_level=0.05,
+        boot_size=1000
+    )
+
+.. todo:: Embed results of this plot. Reader is not able to understand the point of this with just code
 
 This plot shows that the expected p-value will decrease as number of data points increases. For number
 of data points greater than 1000, the test is more likely to reject the null hypothesis, and for number

@@ -17,9 +17,14 @@ Here is an example of a protein signalling network of the T cell signaling pathw
 in (Sachs et al., 2005). It models the molecular mechanisms and regulatory processes involved
 in T cell activation, proliferation, and function.
 
+.. todo:: use RST referencing system for Sachs et al., 2005
+
+.. todo:: embed a nice screenshot of the graph
+
 .. code-block:: python
 
     from y0.graph import NxMixedGraph
+    from eliater.data import load_sachs_df
     from eliater.network_validation import conditional_independence_test_summary
     import pandas as pd
 
@@ -37,12 +42,11 @@ in T cell activation, proliferation, and function.
     )
 
     # Get the data
-    data = pd.read_csv(
-    "https://raw.githubusercontent.com/y0-causal-inference/eliater/conditional_independency_tests/src/data/sachs_discretized_2bin.csv",
-    index_col = False
-    )
+    data = load_sachs_df()
 
     conditional_independence_test_summary(graph, data, verbose=True)
+
+.. todo:: embed results table
 
 The results show that out of 35 cases, 1 failed. The failed test is
 the conditional independence between P38 and PIP2, given PKC, with a p-value of 0.00425.
@@ -55,25 +59,24 @@ as conditionally independent by the test.
 
 Here are some reasons that the result of the test may be false negative or false positive:
 
-1) In pgmpy, the conditional independence tests assume that the alternative hypothesis is
-dependence, while the null hypothesis is conditional independence. However, when dealing
-with an ADMG and hypothetically assuming that the ADMG has the correct structure, it is
-more appropriate for the null hypothesis to be the hypothesis of dependence. This distinction
-can be significant as the p-value relies on the null hypothesis.
+1. In pgmpy, the conditional independence tests assume that the alternative hypothesis is
+   dependence, while the null hypothesis is conditional independence. However, when dealing
+   with an ADMG and hypothetically assuming that the ADMG has the correct structure, it is
+   more appropriate for the null hypothesis to be the hypothesis of dependence. This distinction
+   can be significant as the p-value relies on the null hypothesis.
 
-It's worth noting that this module employs traditional tests where the null hypothesis is
-conditional independence.
+   It's worth noting that this module employs traditional tests where the null hypothesis is
+   conditional independence.
+2. In addition, p-values decrease as the number of data points used in the conditional
+   independency test increases, i.e., the larger the data, more conditional independences
+   implied by the network will be considered as dependent. Hence, chances of false negatives
+   increases.
 
-2) In addition, p-values decrease as the number of data points used in the conditional
-independency test increases, i.e., the larger the data, more conditional independences
-implied by the network will be considered as dependent. Hence, chances of false negatives
-increases.
-
-3) Conditional independence tests rely on probability assumptions regarding the data distribution.
-For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
-that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
-utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
-assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
+3. Conditional independence tests rely on probability assumptions regarding the data distribution.
+   For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
+   that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
+   utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
+   assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
 
 As a result, the results obtained from this module should be regarded more as heuristics approach rather
 than a systematic, strict step that provides precise results. For more reference on this topic, please see
