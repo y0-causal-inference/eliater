@@ -1,4 +1,27 @@
-"""This module generates discrete data for the multi_mediators_confounder_nuisance_var case study."""
+"""This module generates discrete data for the single_mediator_with_multiple_confounders_nuisances_discrete_example case study.
+
+The single_mediator_with_multiple_confounders_nuisances_discrete_example case study is a variation of the "frontdoor-backdoor" graph
+where it contains an exposure variable (X),
+and an outcome (Y), one mediator (M1) on the directed path connecting exposure to the outcome, and three observed confounders (Z1, Z2, Z3). In addition,
+it contains three variables that are descendants of the mediator (R1, R2, R3).
+
+A frontdoor graph is a network structure where there is an exposure variable, and an
+outcome, and one or more variables on the directed path connecting exposure to the
+outcome. In addition, it contains one or more latent confounders between an exposure and the
+outcome. As the confounders are latent, the effect of exposure on the outcome can be estimated
+using Pearl's frontdoor criterion.
+
+A backdoor graph is a network structure where there is an exposure variable, and an
+outcome, and one or more observed confounders between an exposure and the
+outcome. As the confounders are observed, the effect of exposure on the outcome can be estimated
+using Pearl's backdoor criterion.
+
+A frontdoor-backdoor graph is designed to have the properties from both graph. It is a network that
+includes an exposure variable, and an outcome, and one or more mediator variables on the directed path connecting
+exposure to the outcome. In addition, it contains one or more observed confounders between an exposure and the
+outcome. As the confounders are observed and mediators are present, the effect of exposure on the outcome can be
+estimated using Pearl's frontdoor or backdoor criterion.
+"""
 
 import numpy as np
 import pandas as pd
