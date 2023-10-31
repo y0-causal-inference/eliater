@@ -10,12 +10,13 @@ Here is an example that illustrates this point. In the provided graph, Y is inde
 M1 given M2, Z2. The data has been generated based on this assumption. Hence, we expect the
 p-value to be above 0.05, i.e., not rejecting the null hypothesis of conditional independence.
 
-.. image:: docs/source/img/multiple_mediators_with_multiple_confounders.pdf
+.. image:: ../../docs/source/img/multiple_mediators_with_multiple_confounders.png
    :width: 200px
    :height: 100px
-   :scale: 50 %
+   :scale: 100 %
    :alt: alternate text
    :align: right
+
 
 .. code-block:: python
 
@@ -51,11 +52,11 @@ p-value to be above 0.05, i.e., not rejecting the null hypothesis of conditional
         boot_size=1000
     )
 
-.. todo:: I need to check if the plots are showing. Currently, my tox -e docs doesnt work
-.. image:: docs/source/img/pvalue_vs_sample_size.png
-   :width: 200px
-   :height: 100px
-   :scale: 50 %
+
+.. image:: ../../docs/source/img/pvalue_vs_sample_size.png
+   :width: 350px
+   :height: 250px
+   :scale: 200 %
    :alt: alternate text
    :align: right
 

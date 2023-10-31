@@ -18,9 +18,9 @@ in [Sachs2005]_. It models the molecular mechanisms and regulatory processes inv
 in T cell activation, proliferation, and function.
 
 .. image:: ../../docs/source/img/signaling.png
-   :width: 300px
-   :height: 200px
-   :scale: 100 %
+   :width: 200px
+   :height: 300px
+   :scale: 150 %
    :alt: alternate text
    :align: right
 
@@ -50,9 +50,9 @@ in T cell activation, proliferation, and function.
     conditional_independence_test_summary(graph, data, verbose=True)
 
 .. image:: ../../docs/source/img/sachs_table.png
-   :width: 300px
-   :height: 200px
-   :scale: 100 %
+   :width: 200px
+   :height: 400px
+   :scale: 150 %
    :alt: alternate text
    :align: right
 
