@@ -17,13 +17,10 @@ Here is an example of a protein signalling network of the T cell signaling pathw
 in [Sachs2005]_. It models the molecular mechanisms and regulatory processes involved
 in T cell activation, proliferation, and function.
 
-.. image:: ../../docs/source/img/signaling.png
+.. figure:: ../../docs/source/img/signaling.png
    :width: 200px
-   :height: 300px
+   :height: 200px
    :scale: 150 %
-   :alt: alternate text
-   :align: right
-
 
 .. code-block:: python
 
