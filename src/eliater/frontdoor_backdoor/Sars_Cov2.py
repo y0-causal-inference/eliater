@@ -210,6 +210,8 @@ sars_large_example = Example(
     reference="Mohammad-Taheri, S., Zucker, J., Hoyt, C. T., Sachs, K., Tewari, V., Ness, R., & Vitek, O. 2022."
     "Do-calculus enables estimation of causal effects in partially observed biomolecular pathways."
     "- Bioinformatics, 38 (Supplement_1),i350-i358.",
+    description="In this example EGFR is generated as a binary value. Hence, if you want to intervene on it, please"
+                "choose either o or 1",
     graph=NxMixedGraph.from_str_edges(
         nodes=[
             "SARS_COV2",
