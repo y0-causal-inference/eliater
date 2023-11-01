@@ -4,44 +4,13 @@ import numpy as np
 import pandas as pd
 
 from y0.algorithm.identify import Query
-from y0.dsl import Z1, Z2, Z3, Variable, X, Y
+from y0.dsl import Variable
 from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
     "sars_large_example",
 ]
-
-graph = NxMixedGraph.from_str_edges(
-    directed=[
-        ("SARS_COV2", "ACE2"),
-        ("ACE2", "Ang"),
-        ("Ang", "AGTR1"),
-        ("AGTR1", "ADAM17"),
-        ("ADAM17", "EGF"),
-        ("ADAM17", "TNF"),
-        ("ADAM17", "Sil6r"),
-        ("SARS_COV2", "PRR"),
-        ("PRR", "NFKB"),
-        ("EGFR", "NFKB"),
-        ("TNF", "NFKB"),
-        ("Sil6r", "IL6STAT3"),
-        ("Toci", "Sil6r"),
-        ("NFKB", "IL6AMP"),
-        ("IL6AMP", "cytok"),
-        ("IL6STAT3", "IL6AMP"),
-        ("EGF", "EGFR"),
-        ("Gefi", "EGFR"),
-    ],
-    undirected=[
-        ("SARS_COV2", "Ang"),
-        ("ADAM17", "Sil6r"),
-        ("PRR", "NFKB"),
-        ("EGF", "EGFR"),
-        ("EGFR", "TNF"),
-        ("EGFR", "IL6STAT3"),
-    ],
-)
 
 
 def _r_exp(x):
@@ -63,105 +32,181 @@ def generate(
         treatments = {}
     generator = np.random.default_rng(seed)
 
-    u_adam17_sil6r_value = generator.normal(loc=40.0, scale=10.0, size=num_samples)
-    u_il6_stat_egfr_value = generator.normal(loc=44.0, scale=10.0, size=num_samples)
-    u_tnf_egfr_value = generator.normal(loc=40.0, scale=10.0, size=num_samples)
-    u_adam17_cytok_value = generator.normal(loc=44.0, scale=10.0, size=num_samples)
+    gefi = generator.normal(loc=45, scale=10, size=num_samples)
+    toci = generator.normal(loc=45, scale=10, size=num_samples)
+    u_sars_ang = generator.normal(loc=44.0, scale=10.0, size=num_samples)
+    u_prr_nfkb = generator.normal(loc=40.0, scale=10.0, size=num_samples)
+    u_egf_egfr = generator.normal(loc=35.0, scale=10.0, size=num_samples)
+    u_tnf_egfr = generator.normal(loc=40.0, scale=10.0, size=num_samples)
+    u_il6_stat_egfr = generator.normal(loc=44.0, scale=10.0, size=num_samples)
+    u_adam17_sil6_ra = generator.normal(loc=40.0, scale=10.0, size=num_samples)
+
+    beta0_u_sars_ang_to_sars_cov2 = -1.8
+    beta_u_sars_ang = 0.05  # positive
+    loc_sars_cov2 = np.array(
+        100 / (1 + np.exp(-beta0_u_sars_ang_to_sars_cov2 - u_sars_ang * beta_u_sars_ang))
+    )
+    sars_cov2 = generator.normal(loc=loc_sars_cov2, scale=1)
+
+    beta0_sars_cov2_to_ace2 = 1.5
+    beta_sars_cov2_to_ace2 = -0.04  # negative
+    loc_ace2 = 100 / (1 + np.exp(-beta0_sars_cov2_to_ace2 - sars_cov2 * beta_sars_cov2_to_ace2))
+    ace2 = generator.normal(loc=loc_ace2, scale=1)
+
+    beta0_ang = 1.1
+    beta_ace2_to_ang = -0.06  # negative
+    beta_u_sars_ang = 0.05  # positive
+    loc_ang = 100 / (
+        1 + np.exp(-beta0_ang - ace2 * beta_ace2_to_ang - u_sars_ang * beta_u_sars_ang)
+    )
+    ang = generator.normal(loc=loc_ang, scale=1)
+
+    beta0_agtr1 = -1.5
+    beta_ang_to_agtr1 = 0.08
+    loc_agtr1 = 100 / (1 + np.exp(-beta0_agtr1 - ang * beta_ang_to_agtr1))
+    agtr1 = generator.normal(loc=loc_agtr1, scale=1)
 
     beta0_adam17 = -1
-    beta_u_adam17_cytok = 0.04
-    beta_u_adam17_sil6r = 0.04
-    adam17 = generator.normal(
-        loc=100
-        * _r_exp(
+    beta_agtr1_to_adam17 = 0.04
+    beta_u_adam17_sil6r_to_adam17 = 0.04
+    loc_adam17 = 100 / (
+        1
+        + np.exp(
             -beta0_adam17
-            - u_adam17_cytok_value * beta_u_adam17_cytok
-            - u_adam17_sil6r_value * beta_u_adam17_sil6r
-        ),
-        scale=1,
-        size=num_samples,
+            - agtr1 * beta_agtr1_to_adam17
+            - u_adam17_sil6_ra * beta_u_adam17_sil6r_to_adam17
+        )
     )
+    adam17 = generator.normal(loc=loc_adam17, scale=1)
 
     beta0_sil6r = -1.9
     beta_adam17_to_sil6r = 0.03
-    beta_u_adam17_sil6r = 0.05
-    sil6r_value = generator.normal(
-        loc=100
-        * _r_exp(
+    beta_u_to_sil6r = 0.05
+    beta_toci_to_sil6r = -0.04  # negative
+    loc_sil6r = 100 / (
+        1
+        + np.exp(
             -beta0_sil6r
             - adam17 * beta_adam17_to_sil6r
-            - u_adam17_sil6r_value * beta_u_adam17_sil6r
-        ),
-        scale=1,
+            - u_adam17_sil6_ra * beta_u_to_sil6r
+            - toci * beta_toci_to_sil6r
+        )
     )
+    sil6r = generator.normal(loc=loc_sil6r, scale=1)
+
+    beta0_egf = -1.6
+    beta_adam17_to_egf = 0.03
+    beta_u_to_egf = 0.05
+    loc_egf = 100 / (
+        1 + np.exp(-beta0_egf - adam17 * beta_adam17_to_egf - u_egf_egfr * beta_u_to_egf)
+    )
+    egf = generator.normal(loc=loc_egf, scale=1)
 
     beta0_tnf = -1.8
     beta_adam17_to_tnf = 0.05
-    beta_u_tnf_egfr = 0.06
-    tnf = generator.normal(
-        loc=100
-        * _r_exp(-beta0_tnf - adam17 * beta_adam17_to_tnf - u_tnf_egfr_value * beta_u_tnf_egfr),
-        scale=1,
+    beta_u_to_tnf = 0.06
+    loc_tnf = 100 / (
+        1 + np.exp(-beta0_tnf - adam17 * beta_adam17_to_tnf - u_tnf_egfr * beta_u_to_tnf)
     )
+    tnf = generator.normal(loc=loc_tnf, scale=1)
 
     beta0_egfr = -1.9
-    beta_adam17_egfr = 0.03
-    beta_u_il6_stat_egfr = -0.04
-    beta_u_tnf_egfr = 0.02
+    beta_egf_to_egfr = 0.03
+    beta_u1_to_egfr = 0.05
+    beta_u2_to_egfr = 0.02
+    beta_u3_to_egfr = 0.04
+    beta_gefi_to_egfr = -0.08  # negative
     if Variable("EGFR") in treatments:
         egfr = np.full(num_samples, treatments[Variable("EGFR")])
     else:
         p = _r_exp(
             -beta0_egfr
-            - adam17 * beta_adam17_egfr
-            - u_il6_stat_egfr_value * beta_u_il6_stat_egfr
-            - u_tnf_egfr_value * beta_u_tnf_egfr
+            - egf * beta_egf_to_egfr
+            - u_il6_stat_egfr * beta_u1_to_egfr
+            - u_tnf_egfr * beta_u2_to_egfr
+            - u_egf_egfr * beta_u3_to_egfr
+            - gefi * beta_gefi_to_egfr
         )
         egfr = generator.binomial(1, p, size=num_samples)
 
-    beta0_il6_stat3 = -1.6
-    beta_u_il6_stat_egfr = -0.05
-    beta_sil6r_to_il6_stat3 = 0.04
-    il6_stat3 = generator.normal(
-        loc=100
-        * _r_exp(
-            -beta0_il6_stat3
-            - u_il6_stat_egfr_value * beta_u_il6_stat_egfr
-            - sil6r_value * beta_sil6r_to_il6_stat3
-        ),
-        scale=1,
+    beta0_prr = -1.4
+    beta_sars_cov2_to_prr = 0.05
+    beta_u_to_prr = 0.02
+    loc_prr = 100 / (
+        1 + np.exp(-beta0_prr - sars_cov2 * beta_sars_cov2_to_prr - u_prr_nfkb * beta_u_to_prr)
     )
+    prr = generator.normal(loc=loc_prr, scale=1)
+
+    beta0_nfkb = -1.8
+    beta_prr_to_nfkb = 0.01
+    beta_u_to_nfkb = -0.02
+    beta_egfr_to_nfkb = 0.06
+    beta_tnf_to_nfkb = 0.01
+    loc_nfkb = 100 / (
+        1
+        + np.exp(
+            -beta0_nfkb
+            - prr * beta_prr_to_nfkb
+            - u_prr_nfkb * beta_u_to_nfkb
+            - egfr * beta_egfr_to_nfkb
+            - tnf * beta_tnf_to_nfkb
+        )
+    )
+    nfkb = generator.normal(loc=loc_nfkb, scale=1)
+
+    beta0_il6_stat3 = -1.6
+    beta_u_to_il6_stat3 = -0.05
+    beta_sil6r_to_il6_stat3 = 0.04
+    loc_il6_stat3 = 100 / (
+        1
+        + np.exp(
+            -beta0_il6_stat3
+            - u_il6_stat_egfr * beta_u_to_il6_stat3
+            - sil6r * beta_sil6r_to_il6_stat3
+        )
+    )
+    il6_stat3 = generator.normal(loc=loc_il6_stat3, scale=1)
+
+    beta0_il6_amp = -1.98
+    beta_nfkb_to_il6_amp = 0.02
+    beta_il6_stat3_to_il6_amp = 0.03
+    loc_il6_amp = 100 / (
+        1
+        + np.exp(
+            -beta0_il6_amp - nfkb * beta_nfkb_to_il6_amp - il6_stat3 * beta_il6_stat3_to_il6_amp
+        )
+    )
+    il6_amp = generator.normal(loc=loc_il6_amp, scale=1)
 
     beta0_cytok = -1.9
-    beta_il6_stat3_tocytok = 0.02
-    beta_egfr_tocytok = 0.06
-    beta_tnf_tocytok = 0.01
-    beta_u_adam17_cytok = 0.01
-    cytok = generator.normal(
-        loc=100
-        * _r_exp(
-            -beta0_cytok
-            - il6_stat3 * beta_il6_stat3_tocytok
-            - egfr * beta_egfr_tocytok
-            - tnf * beta_tnf_tocytok
-            - u_adam17_cytok_value * beta_u_adam17_cytok
-        ),
-        scale=1,
-    )
+    beta_il6_amp_tocytok = 0.06
+    loc_cytok = 100 / (1 + np.exp(-beta0_cytok - il6_amp * beta_il6_amp_tocytok))
+    cytok = generator.normal(loc=loc_cytok, scale=1)
 
     data = {
-        "ADAM17": adam17,
-        "Sil6r": sil6r_value,
-        "TNF": tnf,
+        "sars_cov2": sars_cov2,
+        "ace2": ace2,
+        "ang": ang,
+        "agtr1": agtr1,
+        "adam17": adam17,
+        "toci": toci,
+        "sil6r": sil6r,
+        "egf": egf,
+        "tnf": tnf,
+        "gefi": gefi,
         "EGFR": egfr,
-        "IL6STAT3": il6_stat3,
+        "prr": prr,
+        "nfkb": nfkb,
+        "il6_stat3": il6_stat3,
+        "il6_amp": il6_amp,
         "cytok": cytok,
     }
     df = pd.DataFrame(data)
     return df
 
+
 sars_large_example = Example(
-    name="SARS-CoV-2 Graph",
+    name="SARS-CoV-2 large Graph",
     reference="Mohammad-Taheri, S., Zucker, J., Hoyt, C. T., Sachs, K., Tewari, V., Ness, R., & Vitek, O. 2022."
     "Do-calculus enables estimation of causal effects in partially observed biomolecular pathways."
     "- Bioinformatics, 38 (Supplement_1),i350-i358.",
