@@ -41,7 +41,6 @@ in T cell activation, proliferation, and function.
         }
     )
 
-    # Get the data
     data = load_sachs_df()
 
     conditional_independence_test_summary(graph, data, verbose=True)
@@ -72,12 +71,10 @@ Here are some reasons that the result of the test may be false negative or false
 
    It's worth noting that this module employs traditional tests where the null hypothesis is
    conditional independence.
-
 2. In addition, p-values decrease as the number of data points used in the conditional
    independency test increases, i.e., the larger the data, more conditional independences
    implied by the network will be considered as dependent. Hence, chances of false negatives
    increases.
-
 3. Conditional independence tests rely on probability assumptions regarding the data distribution.
    For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
    that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
@@ -87,6 +84,11 @@ Here are some reasons that the result of the test may be false negative or false
 As a result, the results obtained from this module should be regarded more as heuristics approach rather
 than a systematic, strict step that provides precise results. For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
+
+.. todo::
+
+    So what? Give some insight in how someone should follow-up after looking at this table.
+    How do you use this on your own data?
 
 .. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 """
@@ -260,10 +262,10 @@ def conditional_independence_test_summary(
     failed_tests = test_results[test_results["result"] == "fail"]
     total_no_of_tests = len(test_results)
     total_no_of_failed_tests = len(failed_tests)
-    percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_tests * 100
-    logging.info("Total number of conditional independencies: " + str(total_no_of_tests))
-    logging.info("Total number of failed tests: " + str(total_no_of_failed_tests))
-    logging.info("Percentage of failed tests: " + str(percentage_of_failed_tests))
+    percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_tests
+    logging.info(f"Total number of conditional independencies: {total_no_of_tests:,}")
+    logging.info(f"Total number of failed tests: {total_no_of_failed_tests:,}")
+    logging.info(f"Percentage of failed tests: {percentage_of_failed_tests:.2%}")
     if verbose:
         logging.info(test_results.to_string(index=False))
     else:
