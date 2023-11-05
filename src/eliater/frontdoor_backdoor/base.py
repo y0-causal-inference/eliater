@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 from y0.algorithm.identify import Query
-from y0.dsl import Variable, Z, X, Y, M
+from y0.dsl import M, Variable, X, Y, Z
 from y0.examples import Example
 from y0.graph import NxMixedGraph
 

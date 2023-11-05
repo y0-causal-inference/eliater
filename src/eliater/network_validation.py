@@ -156,6 +156,7 @@ def is_data_continuous(data: pd.DataFrame) -> bool:
     return variable_types == {"continuous"}
 
 
+# TODO replace with y0.struct.CITest
 CITest = Literal[
     "pearson",
     "chi-square",
@@ -267,5 +268,3 @@ def conditional_independence_test_summary(
         logging.info(test_results.to_string(index=False))
     else:
         logging.info(failed_tests.to_string(index=False))
-
-
