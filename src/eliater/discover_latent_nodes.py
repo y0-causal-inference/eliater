@@ -61,7 +61,7 @@ from typing import Iterable, Optional, Set, Union
 
 import networkx as nx
 
-from eliater.simplify_latent import simplify_latent_dag
+from y0.algorithm.simplify_latent import simplify_latent_dag
 from y0.dsl import Variable
 from y0.graph import DEFAULT_TAG, NxMixedGraph
 
