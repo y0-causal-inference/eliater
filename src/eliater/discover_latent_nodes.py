@@ -55,6 +55,30 @@ causal effect of interest.
     estimand = identify_outcomes(new_graph, treatments=X, outcomes=Y)
 
 The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
+
+.. todo::
+
+    need minimal example for evans rule 1.
+    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
+    and use as few other nodes as possible, named very simply.
+
+.. todo::
+
+    need minimal example for evans rule 2.
+    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
+    and use as few other nodes as possible, named very simply.
+
+.. todo::
+
+    need minimal example for evans rule 3.
+    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
+    and use as few other nodes as possible, named very simply.
+
+.. todo::
+
+    need minimal example for evans rule 4.
+    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
+    and use as few other nodes as possible, named very simply.
 """
 import itertools
 from typing import Iterable, Optional, Set, Union
