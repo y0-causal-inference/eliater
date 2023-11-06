@@ -1,4 +1,14 @@
-"""Examples for T cell signaling pathway."""
+"""Examples for T cell signaling pathway.
+
+.. todo::
+
+    1. wrap these with the :class:`y0.example.Example` class and detailed biological context.
+    2. Where did this network come from? Give reference
+    3. In what organism is this happening?
+    4. What is the biological phenomena described here?
+    5. How was this network constructed?
+    6. Is there associated data to go with this graph?
+"""
 
 from y0.graph import NxMixedGraph
 

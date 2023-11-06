@@ -1,4 +1,14 @@
-"""Examples for E. coli K-12."""
+"""Examples for E. coli K-12.
+
+.. todo::
+
+    1. wrap these with the :class:`y0.example.Example` class and detailed biological context.
+    2. Where did this network come from? Give reference
+    3. What is E. coli K-12?
+    4. What is the biological phenomena described here?
+    5. How was this network constructed?
+    6. Is there associated data to go with this graph?
+"""
 
 from y0.graph import NxMixedGraph
 

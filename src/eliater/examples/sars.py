@@ -1,4 +1,14 @@
-"""Examples for SARS-CoV-2 and COVID19."""
+"""Examples for SARS-CoV-2 and COVID19.
+
+.. todo::
+
+    1. Isn't this the same as something built in to the y0 package?
+    2. wrap these with the :class:`y0.example.Example` class and detailed biological context.
+    3. Where did this network come from? Give reference
+    4. What is the biological phenomena described here?
+    5. How was this network constructed?
+    6. Is there associated data to go with this graph?
+"""
 
 from y0.graph import NxMixedGraph
 
