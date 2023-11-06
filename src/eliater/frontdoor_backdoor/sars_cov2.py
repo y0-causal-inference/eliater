@@ -184,21 +184,21 @@ def generate(
     cytok = generator.normal(loc=loc_cytok, scale=1)
 
     data = {
-        "sars_cov2": sars_cov2,
-        "ace2": ace2,
-        "ang": ang,
-        "agtr1": agtr1,
-        "adam17": adam17,
-        "toci": toci,
-        "sil6r": sil6r,
-        "egf": egf,
-        "tnf": tnf,
-        "gefi": gefi,
+        "SARS_COV2": sars_cov2,
+        "ACE2": ace2,
+        "Ang": ang,
+        "AGTR1": agtr1,
+        "ADAM17": adam17,
+        "Toci": toci,
+        "Sil6R": sil6r,
+        "EGF": egf,
+        "TNF": tnf,
+        "Gefi": gefi,
         "EGFR": egfr,
-        "prr": prr,
-        "nfkb": nfkb,
-        "il6_stat3": il6_stat3,
-        "il6_amp": il6_amp,
+        "PRR": prr,
+        "NFKB": nfkb,
+        "IL6STAT3": il6_stat3,
+        "IL6AMP": il6_amp,
         "cytok": cytok,
     }
     df = pd.DataFrame(data)
@@ -261,7 +261,13 @@ sars_large_example = Example(
         ],
     ),
     example_queries=[
-        Query.from_str(treatments="Sil6r", outcomes="cytok"),
         Query.from_str(treatments="EGFR", outcomes="cytok"),
     ],
 )
+
+
+#obs_data = generate(num_samples=1000, seed=1)
+#print(np.mean(obs_data['cytok']))
+#intv_data_1 = generate(num_samples=1000, seed=1, treatments = {Variable('EGFR'): 1})
+#intv_data_0 = generate(num_samples=1000, seed=1, treatments = {Variable('EGFR'): 0})
+#print(np.mean(intv_data_1['cytok']) - np.mean(intv_data_0['cytok'])) #ATE
