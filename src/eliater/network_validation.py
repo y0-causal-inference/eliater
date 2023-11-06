@@ -71,24 +71,107 @@ Here are some reasons that the result of the test may be false negative or false
 
    It's worth noting that this module employs traditional tests where the null hypothesis is
    conditional independence.
-2. In addition, p-values decrease as the number of data points used in the conditional
-   independency test increases, i.e., the larger the data, more conditional independences
-   implied by the network will be considered as dependent. Hence, chances of false negatives
-   increases.
-3. Conditional independence tests rely on probability assumptions regarding the data distribution.
+2. Conditional independence tests rely on probability assumptions regarding the data distribution.
    For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
    that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
    utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
    assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
+3. In addition, *p*-value of a data-driven conditional independency test (e.g., the pearson
+   test applied to continuous data) decrease as the number of data points increases, i.e., the
+   larger the data, more conditional independence tests implied by the network will be considered
+   as dependent. Hence, chances of false negatives increases, i.e., a pair of variables that are
+   conditionally independent, be concluded as conditional dependent by the test.
 
-As a result, the results obtained from this module should be regarded more as heuristics approach rather
-than a systematic, strict step that provides precise results. For more reference on this topic, please see
+   We demonstrate this third phenomena below using the following example graph, observational data
+   (simulated specifically for this graph using
+   :func:`eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders.generate`),
+   and the application of subsampling.
+   .. todo::
+
+       This name (frontdoor_backdoor.multiple_mediators_with_multiple_confounders) is so awful,
+       way too hard to even write out or read. Maybe best to just call it example T1 or something short
+
+   .. image:: ../../docs/source/img/multiple_mediators_with_multiple_confounders.png
+      :width: 200px
+
+   .. warning::
+
+       This part is implemented based on Chapter 4 from
+       https://livebook.manning.com/book/causal-ai/welcome/v-4/, however
+       this resource is paywalled.
+
+   In this graph, $Y$ is conditionally independent (i.e., D-separated) of $M_1$ given $M_2$, $Z_2$.
+   The data has been generated based on this assumption. Hence, we expect the $p$-value to be above
+   0.05, i.e., not rejecting the null hypothesis of conditional independence. We use the following
+   workflow to graphically assess how this compares to a data-driven approach.
+
+   .. code-block:: python
+
+       import matplotlib.pyplot as plt
+       from matplotlib_inline.backend_inline import set_matplotlib_formats
+
+       from y0.graph import NxMixedGraph
+       from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders import generate
+       from eliater.sample_size_vs_pvalue import generate_plot_expected_p_value_vs_num_data_points
+
+       graph = NxMixedGraph.from_edges(
+           directed=[
+               ('Z1', 'X'),
+               ('X', 'M1'),
+               ('M1', 'M2'),
+               ('M2', 'Y'),
+               ('Z1', 'Z2'),
+               ('Z2', 'Z3'),
+               ('Z3', 'Y')
+           ]
+       )
+
+       # Generate observational data for this graph (this is a special example)
+       observational_df = generate(num_samples=2_000, seed=1)
+
+       generate_plot_expected_p_value_vs_num_data_points(
+           observational_df,
+           start=50,
+           stop=2_000,
+           step=100,
+           left="Y",
+           right="M1",
+           conditions=["M2", "Z2"],
+       )
+       plt.savefig("pvalue_vs_sample_size.svg")
+
+
+   .. image:: ../../docs/source/img/pvalue_vs_sample_size.svg
+      :width: 350px
+      :height: 250px
+      :scale: 200 %
+      :alt: alternate text
+      :align: right
+
+   This plot shows that the expected $p$-value will decrease as number of data points increases. The error bars are 90%
+   bootstrap confidence intervals. The horizontal dashed line is a 0.5 significance level. The p-values above this threshold
+   show that the test favors the null hypothesis of conditional independence. For number of data points greater than 1,000,
+   the test is more likely to reject the null hypothesis, and for number of data points greater than 1,250, the test always
+   rejects the null hypothesis, i.e., the data will no longer support that $Y$ is independent of $M_1$ given $M_2$, and $Z_2$
+   where it should be. Hence, the result of network validation depends on the size of the data. This result may seem dissapointing
+   because more data can lead to inaccurate results, however, regardless of the data size and the significance thresholds, the
+   relative differences between $p$-values when there is no conditional independence and whe there is will be large and easy
+   to detect.
+
+
+As a result of points 1,2,and 3, the results obtained from this module should be regarded more as heuristics approach
+and as an indication of patterns in data as opposed to statement of ground truth and should be interpreted with caution.
+However, if the percentage of failed tests is smaller than 10 to 30 percent, it indicates that there are chances that
+the true network structure is different from the input network, however its impact in causal query estimation is minor.
+If the percentage of failed tests is large, it indicates that the input network does not reflect the underlying data
+generation process, and the network should be revised. Causal structure learning algorithms, for examples the ones
+implemented in <pgmpy> module https://pgmpy.org/examples/Structure%20Learning%20in%20Bayesian%20Networks.html  can be
+used to revise the network structure and align it with data. This module currently does not repair the structure of the
+network if the network is not aligned with data according to conditional independence tests.
+
+For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 
-.. todo::
-
-    So what? Give some insight in how someone should follow-up after looking at this table.
-    How do you use this on your own data?
 
 .. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 """
@@ -97,11 +180,20 @@ import logging
 from typing import Dict, Literal, Optional
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
 from y0.algorithm.falsification import get_graph_falsifications
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 from y0.struct import get_conditional_independence_tests
+
+from typing import Optional
+
+from numpy import mean, quantile
+from tqdm.auto import trange
+
+from eliater.network_validation import CITest, choose_default_test, validate_test
 
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
@@ -114,7 +206,12 @@ __all__ = [
     "is_data_continuous",
     "CITest",
     "choose_default_test",
+    "p_value_of_bootstrap_data",
+    "p_value_statistics",
+    "generate_plot_expected_p_value_vs_num_data_points",
 ]
+
+TESTS = get_conditional_independence_tests()
 
 
 def get_state_space_map(
@@ -270,3 +367,171 @@ def conditional_independence_test_summary(
         logging.info(test_results.to_string(index=False))
     else:
         logging.info(failed_tests.to_string(index=False))
+
+
+def p_value_of_bootstrap_data(
+    df: pd.DataFrame,
+    sample_size: int,
+    left: str,
+    right: str,
+    conditions: list[str],
+    *,
+    test: Optional[CITest] = None,
+    significance_level: Optional[float] = None,
+) -> int:
+    """Calculate the p-value for a bootstrap data.
+
+    :param df: observational data
+    :param sample_size: number of data points to sample a bootstrap data from full_data
+    :param left: first variable name positioned on the left side of a conditional independence test
+    :param right: second variable name positioned on the right side of a conditional independence test
+    :param conditions: variables names to condition on in the conditional independence test
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.05.
+    :return: the $p$-value for the given bootstrap data
+    """
+    if significance_level is None:
+        significance_level = 0.05
+    if test is None:
+        test = choose_default_test(df)
+    else:
+        validate_test(data=df, test=test)
+    bootstrap_data = df.sample(n=sample_size, replace=True)
+    result = TESTS[test](
+        X=left,
+        Y=right,
+        Z=conditions,
+        data=bootstrap_data,
+        boolean=False,
+        significance_level=significance_level,
+    )
+    p_val = result[1]
+    return p_val
+
+
+def p_value_statistics(
+    df: pd.DataFrame,
+    sample_size: int,
+    left: str,
+    right: str,
+    conditions: list[str],
+    *,
+    test: Optional[CITest] = None,
+    significance_level: Optional[float] = None,
+    boot_size: Optional[int] = None,
+):
+    """Calculate mean of p-value, the 5th percentile and 95th percentile error, for several bootstrap data.
+
+    :param df: A dataframe containing observational data
+    :param sample_size: number of data points to sample a bootstrap data from the dataframe
+    :param left: first variable name positioned on the left side of a conditional independence test
+    :param right: second variable name positioned on the right side of a conditional independence test
+    :param conditions: variables names to condition on in the conditional independence test
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.05.
+    :param boot_size: total number of times a bootstrap data is sampled
+    :return: the mean of p-value, the 5th percentile and 95 percentile error, for several bootstrap data
+    """
+    if boot_size is None:
+        boot_size = 1_000
+    if not test:
+        test = choose_default_test(df)
+    else:
+        validate_test(data=df, test=test)
+    samples = [
+        p_value_of_bootstrap_data(
+            df,
+            sample_size,
+            left,
+            right,
+            conditions,
+            test=test,
+            significance_level=significance_level,
+        )
+        for _ in trange(
+            boot_size, desc="Bootstrapping", leave=False, unit_scale=True, unit="bootstrap"
+        )
+    ]
+    p_val = mean(samples)  # Calculate the mean of the p-values to get the bootstrap mean.
+    quantile_05, quantile_95 = quantile(samples, q=[0.05, 0.95])
+    lower_error = np.absolute(p_val - quantile_05)  # Calculate the 5th percentile
+    higher_error = np.absolute(quantile_95 - p_val)  # Calculate the 95th percentile
+    return p_val, lower_error, higher_error
+
+
+def generate_plot_expected_p_value_vs_num_data_points(
+    df: pd.DataFrame,
+    start: int,
+    stop: int,
+    step: int,
+    left: str,
+    right: str,
+    conditions: list[str],
+    *,
+    test: Optional[CITest] = None,
+    significance_level: Optional[float] = None,
+    boot_size: Optional[int] = None,
+):
+    """Generate the plot of expected p-value versus number of data points.
+
+    :param df: observational data
+    :param start: minimum number of data points to sample from df
+    :param stop: maximum number of data points to sample from df
+    :param step: minimum number of sampled data points increments by step number, and stops
+        before maximum number of sampled data points
+    :param left: first variable name positioned on the left side of a conditional independence test
+    :param right: second variable name positioned on the right side of a conditional independence test
+    :param conditions: variables names to condition on in the conditional independence test
+    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+        and ``chi-square`` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.05.
+    :param boot_size: total number of times a bootstrap data is sampled
+    :return: the plot of expected p-value versus number of data points
+    """
+    if significance_level is None:
+        significance_level = 0.05
+    p_vals, lower_errors, higher_errors = zip(
+        *[
+            p_value_statistics(
+                df=df,
+                sample_size=size,
+                left=left,
+                right=right,
+                conditions=conditions,
+                test=test,
+                significance_level=significance_level,
+                boot_size=boot_size,
+            )
+            for size in trange(start, stop, step, desc="Sampling")
+        ]
+    )
+
+    if len(conditions) < 1:
+        plt.title(
+            f"Independence of {left} and {right}"
+        )
+    else:
+        conditions_string = ", ".join(conditions)
+        plt.title(
+            f"Independence of {left} and {right} given {conditions_string}"
+        )
+
+    # TODO try using seaborn for this, gets much higher quality charts
+    plt.xlabel("Data Points")
+    plt.ylabel("Expected p-Value")
+    plt.errorbar(
+        list(range(start, stop, step)),
+        p_vals,
+        yerr=np.array([lower_errors, higher_errors]),
+        ecolor="grey",
+        elinewidth=0.5,
+    )
+    plt.hlines(significance_level, 0, stop, linestyles="dashed")
