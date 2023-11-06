@@ -2,9 +2,8 @@
 
 The *p*-value of a data-driven conditional independency test
 (e.g., the pearson test applied to continuous data) decreases as the number of data points increases.
-This means that the chances of false negatives increases for larger datasets.
-
-.. todo:: What does the chance of false negatives mean specifically? False negative of what?
+This means that the chances of false negatives increases for larger datasets, i.e., a pair of variables that are
+conditionally independent, be concluded as conditional dependent by the test.
 
 We demonstrate this phenomena below using the following example graph, observational data
 (simulated specifically for this graph using
