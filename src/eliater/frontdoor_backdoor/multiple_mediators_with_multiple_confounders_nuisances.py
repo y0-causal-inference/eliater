@@ -178,8 +178,8 @@ def generate(
 
 
 multiple_mediators_confounders_nuisance_vars_example = Example(
-    name="frontdoor with multiple mediators, confounders and nuisance variables",
-    reference="Causal workflow paper, figure 4 (a).",
+    name="frontdoor backdoor with multiple mediators, confounders and nuisance variables",
+    reference="Sara Taheri.",
     description="This is an extension of the frontdoor_backdoor example from y0 module"
     " but with more variables directly connecting the treatment to outcome (mediators)"
     "and several additional variables that are a direct cause of both the treatment and outcome"
