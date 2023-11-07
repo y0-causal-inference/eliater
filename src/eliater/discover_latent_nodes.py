@@ -11,14 +11,16 @@ This module is designed to identify these variables.
 
 This process enables us to concentrate on the fundamental variables needed to estimate the
 treatment's impact on the outcome. This focus results in more precise estimates with reduced
-variance and bias. In addition, if this process is combined with the simplification module in y0:
-y0.algorithm.simplify_latent.simplify_latent_dag() it can help to remove the nuisance variables
+variance and bias. In addition, if this process is combined with the simplification function
+:func:`y0.algorithm.simplify_latent.simplify_latent_dag` it can help to remove the nuisance variables
 from the graph which leads to simpler, more interpretable, and visually more appealing result.
 
-Here is an example of an ADMG where X is the treatment and Y is the outcome. This ADMG has
-only one causal path from X to Y which is X -> M1 -> M2 -> Y. The descendants of these variables
-that are not ancestors of the outcome are R1, R2, and R3. The goal of this example is to identify these
+Here is an example of an ADMG where $X$ is the treatment and $Y$ is the outcome. This ADMG has
+only one causal path from $X$ to $Y$ which is $X$ -> $M_1$ -> $M_2$ -> $Y$. The descendants of these variables
+that are not ancestors of the outcome are $R_1$, $R_2$, and $R_3$. The goal of this example is to identify these
 nuisance variables.
+
+.. todo:: add images to show network before and after. Maybe even creating a function to generate this would be a nice idea
 
 .. code-block:: python
 
@@ -46,7 +48,7 @@ nuisance variables.
 
     new_graph = remove_latent_variables(graph, treatments=X, outcomes=Y)
 
-The nuisance variables are identified as R1, R2, and R3. The new graph does not contain these variables.
+The nuisance variables are identified as $R_1$, $R_2$, and $R_3$. The new graph does not contain these variables.
 It is simpler than the original graph and only contains variables necessary for estimation of the
 causal effect of interest.
 
@@ -80,6 +82,7 @@ The new graph can be used to check if the query is identifiable, and if so, gene
     Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
     and use as few other nodes as possible, named very simply.
 """
+
 import itertools
 from typing import Iterable, Optional, Set, Union
 
@@ -146,8 +149,6 @@ def mark_nuisance_variables_as_latent(
     for node, data in lv_dag.nodes(data=True):
         if Variable(node) in nuisance_variables:
             data[tag] = True
-    # simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
-    # return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
     return lv_dag
 
 
