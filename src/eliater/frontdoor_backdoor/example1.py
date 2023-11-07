@@ -1,9 +1,10 @@
 """This module contains a method to generate continuous testing data for the multiple_mediators_single_confounder case study.
 
-The multiple_mediators_single_confounder case study is a variation of the "frontdoor" graph, where it contains an exposure variable (X),
-and an outcome (Y), and two variables (M1, M2) on the directed path connecting exposure to the outcome. In addition, it contains a bi-directed
-edge between X and Y, indicating the existence of one or more latent confounders between the exposure and the outcome. As the confounder(s) are
-latent, the effect of exposure on the outcome can be estimated using Pearl's frontdoor criterion.
+The multiple_mediators_single_confounder case study is a variation of the "frontdoor" graph, where it contains an
+exposure variable (X), and an outcome (Y), and two variables (M1, M2) on the directed path connecting exposure
+to the outcome. In addition, it contains a bi-directed edge between X and Y, indicating the existence of one
+or more latent confounders between the exposure and the outcome. As the confounder(s) are latent, the effect
+of exposure on the outcome can be estimated using Pearl's frontdoor criterion.
 """
 
 import numpy as np

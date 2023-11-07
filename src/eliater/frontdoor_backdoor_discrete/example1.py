@@ -1,9 +1,9 @@
 """This module generates discrete data for the single_mediator_with_multiple_confounders_nuisances_discrete_example case study.
 
-The single_mediator_with_multiple_confounders_nuisances_discrete_example case study is a variation of the "frontdoor-backdoor" graph
-where it contains an exposure variable (X),
-and an outcome (Y), one mediator (M1) on the directed path connecting exposure to the outcome, and three observed confounders (Z1, Z2, Z3). In addition,
-it contains three variables that are descendants of the mediator (R1, R2, R3).
+The single_mediator_with_multiple_confounders_nuisances_discrete_example case study is a variation of the
+"frontdoor-backdoor" graph where it contains an exposure variable (X),
+and an outcome (Y), one mediator (M1) on the directed path connecting exposure to the outcome, and three observed
+confounders (Z1, Z2, Z3). In addition, it contains three variables that are descendants of the mediator (R1, R2, R3).
 
 A frontdoor graph is a network structure where there is an exposure variable, and an
 outcome, and one or more variables on the directed path connecting exposure to the

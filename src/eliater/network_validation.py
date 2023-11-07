@@ -84,7 +84,7 @@ Here are some reasons that the result of the test may be false negative or false
 
    We demonstrate this third phenomena below using the following example graph, observational data
    (simulated specifically for this graph using
-   :func:`eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders.generate`),
+   :func:`eliater.frontdoor_backdoor.example2.generate`),
    and the application of subsampling.
    .. todo::
 
@@ -111,7 +111,7 @@ Here are some reasons that the result of the test may be false negative or false
        from matplotlib_inline.backend_inline import set_matplotlib_formats
 
        from y0.graph import NxMixedGraph
-       from eliater.frontdoor_backdoor.multiple_mediators_with_multiple_confounders import generate
+       from eliater.frontdoor_backdoor.example2 import generate
        from eliater.sample_size_vs_pvalue import generate_plot_expected_p_value_vs_num_data_points
 
        graph = NxMixedGraph.from_edges(
@@ -149,14 +149,14 @@ Here are some reasons that the result of the test may be false negative or false
       :align: right
 
    This plot shows that the expected $p$-value will decrease as number of data points increases. The error bars are 90%
-   bootstrap confidence intervals. The horizontal dashed line is a 0.5 significance level. The p-values above this threshold
-   show that the test favors the null hypothesis of conditional independence. For number of data points greater than 1,000,
-   the test is more likely to reject the null hypothesis, and for number of data points greater than 1,250, the test always
-   rejects the null hypothesis, i.e., the data will no longer support that $Y$ is independent of $M_1$ given $M_2$, and $Z_2$
-   where it should be. Hence, the result of network validation depends on the size of the data. This result may seem dissapointing
-   because more data can lead to inaccurate results, however, regardless of the data size and the significance thresholds, the
-   relative differences between $p$-values when there is no conditional independence and whe there is will be large and easy
-   to detect.
+   bootstrap confidence intervals. The horizontal dashed line is a 0.5 significance level. The p-values above this
+   threshold show that the test favors the null hypothesis of conditional independence. For number of data points
+   greater than 1,000, the test is more likely to reject the null hypothesis, and for number of data points greater
+   than 1,250, the test always rejects the null hypothesis, i.e., the data will no longer support that $Y$ is
+   independent of $M_1$ given $M_2$, and $Z_2$ where it should be. Hence, the result of network validation depends
+   on the size of the data. This result may seem dissapointing because more data can lead to inaccurate results,
+   however, regardless of the data size and the significance thresholds, the relative differences between $p$-values
+   when there is no conditional independence and whe there is will be large and easy to detect.
 
 
 As a result of points 1,2,and 3, the results obtained from this module should be regarded more as heuristics approach
@@ -173,27 +173,23 @@ For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 
 
-.. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
+.. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling networks
+derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 """
 
 import logging
 from typing import Dict, Literal, Optional
 
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from numpy import mean, quantile
+from tqdm.auto import trange
 
 from y0.algorithm.falsification import get_graph_falsifications
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 from y0.struct import get_conditional_independence_tests
-
-from typing import Optional
-
-from numpy import mean, quantile
-from tqdm.auto import trange
-
-from eliater.network_validation import CITest, choose_default_test, validate_test
 
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
@@ -490,9 +486,8 @@ def generate_plot_expected_p_value_vs_num_data_points(
     :param conditions: variables names to condition on in the conditional independence test
     :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
         and ``chi-square`` for discrete data.
-    :param significance_level: The statistical tests employ this value for
-        comparison with the p-value of the test to determine the independence of
-        the tested variables. If none, defaults to 0.05.
+    :param significance_level: The statistical tests employ this value for comparison with the p-value of the test
+        to determine the independence of the tested variables. If none, defaults to 0.05.
     :param boot_size: total number of times a bootstrap data is sampled
     :return: the plot of expected p-value versus number of data points
     """
@@ -515,14 +510,10 @@ def generate_plot_expected_p_value_vs_num_data_points(
     )
 
     if len(conditions) < 1:
-        plt.title(
-            f"Independence of {left} and {right}"
-        )
+        plt.title(f"Independence of {left} and {right}")
     else:
         conditions_string = ", ".join(conditions)
-        plt.title(
-            f"Independence of {left} and {right} given {conditions_string}"
-        )
+        plt.title(f"Independence of {left} and {right} given {conditions_string}")
 
     # TODO try using seaborn for this, gets much higher quality charts
     plt.xlabel("Data Points")
