@@ -86,10 +86,6 @@ Here are some reasons that the result of the test may be false negative or false
    (simulated specifically for this graph using
    :func:`eliater.frontdoor_backdoor.example2.generate`),
    and the application of subsampling.
-   .. todo::
-
-       This name (frontdoor_backdoor.multiple_mediators_with_multiple_confounders) is so awful,
-       way too hard to even write out or read. Maybe best to just call it example T1 or something short
 
    .. image:: ../../docs/source/img/multiple_mediators_with_multiple_confounders.png
       :width: 200px
@@ -114,7 +110,7 @@ Here are some reasons that the result of the test may be false negative or false
        from eliater.frontdoor_backdoor.example2 import generate
        from eliater.sample_size_vs_pvalue import generate_plot_expected_p_value_vs_num_data_points
 
-       graph = NxMixedGraph.from_edges(
+       graph = NxMixedGraph.from_str_edges(
            directed=[
                ('Z1', 'X'),
                ('X', 'M1'),
@@ -189,7 +185,7 @@ from tqdm.auto import trange
 from y0.algorithm.falsification import get_graph_falsifications
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
-from y0.struct import get_conditional_independence_tests
+from y0.struct import CITest, get_conditional_independence_tests
 
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
@@ -251,20 +247,6 @@ def is_data_continuous(data: pd.DataFrame) -> bool:
     return variable_types == {"continuous"}
 
 
-# TODO replace with y0.struct.CITest
-CITest = Literal[
-    "pearson",
-    "chi-square",
-    "cressie_read",
-    "freeman_tuckey",
-    "g_sq",
-    "log_likelihood",
-    "modified_log_likelihood",
-    "power_divergence",
-    "neyman",
-]
-
-
 def choose_default_test(data: pd.DataFrame) -> CITest:
     """Choose the default statistical test for testing conditional independencies based on the data.
 
@@ -309,6 +291,7 @@ def conditional_independence_test_summary(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     test: Optional[CITest] = None,
+    max_given: Optional[int] = 5,
     significance_level: Optional[float] = None,
     verbose: Optional[bool] = False,
 ) -> None:
@@ -322,6 +305,7 @@ def conditional_independence_test_summary(
     :param data: observational data corresponding to the graph
     :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
         and ``chi-square`` for discrete data.
+    :param max_given: The maximum set size in the power set of the vertices minus the d-separable pairs
     :param significance_level: The statistical tests employ this value for
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.01.
@@ -341,7 +325,11 @@ def conditional_independence_test_summary(
                 "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
             )
     test_results = get_graph_falsifications(
-        graph=graph, df=data, method=test, significance_level=significance_level
+        graph=graph,
+        df=data,
+        method=test,
+        significance_level=significance_level,
+        max_given=max_given,
     ).evidence
     # Find the result based on p-value
     test_results["result"] = test_results["p"].apply(
@@ -514,7 +502,6 @@ def generate_plot_expected_p_value_vs_num_data_points(
         conditions_string = ", ".join(conditions)
         plt.title(f"Independence of {left} and {right} given {conditions_string}")
 
-    # TODO try using seaborn for this, gets much higher quality charts
     plt.xlabel("Data Points")
     plt.ylabel("Expected p-Value")
     plt.errorbar(
