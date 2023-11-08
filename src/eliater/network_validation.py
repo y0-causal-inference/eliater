@@ -496,6 +496,7 @@ def generate_plot_expected_p_value_vs_num_data_points(
         ]
     )
 
+    # TODO use seaborn for high quality plots
     if len(conditions) < 1:
         plt.title(f"Independence of {left} and {right}")
     else:
