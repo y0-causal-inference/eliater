@@ -1,4 +1,4 @@
-"""This module generates discrete data for the single_mediator_with_multiple_confounders_nuisances_discrete_example case study.
+"""This module generates discrete data for the example1.
 
 The single_mediator_with_multiple_confounders_nuisances_discrete_example case study is a variation of the
 "frontdoor-backdoor" graph where it contains an exposure variable (X),

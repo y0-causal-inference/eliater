@@ -1,4 +1,4 @@
-"""This module contains a method to generate continuous testing data for the multiple_mediators_single_confounder case study.
+"""This module contains a method to generate continuous testing data for example1.
 
 The multiple_mediators_single_confounder case study is a variation of the "frontdoor" graph, where it contains an
 exposure variable (X), and an outcome (Y), and two variables (M1, M2) on the directed path connecting exposure

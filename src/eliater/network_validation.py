@@ -489,7 +489,6 @@ def generate_plot_expected_p_value_vs_num_data_points(
     :param significance_level: The statistical tests employ this value for comparison with the p-value of the test
         to determine the independence of the tested variables. If none, defaults to 0.05.
     :param boot_size: total number of times a bootstrap data is sampled
-    :return: the plot of expected p-value versus number of data points
     """
     if significance_level is None:
         significance_level = 0.05

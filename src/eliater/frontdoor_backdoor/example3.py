@@ -1,4 +1,4 @@
-"""This module generates continuous testing data for the multiple_mediators_with_multiple_confounders_nuisances case study.
+"""This module generates continuous testing data for the example3.
 
 The multiple_mediators_with_multiple_confounders_nuisances case study is a variation of the "frontdoor-backdoor" graph,
 where it contains an exposure variable (X), and an outcome (Y), two mediator variables (M1, M2) on the directed
