@@ -20,7 +20,8 @@ only one causal path from $X$ to $Y$ which is $X$ -> $M_1$ -> $M_2$ -> $Y$. The 
 that are not ancestors of the outcome are $R_1$, $R_2$, and $R_3$. The goal of this example is to identify these
 nuisance variables.
 
-.. todo:: add images to show network before and after. Maybe even creating a function to generate this would be a nice idea
+.. todo:: add images to show network before and after. Maybe even creating a function
+          to generate this would be a nice idea
 
 .. code-block:: python
 
@@ -58,29 +59,71 @@ causal effect of interest.
 
 The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
 
-.. todo::
+.. code-block:: python
 
-    need minimal example for evans rule 1.
-    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
-    and use as few other nodes as possible, named very simply.
+    # Minimal example for evans rule 1 (Transforming latent nodes)
+    from y0.algorithm.simplify_latent import simplify_latent_dag
+    import networkx as nx
+    from y0.dsl import X, Y, Z1
+    from y0.graph import set_latent
 
-.. todo::
+    graph = nx.DiGraph()
+    graph.add_edges_from([(X, Z1), (Z1, Y), (Z1, Z2)])
+    set_latent(graph, [Z1])
+    simplified_graph = simplify_latent_dag(graph).graph
 
-    need minimal example for evans rule 2.
-    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
-    and use as few other nodes as possible, named very simply.
+The edges in the resultant graph are [(X, Z2), (X, Y), (Z1_prime, Z2), (Z1_prime, Y)].
+The parent of the latent node Z1 becomes attached to latter's children (Z2 and Y).
+The edge between X and Z1 is removed, and Z1 is transformed into Z1_prime while remaining connected to its children.
 
-.. todo::
+.. code-block:: python
 
-    need minimal example for evans rule 3.
-    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
-    and use as few other nodes as possible, named very simply.
+    # Minimal example for evans rule 2 (Removing widow latents)
+    from y0.algorithm.simplify_latent import simplify_latent_dag
+    import networkx as nx
+    from y0.dsl import X, Y, Z1
+    from y0.graph import set_latent
 
-.. todo::
+    graph = nx.DiGraph()
+    graph.add_edges_from([(X, Z1), (X, Y)])
+    set_latent(graph, [Z1])
+    simplified_graph = simplify_latent_dag(graph).graph
 
-    need minimal example for evans rule 4.
-    Minimal means that it should not be a biology network, and use X as the treatment, Y as the outcome,
-    and use as few other nodes as possible, named very simply.
+The edges in the resultant graph are [(X, Y)].
+Z1 is removed as it is a latent node with no children.
+
+.. code-block:: python
+
+    # Minimal example for evans rule 3 (Removing unidirectional latents)
+    from y0.algorithm.simplify_latent import simplify_latent_dag
+    import networkx as nx
+    from y0.dsl import X, Y, Z1
+    from y0.graph import set_latent
+
+    graph = nx.DiGraph()
+    graph.add_edges_from([(X, Z1), (Z1, Y), (X, Y)])
+    set_latent(graph, [Z1])
+    simplified_graph = simplify_latent_dag(graph).graph
+
+The edges in the resultant graph are [(X, Y)].
+Z1 is removed as it is a latent node with a single child.
+
+.. code-block:: python
+
+    # Minimal example for evans rule 4 (Removing redundant latents)
+    from y0.algorithm.simplify_latent import simplify_latent_dag
+    import networkx as nx
+    from y0.dsl import X, Y, Z1, Z2, Z3, Z4
+    from y0.graph import set_latent
+
+    graph = nx.DiGraph()
+    graph.add_edges_from([(X, Y), (Z1, Y), (Z1, Z2), (Z1, Z3), (Z4, Z2), (Z4, Z3)])
+    set_latent(graph, [Z1, Z4])
+    simplified_graph = simplify_latent_dag(graph).graph
+
+The edges in the resultant graph are [(X, Y), (Z1, Y), (Z1, Z2), (Z1, Z3)].
+Z4 is removed as its children are a subset of Z1's children.
+
 """
 
 import itertools
