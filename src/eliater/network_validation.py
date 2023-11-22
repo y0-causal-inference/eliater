@@ -179,6 +179,7 @@ from typing import Dict, Literal, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from numpy import mean, quantile
 from tqdm.auto import trange
 
@@ -496,7 +497,6 @@ def generate_plot_expected_p_value_vs_num_data_points(
         ]
     )
 
-    # TODO use seaborn for high quality plots
     if len(conditions) < 1:
         plt.title(f"Independence of {left} and {right}")
     else:
@@ -505,11 +505,16 @@ def generate_plot_expected_p_value_vs_num_data_points(
 
     plt.xlabel("Data Points")
     plt.ylabel("Expected p-Value")
+
+    sns.lineplot(x=list(range(start, stop, step)), y=p_vals)
+
     plt.errorbar(
         list(range(start, stop, step)),
         p_vals,
         yerr=np.array([lower_errors, higher_errors]),
         ecolor="grey",
         elinewidth=0.5,
+        fmt="none",
     )
     plt.hlines(significance_level, 0, stop, linestyles="dashed")
+    plt.show()
