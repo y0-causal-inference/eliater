@@ -169,7 +169,7 @@ For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 
 
-.. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling
+[Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling
 networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 
 """
