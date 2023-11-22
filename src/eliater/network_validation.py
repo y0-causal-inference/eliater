@@ -108,7 +108,7 @@ Here are some reasons that the result of the test may be false negative or false
 
        from y0.graph import NxMixedGraph
        from eliater.frontdoor_backdoor.example2 import generate
-       from eliater.sample_size_vs_pvalue import generate_plot_expected_p_value_vs_num_data_points
+       from eliater.network_validation import generate_plot_expected_p_value_vs_num_data_points
 
        graph = NxMixedGraph.from_str_edges(
            directed=[

@@ -4,8 +4,3 @@ Network Validation
     :no-heading:
     :include-all-objects:
 
-Sample size vs p-value
-=======================
-.. automodapi:: eliater.sample_size_vs_pvalue
-    :no-heading:
-    :include-all-objects:
