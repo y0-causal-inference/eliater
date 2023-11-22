@@ -517,4 +517,3 @@ def generate_plot_expected_p_value_vs_num_data_points(
         fmt="none",
     )
     plt.hlines(significance_level, 0, stop, linestyles="dashed")
-    plt.show()
