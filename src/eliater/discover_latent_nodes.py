@@ -16,12 +16,14 @@ variance and bias. In addition, if this process is combined with the simplificat
 from the graph which leads to simpler, more interpretable, and visually more appealing result.
 
 Here is an example of an ADMG where $X$ is the treatment and $Y$ is the outcome. This ADMG has
-only one causal path from $X$ to $Y$ which is $X$ -> $M_1$ -> $M_2$ -> $Y$. The descendants of these variables
+only one causal path from $X$ to $Y$ which is $X$ -> $M_1$ -> $Y$. The descendants of these variables
 that are not ancestors of the outcome are $R_1$, $R_2$, and $R_3$. The goal of this example is to identify these
 nuisance variables.
 
-.. todo:: add images to show network before and after. Maybe even creating a function
-          to generate this would be a nice idea
+.. figure:: ../../docs/source/img/discover_latent_nodes_docstring_example.png
+   :width: 120px
+   :height: 120px
+   :scale: 150 %
 
 .. code-block:: python
 
@@ -30,13 +32,12 @@ nuisance variables.
     from y0.dsl import Variable, X, Y
     from y0.graph import NxMixedGraph
 
-    M1, M2, R1, R2, R3 = (Variable(x) for x in ("M1", "M2", "R1", "R2", "R3"))
+    M1, R1, R2, R3 = (Variable(x) for x in ("M1", "R1", "R2", "R3"))
 
     graph = NxMixedGraph.from_edges(
         directed=[
             (X, M1),
-            (M1, M2),
-            (M2, Y),
+            (M1, Y),
             (M1, R1),
             (R1, R2),
             (R2, R3),
@@ -52,6 +53,11 @@ nuisance variables.
 The nuisance variables are identified as $R_1$, $R_2$, and $R_3$. The new graph does not contain these variables.
 It is simpler than the original graph and only contains variables necessary for estimation of the
 causal effect of interest.
+
+.. figure:: ../../docs/source/img/discover_latent_nodes_docstring_example_output.png
+   :width: 120px
+   :height: 100px
+   :scale: 130 %
 
 .. code-block:: python
 

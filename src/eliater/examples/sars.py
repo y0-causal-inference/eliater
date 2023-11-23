@@ -1,16 +1,17 @@
-"""Examples for SARS-CoV-2 and COVID19.
+"""Examples for SARS-CoV-2.
 
-.. todo::
+The data associated with this example is as follows:
 
-    1. Isn't this the same as something built in to the y0 package?
-    2. wrap these with the :class:`y0.example.Example` class and detailed biological context.
-    3. Where did this network come from? Give reference
-    4. What is the biological phenomena described here?
-    5. How was this network constructed?
-    6. Is there associated data to go with this graph?
+.. code-block:: python
+
+    from src.eliater.frontdoor_backdoor import sars_cov2_discrete
+    data = sars_cov2_discrete.generate(num_samples=1000, seed=1),
 """
 
 from y0.graph import NxMixedGraph
+from y0.examples import Example
+from y0.algorithm.identify import Query
+
 
 graph = NxMixedGraph.from_str_edges(
     directed=[
@@ -42,3 +43,21 @@ graph = NxMixedGraph.from_str_edges(
         ("EGFR", "IL6STAT3"),
     ],
 )
+
+base_example = Example(
+    name="SARS-CoV-2 Graph",
+    reference="Mohammad-Taheri, S., Zucker, J., Hoyt, C. T., Sachs, K., Tewari, V., Ness, R., & Vitek,"
+              " O. (2022). Do-calculus enables estimation of causal effects in partially observed"
+              " biomolecular pathways. Bioinformatics, 38(Supplement_1), i350-i358.",
+    graph=graph,
+    description="This system models activation of Cytokine Release Syndrome (Cytokine Storm), known to"
+                " cause tissue damage in severely ill SARS-CoV-2  patients. The network was extracted"
+                " from COVID-19 Open Research Dataset (CORD-19) document corpus using the Integrated Dynamical"
+                " Reasoner and Assembler (INDRA) workflow, and by quering and expressing the corresponding causal"
+                " statements in the Biological Expression Language (BEL). Presence of latent variables was determined"
+                " by querying pairs of entities in the network for common causes in the corpus.",
+    example_queries=[Query.from_str(treatments="Sil6r", outcomes="cytok"),
+                     Query.from_str(treatments="EGFR", outcomes="cytok")]
+)
+
+base_example.__doc__ = base_example.description
