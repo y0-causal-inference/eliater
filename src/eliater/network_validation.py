@@ -13,7 +13,8 @@ This process allows for checking the validity of network structure with respect 
 If the percentage of failed tests is higher than the user expects, additional experiments
 is required to change the model.
 
-.. todo:: How does the user set their expectation? This kind of text gives no help to someone reading this for the first time that wants to understand how to use this or why to use it
+.. todo:: How does the user set their expectation? This kind of text gives no help to someone reading this for the
+.. todo:: first time that wants to understand how to use this or why to use it
 
 
 T Cell Signalling Example
@@ -202,7 +203,7 @@ chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 
 
 .. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling
-networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
+   networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 """
 
 import logging
