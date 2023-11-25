@@ -13,11 +13,18 @@ This process allows for checking the validity of network structure with respect 
 If the percentage of failed tests is higher than the user expects, additional experiments
 is required to change the model.
 
+.. todo:: How does the user set their expectation? This kind of text gives no help to someone reading this for the first time that wants to understand how to use this or why to use it
+
+
+T Cell Signalling Example
+-------------------------
 Here is an example of a protein signalling network of the T cell signaling pathway presented
 in [Sachs2005]_. It models the molecular mechanisms and regulatory processes involved
 in T cell activation, proliferation, and function.
 
-.. figure:: docs/source/img/signaling.png
+.. todo:: what about explanation of data?
+
+.. image:: ../../docs/source/img/signaling.png
    :width: 200px
    :height: 200px
    :scale: 150 %
@@ -43,6 +50,7 @@ in T cell activation, proliferation, and function.
 
     data = load_sachs_df()
 
+    # TODO what does this return? a dataframe? does the user output it?
     conditional_independence_test_summary(graph, data, verbose=True)
 
 .. image:: ../../docs/source/img/sachs_table.png
@@ -55,107 +63,131 @@ in T cell activation, proliferation, and function.
 The results show that out of 35 cases, 1 failed. The failed test is
 the conditional independence between P38 and PIP2, given PKC, with a p-value of 0.00425.
 
+.. todo:: link all mentions of biological entities to HGNC or UniProt pages
+
+Finding False Negatives
+-----------------------
 This module relies on statistical tests, and statistical tests always have chances
 of producing false negatives, i.e., a pair of variables that are conditionally
 independent, be concluded as conditional dependent by the test, or producing false
 positives, i.e., a pair of variables that are conditionally dependent be concluded
 as conditionally independent by the test.
 
-Here are some reasons that the result of the test may be false negative or false positive:
+There are three main reasons that the result of the test may be false negative or false positive:
 
-1. In pgmpy, the conditional independence tests assume that the alternative hypothesis is
-   dependence, while the null hypothesis is conditional independence. However, when dealing
-   with an ADMG and hypothetically assuming that the ADMG has the correct structure, it is
-   more appropriate for the null hypothesis to be the hypothesis of dependence. This distinction
-   can be significant as the p-value relies on the null hypothesis.
+1. .. todo:: 1 sentence summary of scenario 1
+2. .. todo:: 1 sentence summary of scenario 2
+3. .. todo:: 1 sentence summary of scenario 3
 
-   It's worth noting that this module employs traditional tests where the null hypothesis is
-   conditional independence.
-2. Conditional independence tests rely on probability assumptions regarding the data distribution.
-   For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
-   that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
-   utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
-   assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
-3. In addition, *p*-value of a data-driven conditional independency test (e.g., the pearson
-   test applied to continuous data) decrease as the number of data points increases, i.e., the
-   larger the data, more conditional independence tests implied by the network will be considered
-   as dependent. Hence, chances of false negatives increases, i.e., a pair of variables that are
-   conditionally independent, be concluded as conditional dependent by the test.
+.. todo:: give meaningful names for all point headers
 
-   We demonstrate this third phenomena below using the following example graph, observational data
-   (simulated specifically for this graph using
-   :func:`eliater.frontdoor_backdoor.example2.generate`),
-   and the application of subsampling.
+False Negatives Scenario 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+In pgmpy, the conditional independence tests assume that the alternative hypothesis is
+dependence, while the null hypothesis is conditional independence. However, when dealing
+with an ADMG and hypothetically assuming that the ADMG has the correct structure, it is
+more appropriate for the null hypothesis to be the hypothesis of dependence. This distinction
+can be significant as the p-value relies on the null hypothesis.
 
-   .. image:: ../../docs/source/img/multiple_mediators_with_multiple_confounders.png
-      :width: 200px
+Note that this module employs traditional tests where the null hypothesis is conditional independence.
 
-   .. warning::
+.. todo:: demonstrate an example
 
-       This part is implemented based on Chapter 4 from
-       https://livebook.manning.com/book/causal-ai/welcome/v-4/, however
-       this resource is paywalled.
+False Negatives Scenario 2
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Conditional independence tests rely on probability assumptions regarding the data distribution.
+For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
+that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
+utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
+assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
 
-   In this graph, $Y$ is conditionally independent (i.e., D-separated) of $M_1$ given $M_2$, $Z_2$.
-   The data has been generated based on this assumption. Hence, we expect the $p$-value to be above
-   0.05, i.e., not rejecting the null hypothesis of conditional independence. We use the following
-   workflow to graphically assess how this compares to a data-driven approach.
+.. todo:: demonstrate an example
 
-   .. code-block:: python
+False Negatives Scenario 3
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+In addition, *p*-value of a data-driven conditional independency test (e.g., the pearson
+test applied to continuous data) decrease as the number of data points increases, i.e., the
+larger the data, more conditional independence tests implied by the network will be considered
+as dependent. Hence, chances of false negatives increases, i.e., a pair of variables that are
+conditionally independent, be concluded as conditional dependent by the test.
 
-       import matplotlib.pyplot as plt
-       from matplotlib_inline.backend_inline import set_matplotlib_formats
+.. todo:: this can be one sentence (super wordy), but also needs a second sentence answering the question: "why?"
 
-       from y0.graph import NxMixedGraph
-       from eliater.frontdoor_backdoor.example2 import generate
-       from eliater.network_validation import generate_plot_expected_p_value_vs_num_data_points
+.. todo:: don't use first person in a demo. Just use active verbs about the demo itself
 
-       graph = NxMixedGraph.from_str_edges(
-           directed=[
-               ('Z1', 'X'),
-               ('X', 'M1'),
-               ('M1', 'M2'),
-               ('M2', 'Y'),
-               ('Z1', 'Z2'),
-               ('Z2', 'Z3'),
-               ('Z3', 'Y')
-           ]
-       )
+We demonstrate this third phenomena below using the following example graph, observational data
+(simulated specifically for this graph using
+:func:`eliater.frontdoor_backdoor.example2.generate`),
+and the application of subsampling.
 
-       # Generate observational data for this graph (this is a special example)
-       observational_df = generate(num_samples=2_000, seed=1)
+.. image:: ../../docs/source/img/multiple_mediators_with_multiple_confounders.png
+  :width: 200px
 
-       generate_plot_expected_p_value_vs_num_data_points(
-           observational_df,
-           start=50,
-           stop=2_000,
-           step=100,
-           left="Y",
-           right="M1",
-           conditions=["M2", "Z2"],
-       )
-       plt.savefig("pvalue_vs_sample_size.svg")
+.. warning::
+
+   This part is implemented based on Chapter 4 from
+   https://livebook.manning.com/book/causal-ai/welcome/v-4/, however
+   this resource is paywalled.
+
+In this graph, $Y$ is conditionally independent (i.e., D-separated) of $M_1$ given $M_2$, $Z_2$.
+The data has been generated based on this assumption. Hence, we expect the $p$-value to be above
+0.05, i.e., not rejecting the null hypothesis of conditional independence. We use the following
+workflow to graphically assess how this compares to a data-driven approach.
+
+.. code-block:: python
+
+   import matplotlib.pyplot as plt
+   from matplotlib_inline.backend_inline import set_matplotlib_formats
+
+   from y0.graph import NxMixedGraph
+   from eliater.frontdoor_backdoor.example2 import generate
+   from eliater.network_validation import generate_plot_expected_p_value_vs_num_data_points
+
+   graph = NxMixedGraph.from_str_edges(
+       directed=[
+           ('Z1', 'X'),
+           ('X', 'M1'),
+           ('M1', 'M2'),
+           ('M2', 'Y'),
+           ('Z1', 'Z2'),
+           ('Z2', 'Z3'),
+           ('Z3', 'Y')
+       ]
+   )
+
+   # Generate observational data for this graph (this is a special example)
+   observational_df = generate(num_samples=2_000, seed=1)
+
+   generate_plot_expected_p_value_vs_num_data_points(
+       observational_df,
+       start=50,
+       stop=2_000,
+       step=100,
+       left="Y",
+       right="M1",
+       conditions=["M2", "Z2"],
+   )
+   plt.savefig("pvalue_vs_sample_size.svg")
 
 
-   .. image:: ../../docs/source/img/pvalue_vs_sample_size.svg
-      :width: 350px
-      :height: 250px
-      :scale: 200 %
-      :alt: alternate text
-      :align: right
+.. image:: ../../docs/source/img/pvalue_vs_sample_size.svg
+  :width: 350px
+  :height: 250px
+  :scale: 200 %
+  :alt: alternate text
+  :align: right
 
-   This plot shows that the expected $p$-value will decrease as number of data points increases. The error bars are 90%
-   bootstrap confidence intervals. The horizontal dashed line is a 0.5 significance level. The p-values above this
-   threshold show that the test favors the null hypothesis of conditional independence. For number of data points
-   greater than 1,000, the test is more likely to reject the null hypothesis, and for number of data points greater
-   than 1,250, the test always rejects the null hypothesis, i.e., the data will no longer support that $Y$ is
-   independent of $M_1$ given $M_2$, and $Z_2$ where it should be. Hence, the result of network validation depends
-   on the size of the data. This result may seem dissapointing because more data can lead to inaccurate results,
-   however, regardless of the data size and the significance thresholds, the relative differences between $p$-values
-   when there is no conditional independence and whe there is will be large and easy to detect.
+This plot shows that the expected $p$-value will decrease as number of data points increases. The error bars are 90%
+bootstrap confidence intervals. The horizontal dashed line is a 0.5 significance level. The p-values above this
+threshold show that the test favors the null hypothesis of conditional independence. For number of data points
+greater than 1,000, the test is more likely to reject the null hypothesis, and for number of data points greater
+than 1,250, the test always rejects the null hypothesis, i.e., the data will no longer support that $Y$ is
+independent of $M_1$ given $M_2$, and $Z_2$ where it should be. Hence, the result of network validation depends
+on the size of the data. This result may seem disappointing because more data can lead to inaccurate results,
+however, regardless of the data size and the significance thresholds, the relative differences between $p$-values
+when there is no conditional independence and whe there is will be large and easy to detect.
 
-
-As a result of points 1,2,and 3, the results obtained from this module should be regarded more as heuristics approach
+As a result of points 1, 2, and 3, the results obtained from this module should be regarded more as heuristics approach
 and as an indication of patterns in data as opposed to statement of ground truth and should be interpreted with caution.
 However, if the percentage of failed tests is smaller than 10 to 30 percent, it indicates that there are chances that
 the true network structure is different from the input network, however its impact in causal query estimation is minor.
@@ -171,7 +203,6 @@ chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 
 .. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling
 networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
-
 """
 
 import logging
