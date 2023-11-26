@@ -17,9 +17,9 @@ Here is the data associated with this network:
 networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 """
 
-from y0.graph import NxMixedGraph
-from y0.examples import Example
 from y0.algorithm.identify import Query
+from y0.examples import Example
+from y0.graph import NxMixedGraph
 
 graph = NxMixedGraph.from_str_adj(
     directed={

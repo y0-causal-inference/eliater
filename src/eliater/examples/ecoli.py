@@ -10,9 +10,9 @@ The data associated with this example is as follows:
     )
 """
 
-from y0.graph import NxMixedGraph
-from y0.examples import Example
 from y0.algorithm.identify import Query
+from y0.examples import Example
+from y0.graph import NxMixedGraph
 
 graph = NxMixedGraph.from_str_adj(
     directed={
@@ -48,7 +48,7 @@ graph = NxMixedGraph.from_str_adj(
             "exuT",
             "gadX",
             "mdh",
-            "gutM"
+            "gutM",
         ],
         "cspA": ["hns"],
         "dcuR": ["dpiA", "dpiB"],
@@ -108,19 +108,19 @@ graph = NxMixedGraph.from_str_adj(
         "hns": ["rpoS", "lrp"],
         "rpoS": ["lrp"],
         "lrp": ["ydeO", "oxyR"],
-        "oxyR": ["ydeO"]
+        "oxyR": ["ydeO"],
     },
 )
 
 base_example = Example(
     name="EColi Graph",
     reference="Mohammad-Taheri, S., Tewari, V., Kapre, R., Rahiminasab, E., Sachs, K., Tapley Hoyt, C.,"
-              " ... & Vitek, O. (2023). Optimal adjustment sets for causal query estimation in partially"
-              " observed biomolecular networks. Bioinformatics, 39(Supplement_1), i494-i503.",
+    " ... & Vitek, O. (2023). Optimal adjustment sets for causal query estimation in partially"
+    " observed biomolecular networks. Bioinformatics, 39(Supplement_1), i494-i503.",
     graph=graph,
     description="This is the transcriptional E. Coli} regulatory network"
-                " obtained from EcoCyc database ",
-    example_queries=[Query.from_str(treatments="fur", outcomes="dpiA")]
+    " obtained from EcoCyc database ",
+    example_queries=[Query.from_str(treatments="fur", outcomes="dpiA")],
 )
 
 base_example.__doc__ = base_example.description

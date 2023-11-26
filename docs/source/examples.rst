@@ -14,4 +14,14 @@ Frontdoor-Backdoor Example
     :no-heading:
     :include-all-objects:
 
-.. todo:: add remaining examples
+.. automodapi:: eliater.examples.sars
+    :no-heading:
+    :include-all-objects:
+
+.. automodapi:: eliater.examples.t_cell_signaling_pathway
+    :no-heading:
+    :include-all-objects:
+
+.. automodapi:: eliater.examples.multi_causal_path
+    :no-heading:
+    :include-all-objects:
