@@ -13,8 +13,8 @@ This process allows for checking the validity of network structure with respect 
 If the percentage of failed tests is higher than the user expects, additional experiments
 is required to change the model.
 
-.. todo:: How does the user set their expectation? This kind of text gives no help to someone reading this for the
-.. todo:: first time that wants to understand how to use this or why to use it
+.. tod:: How does the user set their expectation? This kind of text gives no help to someone reading this for the
+. tod:: first time that wants to understand how to use this or why to use it
 
 
 T Cell Signalling Example
@@ -23,7 +23,7 @@ Here is an example of a protein signalling network of the T cell signaling pathw
 in [Sachs2005]_. It models the molecular mechanisms and regulatory processes involved
 in T cell activation, proliferation, and function.
 
-.. todo:: what about explanation of data?
+.. tod:: what about explanation of data?
 
 .. figure:: _images/signaling.png
    :width: 200px
@@ -64,7 +64,7 @@ in T cell activation, proliferation, and function.
 The results show that out of 35 cases, 1 failed. The failed test is
 the conditional independence between P38 and PIP2, given PKC, with a p-value of 0.00425.
 
-.. todo:: link all mentions of biological entities to HGNC or UniProt pages
+.. tod:: link all mentions of biological entities to HGNC or UniProt pages
 
 Finding False Negatives
 -----------------------
@@ -76,11 +76,11 @@ as conditionally independent by the test.
 
 There are three main reasons that the result of the test may be false negative or false positive:
 
-1. .. todo:: 1 sentence summary of scenario 1
-2. .. todo:: 1 sentence summary of scenario 2
-3. .. todo:: 1 sentence summary of scenario 3
+1. .. tod:: 1 sentence summary of scenario 1
+2. .. tod:: 1 sentence summary of scenario 2
+3. .. tod:: 1 sentence summary of scenario 3
 
-.. todo:: give meaningful names for all point headers
+.. tod:: give meaningful names for all point headers
 
 False Negatives Scenario 1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,7 +92,7 @@ can be significant as the p-value relies on the null hypothesis.
 
 Note that this module employs traditional tests where the null hypothesis is conditional independence.
 
-.. todo:: demonstrate an example
+.. tod:: demonstrate an example
 
 False Negatives Scenario 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +102,7 @@ that conforms to the Chi-squared probability distribution. Similarly, in the cas
 utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
 assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
 
-.. todo:: demonstrate an example
+.. tod:: demonstrate an example
 
 False Negatives Scenario 3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,9 +112,9 @@ larger the data, more conditional independence tests implied by the network will
 as dependent. Hence, chances of false negatives increases, i.e., a pair of variables that are
 conditionally independent, be concluded as conditional dependent by the test.
 
-.. todo:: this can be one sentence (super wordy), but also needs a second sentence answering the question: "why?"
+.. tod:: this can be one sentence (super wordy), but also needs a second sentence answering the question: "why?"
 
-.. todo:: don't use first person in a demo. Just use active verbs about the demo itself
+.. tod:: don't use first person in a demo. Just use active verbs about the demo itself
 
 We demonstrate this third phenomena below using the following example graph, observational data
 (simulated specifically for this graph using
