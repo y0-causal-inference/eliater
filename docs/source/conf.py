@@ -243,5 +243,3 @@ autodoc_member_order = "bysource"
 
 todo_include_todos = True
 todo_emit_warnings = True
-
-html_static_path = ['_images']
