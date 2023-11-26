@@ -13,8 +13,8 @@ Here is the data associated with this network:
     index_col=False,
     )
 
-[Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling
-networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
+.. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling
+   networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
 """
 
 from y0.algorithm.identify import Query
