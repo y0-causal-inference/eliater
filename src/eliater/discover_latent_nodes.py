@@ -20,7 +20,7 @@ only one causal path from $X$ to $Y$ which is $X$ -> $M_1$ -> $Y$. The descendan
 that are not ancestors of the outcome are $R_1$, $R_2$, and $R_3$. The goal of this example is to identify these
 nuisance variables.
 
-.. figure:: _images/discover_latent_nodes_docstring_example.png
+.. figure:: img/discover_latent_nodes_docstring_example.png
    :width: 120px
    :height: 120px
    :scale: 150 %
@@ -54,7 +54,7 @@ The nuisance variables are identified as $R_1$, $R_2$, and $R_3$. The new graph 
 It is simpler than the original graph and only contains variables necessary for estimation of the
 causal effect of interest.
 
-.. figure:: _images/discover_latent_nodes_docstring_example_output.png
+.. figure:: img/discover_latent_nodes_docstring_example_output.png
    :width: 120px
    :height: 100px
    :scale: 130 %
