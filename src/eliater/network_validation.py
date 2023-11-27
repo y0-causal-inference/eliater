@@ -25,7 +25,7 @@ in T cell activation, proliferation, and function.
 The data consist of simultaneous measurements of 11 phosphorylated proteins and phospholipids
 derived from thousands of individual primary human immune system cells.
 
-.. image:: ../../docs/source/img/signaling.png
+.. figure:: img/signaling.png
    :width: 200px
    :height: 200px
    :scale: 150 %
@@ -51,10 +51,10 @@ derived from thousands of individual primary human immune system cells.
 
     data = load_sachs_df()
 
-    # TODO what does this return? a dataframe? does the user output it?
+    # Prints out the conditional independence test results into the console
     conditional_independence_test_summary(graph, data, verbose=True)
 
-.. image:: ../../docs/source/img/sachs_table.png
+.. image:: img/sachs_table.png
    :width: 200px
    :height: 400px
    :scale: 150 %
@@ -83,7 +83,7 @@ This is described below using the following example graph, and observational dat
 :func:`eliater.frontdoor_backdoor.example2.generate`),
 and the application of subsampling.
 
-.. image:: ../../docs/source/img/multiple_mediators_with_multiple_confounders.png
+.. image:: img/multiple_mediators_with_multiple_confounders.png
   :width: 200px
 
 .. warning::
@@ -133,7 +133,7 @@ workflow to graphically assess how this compares to a data-driven approach.
    plt.savefig("pvalue_vs_sample_size.svg")
 
 
-.. image:: ../../docs/source/img/pvalue_vs_sample_size.svg
+.. image:: img/pvalue_vs_sample_size.svg
   :width: 350px
   :height: 250px
   :scale: 200 %
