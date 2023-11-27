@@ -68,57 +68,17 @@ the conditional independence between P38 and PIP2, given PKC, with a p-value of 
 
 Finding False Negatives
 -----------------------
-This module relies on statistical tests, and statistical tests always have chances
+This module relies on statistical tests, and statistical tests have chances
 of producing false negatives, i.e., a pair of variables that are conditionally
 independent, be concluded as conditional dependent by the test, or producing false
 positives, i.e., a pair of variables that are conditionally dependent be concluded
-as conditionally independent by the test.
+as conditionally independent by the test. The main reason that the result of the test
+may be false negative or false positive is that statistical tests rely on *p*-values.
+The p-values are subject to known limitations in statistical analysis. In particular,
+the p-value of a data-driven conditional independency test decrease as the number of
+data points increases.
 
-There are three main reasons that the result of the test may be false negative or false positive:
-
-1. The null hypothesis should be conditional dependence but it is implemented as conditional independence.
-2. The joint probability distribution among the variables may not be similar to the assumptions of the test.
-3. The *p*-value of a data-driven conditional independency test decrease as the number of data points increases.
-
-
-Scenario 1: The null hypothesis should be conditional dependence as opposed to conditional independence
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-In pgmpy, the conditional independence tests assume that the alternative hypothesis is
-dependence, while the null hypothesis is conditional independence. However, when dealing
-with an ADMG and hypothetically assuming that the ADMG has the correct structure, it is
-more appropriate for the null hypothesis to be the hypothesis of dependence. This distinction
-can be significant as the p-value relies on the null hypothesis.
-
-Note that this module employs traditional tests where the null hypothesis is conditional independence.
-
-.. todo:: demonstrate an example
-
-Scenario 2: The distributional assumptions of the test may not be accurate
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Conditional independence tests rely on probability assumptions regarding the data distribution.
-For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
-that conforms to the Chi-squared probability distribution. Similarly, in the case of continuous data,
-utilizing the Pearson test yields a test statistic that adheres to the Normal distribution. If these
-assumptions are not satisfied by the data, the outcomes may lead to both false positives and false negatives.
-
-.. todo:: demonstrate an example
-
-Scenario 3: The p-value is dependent on the number of samples in the data set
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-In addition, *p*-value of a data-driven conditional independency test (e.g., the pearson
-test applied to continuous data) decrease as the number of data points increases, i.e., the
-larger the data, more conditional independence tests implied by the network will be considered
-as dependent.
-
-This is because the p-value measures the disparity between the data and the null hypothesis,
-utilizing an estimate of the parameter of interest. Normally, this disparity is quantified in
-units of standard deviations of the estimate (standard errors). For example, tests for a regression
-coefficient are based on the distance between that coefficient and zero, measured in units of standard
-errors. Standard errors for consistent estimators decrease as the sample size grows. In the case of a very
-large sample, the standard error diminishes significantly, causing even extremely slight gaps between the estimate
-and the null hypothesis to attain statistical significance, resulting in a small p-value.
-
-The third phenomena is described below using the following example graph, observational data
+This is described below using the following example graph, and observational data
 (simulated specifically for this graph using
 :func:`eliater.frontdoor_backdoor.example2.generate`),
 and the application of subsampling.
@@ -190,22 +150,33 @@ on the size of the data. This result may seem disappointing because more data ca
 however, regardless of the data size and the significance thresholds, the relative differences between $p$-values
 when there is no conditional independence and whe there is will be large and easy to detect.
 
-As a result of points 1, 2, and 3, the results obtained from this module should be regarded more as heuristics approach
+As a result, the results obtained from this module should be regarded more as heuristics approach
 and as an indication of patterns in data as opposed to statement of ground truth and should be interpreted with caution.
-However, if the percentage of failed tests is smaller than 10 to 30 percent, it indicates that there are chances that
-the true network structure is different from the input network, however its impact in causal query estimation is minor.
-If the percentage of failed tests is large, it indicates that the input network does not reflect the underlying data
-generation process, and the network should be revised. Causal structure learning algorithms, for examples the ones
-implemented in <pgmpy> module https://pgmpy.org/examples/Structure%20Learning%20in%20Bayesian%20Networks.html  can be
-used to revise the network structure and align it with data. This module currently does not repair the structure of the
+However, we recommend that if the percentage of failed tests is small (e.g., smaller than 30 percent), then that impact
+of inconsistency between network structure and data is minor in that causal query estimation. Hence, it is safe to
+proceed with the estimation procedure.
+If the percentage of failed tests is large (greater than 30-40 percent), it indicates that the input network does not
+reflect the underlying data generation process, and the network or the data should be revised. Causal structure learning
+algorithms, for examples the ones implemented in <pgmpy> module
+https://pgmpy.org/examples/Structure%20Learning%20in%20Bayesian%20Networks.html
+can be used to revise the network structure and align it with data. This module currently does not repair the structure of the
 network if the network is not aligned with data according to conditional independence tests.
 
 For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 
 
-.. [Sachs2005] K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling
-   networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.
+.. [Sachs2005] Sachs, Karen, et al. "Causal protein-signaling networks derived from multiparameter
+   single-cell data." Science 308.5721 (2005): 523-529.
+
+.. [halsey2015fickle] Halsey, Lewis G., et al. "The fickle P value generates irreproducible results.
+   " Nature methods 12.3 (2015): 179-185.
+
+.. [wang2022addressing] Wang, Ming, and Qi Long. "Addressing Common Misuses and Pitfalls of p values
+   in Biomedical Research." Cancer research 82.15 (2022): 2674-2677.
+
+.. [lucas2013too] Lucas, H., and G. Shmueli. "Too big to fail: large samples and the p-value problem."
+   Inf. Syst. Res. 24.4 (2013): 906-917.
 """
 
 import logging
