@@ -9,12 +9,11 @@ for continuous data from :mod:`pgmpy.estimators.CITests`.
 This module provides a summary statistics for the total number of tests, percentage of failed
 tests, and a list of all (or the failed tests) with their corresponding p-value.
 
-This process allows for checking the validity of network structure with respect to data.
-If the percentage of failed tests is higher than the user expects, additional experiments
-is required to change the model.
-
-.. todo:: How does the user set their expectation? This kind of text gives no help to someone reading this for the
-.. todo:: first time that wants to understand how to use this or why to use it
+This process allows for checking if the network structure is consistent with the data by checking
+the percentage of failed tests. If the percentage of failed tests is lower than 30 percent, the effect
+that the inconsistentcy between the structure and the data may have on causal quewry estimation is minor.
+However, if the percentage of failed tests is larger than 30 percent, we recommend the usewr to revise
+the network structure or the corresponding data.
 
 
 T Cell Signalling Example
@@ -23,7 +22,8 @@ Here is an example of a protein signalling network of the T cell signaling pathw
 in [Sachs2005]_. It models the molecular mechanisms and regulatory processes involved
 in T cell activation, proliferation, and function.
 
-.. todo:: what about explanation of data?
+The data consist of simultaneous measurements of 11 phosphorylated proteins and phospholipids
+derived from thousands of individual primary human immune system cells.
 
 .. image:: ../../docs/source/img/signaling.png
    :width: 200px
@@ -76,13 +76,12 @@ as conditionally independent by the test.
 
 There are three main reasons that the result of the test may be false negative or false positive:
 
-1. .. todo:: 1 sentence summary of scenario 1
-2. .. todo:: 1 sentence summary of scenario 2
-3. .. todo:: 1 sentence summary of scenario 3
+1. The null hypothesis should be conditional dependence but it is implemented as conditional independence.
+2. The joint probability distribution among the variables may not be similar to the assumptions of the test.
+3. The *p*-value of a data-driven conditional independency test decrease as the number of data points increases.
 
-.. todo:: give meaningful names for all point headers
 
-False Negatives Scenario 1
+Scenario 1: The null hypothesis should be conditional dependence as opposed to conditional independence
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 In pgmpy, the conditional independence tests assume that the alternative hypothesis is
 dependence, while the null hypothesis is conditional independence. However, when dealing
@@ -94,7 +93,7 @@ Note that this module employs traditional tests where the null hypothesis is con
 
 .. todo:: demonstrate an example
 
-False Negatives Scenario 2
+Scenario 2: The distributional assumptions of the test may not be accurate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Conditional independence tests rely on probability assumptions regarding the data distribution.
 For instance, when dealing with discrete data, employing the chi-square test generates a test statistic
@@ -104,19 +103,22 @@ assumptions are not satisfied by the data, the outcomes may lead to both false p
 
 .. todo:: demonstrate an example
 
-False Negatives Scenario 3
+Scenario 3: The p-value is dependent on the number of samples in the data set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 In addition, *p*-value of a data-driven conditional independency test (e.g., the pearson
 test applied to continuous data) decrease as the number of data points increases, i.e., the
 larger the data, more conditional independence tests implied by the network will be considered
-as dependent. Hence, chances of false negatives increases, i.e., a pair of variables that are
-conditionally independent, be concluded as conditional dependent by the test.
+as dependent.
 
-.. todo:: this can be one sentence (super wordy), but also needs a second sentence answering the question: "why?"
+This is because the p-value measures the disparity between the data and the null hypothesis,
+utilizing an estimate of the parameter of interest. Normally, this disparity is quantified in
+units of standard deviations of the estimate (standard errors). For example, tests for a regression
+coefficient are based on the distance between that coefficient and zero, measured in units of standard
+errors. Standard errors for consistent estimators decrease as the sample size grows. In the case of a very
+large sample, the standard error diminishes significantly, causing even extremely slight gaps between the estimate
+and the null hypothesis to attain statistical significance, resulting in a small p-value.
 
-.. todo:: don't use first person in a demo. Just use active verbs about the demo itself
-
-We demonstrate this third phenomena below using the following example graph, observational data
+The third phenomena is described below using the following example graph, observational data
 (simulated specifically for this graph using
 :func:`eliater.frontdoor_backdoor.example2.generate`),
 and the application of subsampling.
