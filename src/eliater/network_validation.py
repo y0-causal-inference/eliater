@@ -74,9 +74,9 @@ independent, be concluded as conditional dependent by the test, or producing fal
 positives, i.e., a pair of variables that are conditionally dependent be concluded
 as conditionally independent by the test. The main reason that the result of the test
 may be false negative or false positive is that statistical tests rely on *p*-values.
-The p-values are subject to known limitations in statistical analysis. In particular,
-the p-value of a data-driven conditional independency test decrease as the number of
-data points increases.
+The p-values are subject to known limitations in statistical analysis [halsey2015fickle]_
+and [wang2022addressing]_. In particular, the p-value of a data-driven conditional
+independency test decrease as the number of data points increases [lucas2013too]_.
 
 This is described below using the following example graph, and observational data
 (simulated specifically for this graph using
