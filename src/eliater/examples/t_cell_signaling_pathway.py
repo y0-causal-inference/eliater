@@ -18,6 +18,8 @@ from y0.algorithm.identify import Query
 from y0.examples import Example
 from y0.graph import NxMixedGraph
 
+from ..data import load_sachs_df
+
 __all__ = [
     "t_cell_signaling_example",
 ]
@@ -44,6 +46,7 @@ t_cell_signaling_example = Example(
     "It models the molecular mechanisms and regulatory processes of human cells involved"
     "in T cell activation, proliferation, and function.",
     example_queries=[Query.from_str(treatments="Raf", outcomes="Erk")],
+    data=load_sachs_df(),
 )
 
 t_cell_signaling_example.__doc__ = t_cell_signaling_example.description

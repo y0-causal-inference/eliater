@@ -31,27 +31,12 @@ derived from thousands of individual primary human immune system cells.
 
 .. code-block:: python
 
-    from y0.graph import NxMixedGraph
-    from eliater.data import load_sachs_df
+    from eliater.examples import t_cell_signaling_example
     from eliater.network_validation import conditional_independence_test_summary
 
-    graph = NxMixedGraph.from_str_adj(
-        directed={
-            "PKA": ["Raf", "Mek", "Erk", "Akt", "Jnk", "P38"],
-            "PKC": ["Mek", "Raf", "PKA", "Jnk", "P38"],
-            "Raf": ["Mek"],
-            "Mek": ["Erk"],
-            "Erk": ["Akt"],
-            "Plcg": ["PKC", "PIP2", "PIP3"],
-            "PIP3": ["PIP2", "Akt"],
-            "PIP2": ["PKC"],
-        }
-    )
-
-    data = load_sachs_df()
-
-    # Prints out the conditional independence test results into the console
-    conditional_independence_test_summary(graph, data, verbose=True)
+    graph = t_cell_signaling_example.graph
+    data = t_cell_signaling_example.graph.data
+    log_graph_falsifications(graph, data, verbose=True)
 
 .. image:: img/sachs_table.png
    :width: 200px
@@ -62,8 +47,17 @@ derived from thousands of individual primary human immune system cells.
 
 The results show that out of 35 cases, 1 failed. The failed test is
 the conditional independence between P38 and PIP2, given PKC, with a p-value of 0.00425.
+This means we should add an undirected edge between P38 and PIP2. This can be done in an automated
+fashion with:
 
-.. todo:: link all mentions of biological entities to HGNC or UniProt pages
+.. code-block:: python
+
+    from eliater import add_ci_undirected_edges
+    from eliater.examples import t_cell_signaling_example
+
+    graph = t_cell_signaling_example.graph
+    data = t_cell_signaling_example.data
+    new_graph = add_ci_undirected_edges(graph, data, verbose=True)
 
 Finding False Negatives
 -----------------------
@@ -156,14 +150,13 @@ of inconsistency between network structure and data is minor in that causal quer
 proceed with the estimation procedure.
 If the percentage of failed tests is large (greater than 30-40 percent), it indicates that the input network does not
 reflect the underlying data generation process, and the network or the data should be revised. Causal structure learning
-algorithms, for examples the ones implemented in <pgmpy> module
-https://pgmpy.org/examples/Structure%20Learning%20in%20Bayesian%20Networks.html
+algorithms, for examples the ones implemented in :mod:`pgmpy`
+(see `here <https://pgmpy.org/examples/Structure%20Learning%20in%20Bayesian%20Networks.html>`_)
 can be used to revise the network structure and align it with data. This module currently does not repair the
 structure of the network if the network is not aligned with data according to conditional independence tests.
 
 For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
-
 
 .. [Sachs2005] Sachs, Karen, et al. "Causal protein-signaling networks derived from multiparameter
    single-cell data." Science 308.5721 (2005): 523-529.
@@ -196,7 +189,7 @@ from y0.struct import CITest, get_conditional_independence_tests
 
 __all__ = [
     "add_ci_undirected_edges",
-    "conditional_independence_test_summary",
+    "log_graph_falsifications",
     "p_value_of_bootstrap_data",
     "p_value_statistics",
     "generate_plot_expected_p_value_vs_num_data_points",
@@ -321,7 +314,7 @@ def add_ci_undirected_edges(
     return rv
 
 
-def conditional_independence_test_summary(
+def log_graph_falsifications(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     method: Optional[CITest] = None,
@@ -366,6 +359,7 @@ def conditional_independence_test_summary(
         max_given=max_given,
     ).evidence
     # Find the result based on p-value
+    # FIXME isn't this already done with the "flagged" variable?
     test_results["result"] = test_results["p"].apply(
         lambda p_value: "fail" if p_value < significance_level else "pass"
     )

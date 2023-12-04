@@ -8,7 +8,7 @@ __all__ = [
     "SACHS_PATH",
 ]
 
-HERE = Path(__file__)
+HERE = Path(__file__).parent.resolve()
 SACHS_PATH = HERE.joinpath("sachs_discretized_2bin.csv")
 
 

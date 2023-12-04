@@ -1,11 +1,9 @@
 Workflow
 ========
-.. automodapi:: eliater.api
-    :no-heading:
-    :include-all-objects:
+.. autofunction:: eliater.workflow
 
-Add edges representing conditional independences between D-separated nodes
---------------------------------------------------------------------------
+Add edges for conditional independences between D-separated nodes
+-----------------------------------------------------------------
 .. automodapi:: eliater.network_validation
     :no-heading:
     :include-all-objects:
