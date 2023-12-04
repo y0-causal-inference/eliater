@@ -141,6 +141,8 @@ The edges in the resultant graph are [($X$, $Y$), ($Z_1$, $Y$), ($Z_1$, $Z_2$), 
 $Z_4$ is removed as its children are a subset of $Z_1$'s children.
 """
 
+# FIXME @sara the explanation section is not easy to follow. please revise it.
+
 import itertools
 from typing import Iterable, Optional, Set, Union
 
