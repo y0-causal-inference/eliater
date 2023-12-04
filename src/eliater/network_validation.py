@@ -195,12 +195,6 @@ from y0.struct import CITest, get_conditional_independence_tests
 
 __all__ = [
     "conditional_independence_test_summary",
-    "validate_test",
-    "get_state_space_map",
-    "is_data_discrete",
-    "is_data_continuous",
-    "CITest",
-    "choose_default_test",
     "p_value_of_bootstrap_data",
     "p_value_statistics",
     "generate_plot_expected_p_value_vs_num_data_points",
@@ -211,7 +205,7 @@ logger = logging.getLogger(__name__)
 TESTS = get_conditional_independence_tests()
 
 
-def get_state_space_map(
+def _get_state_space_map(
     data: pd.DataFrame, threshold: Optional[int] = 10
 ) -> Dict[Variable, Literal["discrete", "continuous"]]:
     """Get a dictionary from each variable to its type.
@@ -232,43 +226,43 @@ def get_state_space_map(
     }
 
 
-def is_data_discrete(data: pd.DataFrame) -> bool:
+def _is_data_discrete(data: pd.DataFrame) -> bool:
     """Check if all the columns in the dataframe has discrete data.
 
     :param data: observational data.
     :return: True, if all the columns have discrete data, False, otherwise
     """
-    variable_types = set(get_state_space_map(data=data).values())
+    variable_types = set(_get_state_space_map(data=data).values())
     return variable_types == {"discrete"}
 
 
-def is_data_continuous(data: pd.DataFrame) -> bool:
+def _is_data_continuous(data: pd.DataFrame) -> bool:
     """Check if all the columns in the dataframe has continuous data.
 
     :param data: observational.
     :return: True, if all the columns have continuous data, False, otherwise
     """
-    variable_types = set(get_state_space_map(data).values())
+    variable_types = set(_get_state_space_map(data).values())
     return variable_types == {"continuous"}
 
 
-def choose_default_test(data: pd.DataFrame) -> CITest:
+def _choose_default_test(data: pd.DataFrame) -> CITest:
     """Choose the default statistical test for testing conditional independencies based on the data.
 
     :param data: observational data.
     :return: the default test based on data
     :raises NotImplementedError: if data is of mixed type (contains both discrete and continuous columns)
     """
-    if is_data_discrete(data):
+    if _is_data_discrete(data):
         return "chi-square"
-    if is_data_continuous(data):
+    if _is_data_continuous(data):
         return "pearson"
     raise NotImplementedError(
         "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
     )
 
 
-def validate_test(
+def _validate_test(
     data: pd.DataFrame,
     test: Optional[CITest],
 ) -> None:
@@ -283,12 +277,12 @@ def validate_test(
     if test not in tests:
         raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
 
-    if is_data_continuous(data) and test != "pearson":
+    if _is_data_continuous(data) and test != "pearson":
         raise ValueError(
             "The data is continuous. Either discretize and use chi-square or use the pearson."
         )
 
-    if is_data_discrete(data) and test == "pearson":
+    if _is_data_discrete(data) and test == "pearson":
         raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
 
 
@@ -321,11 +315,11 @@ def conditional_independence_test_summary(
     if significance_level is None:
         significance_level = 0.01
     if not test:
-        test = choose_default_test(data)
+        test = _choose_default_test(data)
     else:
         # Validate test and data
-        validate_test(data=data, test=test)
-        if len(set(get_state_space_map(data).values())) > 1:
+        _validate_test(data=data, test=test)
+        if len(set(_get_state_space_map(data).values())) > 1:
             raise NotImplementedError(
                 "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
             )
@@ -385,9 +379,9 @@ def p_value_of_bootstrap_data(
     if significance_level is None:
         significance_level = 0.05
     if test is None:
-        test = choose_default_test(df)
+        test = _choose_default_test(df)
     else:
-        validate_test(data=df, test=test)
+        _validate_test(data=df, test=test)
     bootstrap_data = df.sample(n=sample_size, replace=True)
     result = TESTS[test](
         X=left,
@@ -430,9 +424,9 @@ def p_value_statistics(
     if boot_size is None:
         boot_size = 1_000
     if not test:
-        test = choose_default_test(df)
+        test = _choose_default_test(df)
     else:
-        validate_test(data=df, test=test)
+        _validate_test(data=df, test=test)
     samples = [
         p_value_of_bootstrap_data(
             df,
