@@ -159,8 +159,8 @@ If the percentage of failed tests is large (greater than 30-40 percent), it indi
 reflect the underlying data generation process, and the network or the data should be revised. Causal structure learning
 algorithms, for examples the ones implemented in <pgmpy> module
 https://pgmpy.org/examples/Structure%20Learning%20in%20Bayesian%20Networks.html
-can be used to revise the network structure and align it with data. This module currently does not repair the structure of the
-network if the network is not aligned with data according to conditional independence tests.
+can be used to revise the network structure and align it with data. This module currently does not repair the
+structure of the network if the network is not aligned with data according to conditional independence tests.
 
 For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
