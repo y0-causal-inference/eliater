@@ -169,7 +169,7 @@ chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
    Inf. Syst. Res. 24.4 (2013): 906-917.
 """
 
-from typing import Dict, Literal, Optional
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -180,10 +180,8 @@ from tqdm.auto import trange
 
 from y0.algorithm.conditional_independencies import get_conditional_independencies
 from y0.algorithm.falsification import get_graph_falsifications
-from y0.dsl import Variable
 from y0.graph import NxMixedGraph
-from y0.struct import CITest, get_conditional_independence_tests
-from y0.struct import _ensure_method
+from y0.struct import CITest, _ensure_method, get_conditional_independence_tests
 
 __all__ = [
     "add_ci_undirected_edges",
@@ -258,30 +256,21 @@ def print_graph_falsifications(
     """
     if significance_level is None:
         significance_level = DEFAULT_SIGNIFICANCE
-    test_results = get_graph_falsifications(
+    evidence_df = get_graph_falsifications(
         graph=graph,
         df=data,
         method=method,
         significance_level=significance_level,
         max_given=max_given,
     ).evidence
-    # Find the result based on p-value
-    test_results["p_significant"] = test_results["p"].apply(
-        lambda p_value: p_value < significance_level
-    )
-    test_results = test_results.sort_values("p")
-    failed_tests = test_results[~test_results["p_significant"]]
-    total_no_of_tests = len(test_results)
-    total_no_of_failed_tests = len(failed_tests)
-    percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_tests
-    print(f"Total number of conditional independencies: {total_no_of_tests:,}")
-    print(f"Total number of failed tests: {total_no_of_failed_tests:,}")
-    print(f"Percentage of failed tests: {percentage_of_failed_tests:.2%}")
-    print(f"Reject null hypothesis when p<{significance_level}")
+    n_total = len(evidence_df)
+    n_failed = evidence_df["p_adj_significant"].sum()
+    print(f"Failed tests: {n_failed}/{n_total} ({n_failed / n_total:.2%})")  # noqa:T201
+    print(f"Reject null hypothesis when p<{significance_level}")  # noqa:T201
     if verbose:
-        print(test_results.to_string(index=False))
+        print(evidence_df.to_string(index=False))
     else:
-        print(failed_tests.to_string(index=False))
+        print(evidence_df[evidence_df["p_adj_significant"]].to_string(index=False))
 
 
 def p_value_of_bootstrap_data(
