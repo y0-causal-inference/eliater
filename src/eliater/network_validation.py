@@ -17,8 +17,9 @@ the network structure or the corresponding data.
 
 T Cell Signalling Example
 -------------------------
-Here is an example of a protein signalling network of the T cell signaling pathway presented
-in [Sachs2005]_. It models the molecular mechanisms and regulatory processes involved
+Here is an example of a protein signalling network of the T cell signaling pathway
+(:data:`eliater.examples.t_cell_signaling_example`).
+It models the molecular mechanisms and regulatory processes involved
 in T cell activation, proliferation, and function.
 
 The data consist of simultaneous measurements of 11 phosphorylated proteins and phospholipids
@@ -157,9 +158,6 @@ structure of the network if the network is not aligned with data according to co
 
 For more reference on this topic, please see
 chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
-
-.. [Sachs2005] Sachs, Karen, et al. "Causal protein-signaling networks derived from multiparameter
-   single-cell data." Science 308.5721 (2005): 523-529.
 
 .. [halsey2015fickle] Halsey, Lewis G., et al. "The fickle P value generates irreproducible results.
    " Nature methods 12.3 (2015): 179-185.

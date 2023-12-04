@@ -2,7 +2,10 @@
 
 import unittest
 
-from eliater.frontdoor_backdoor import base_example, multiple_mediators_single_confounder_example
+from eliater.frontdoor_backdoor import (
+    frontdoor_backdoor_example,
+    multiple_mediators_single_confounder_example,
+)
 from eliater.network_validation import _choose_default_test, _get_state_space_map, _validate_test
 from y0.dsl import Variable
 from y0.examples.frontdoor import generate_data_for_frontdoor
@@ -53,7 +56,7 @@ class TestRepair(unittest.TestCase):
     def test_choose_default_test_for_continuous_data(self):
         """Test choose_default_test for continuous data."""
         expected_default_test = "pearson"
-        actual_default_test = _choose_default_test(base_example.generate_data())
+        actual_default_test = _choose_default_test(frontdoor_backdoor_example.generate_data())
         self.assertEqual(expected_default_test, actual_default_test)
 
     def test_choose_default_test_for_mixed_data(self):
@@ -75,7 +78,7 @@ class TestRepair(unittest.TestCase):
         self.assertRaises(
             ValueError,
             _validate_test,
-            base_example.generate_data(),
+            frontdoor_backdoor_example.generate_data(),
             "chi-square",
         )
 
