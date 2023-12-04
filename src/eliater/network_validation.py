@@ -33,10 +33,10 @@ derived from thousands of individual primary human immune system cells.
 .. code-block:: python
 
     from eliater.examples import t_cell_signaling_example
-    from eliater.network_validation import conditional_independence_test_summary
+    from eliater.network_validation import log_graph_falsifications
 
     graph = t_cell_signaling_example.graph
-    data = t_cell_signaling_example.graph.data
+    data = t_cell_signaling_example.data
     log_graph_falsifications(graph, data, verbose=True)
 
 .. image:: img/sachs_table.png
@@ -169,7 +169,6 @@ chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
    Inf. Syst. Res. 24.4 (2013): 906-917.
 """
 
-import logging
 from typing import Dict, Literal, Optional
 
 import matplotlib.pyplot as plt
@@ -187,13 +186,11 @@ from y0.struct import CITest, get_conditional_independence_tests
 
 __all__ = [
     "add_ci_undirected_edges",
-    "log_graph_falsifications",
+    "print_graph_falsifications",
     "p_value_of_bootstrap_data",
     "p_value_statistics",
     "generate_plot_expected_p_value_vs_num_data_points",
 ]
-
-logger = logging.getLogger(__name__)
 
 TESTS = get_conditional_independence_tests()
 
@@ -312,7 +309,7 @@ def add_ci_undirected_edges(
     return rv
 
 
-def log_graph_falsifications(
+def print_graph_falsifications(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     method: Optional[CITest] = None,
@@ -357,26 +354,20 @@ def log_graph_falsifications(
         max_given=max_given,
     ).evidence
     # Find the result based on p-value
-    # FIXME isn't this already done with the "flagged" variable?
-    test_results["result"] = test_results["p"].apply(
-        lambda p_value: "fail" if p_value < significance_level else "pass"
-    )
-    # Selecting columns of interest
-    test_results = test_results[["left", "right", "given", "p", "result"]]
-    # Sorting the rows by index
-    test_results = test_results.sort_index()
-    test_results = test_results.rename(columns={"p": "p-value"})
-    failed_tests = test_results[test_results["result"] == "fail"]
+    test_results["pass"] = test_results["p"].apply(lambda p_value: p_value >= significance_level)
+    test_results = test_results[["left", "right", "given", "p", "pass"]]
+    test_results = test_results.sort_values("p")
+    failed_tests = test_results[~test_results["pass"]]
     total_no_of_tests = len(test_results)
     total_no_of_failed_tests = len(failed_tests)
     percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_tests
-    logger.info(f"Total number of conditional independencies: {total_no_of_tests:,}")
-    logger.info(f"Total number of failed tests: {total_no_of_failed_tests:,}")
-    logger.info(f"Percentage of failed tests: {percentage_of_failed_tests:.2%}")
+    print(f"Total number of conditional independencies: {total_no_of_tests:,}")
+    print(f"Total number of failed tests: {total_no_of_failed_tests:,}")
+    print(f"Percentage of failed tests: {percentage_of_failed_tests:.2%}")
     if verbose:
-        logger.info(test_results.to_string(index=False))
+        print(test_results.to_string(index=False))
     else:
-        logger.info(failed_tests.to_string(index=False))
+        print(failed_tests.to_string(index=False))
 
 
 def p_value_of_bootstrap_data(
