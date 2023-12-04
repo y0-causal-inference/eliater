@@ -21,13 +21,13 @@ estimated using Pearl's frontdoor or backdoor criterion.
 
 from y0.examples import Example
 
-from .base import base_example
+from .base import frontdoor_backdoor_example
 from .example1 import multiple_mediators_single_confounder_example
 from .example2 import multiple_mediators_with_multiple_confounders_example
 from .example3 import multiple_mediators_confounders_nuisance_vars_example
 
 __all__ = [
-    "base_example",
+    "frontdoor_backdoor_example",
     "multiple_mediators_single_confounder_example",
     "multiple_mediators_with_multiple_confounders_example",
     "multiple_mediators_confounders_nuisance_vars_example",

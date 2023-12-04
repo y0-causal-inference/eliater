@@ -29,7 +29,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "base_example",
+    "frontdoor_backdoor_example",
 ]
 
 graph = NxMixedGraph.from_edges(directed=[(Z, X), (X, M), (M, Y), (Z, Y)])
@@ -70,7 +70,7 @@ def generate(
     return data
 
 
-base_example = Example(
+frontdoor_backdoor_example = Example(
     name="Frontdoor/Backdoor Example",
     reference="frontdoor_backdoor example from y0 module",
     graph=graph,
@@ -81,4 +81,4 @@ base_example = Example(
     example_queries=[Query.from_str(treatments="X", outcomes="Y")],
 )
 
-base_example.__doc__ = base_example.description
+frontdoor_backdoor_example.__doc__ = frontdoor_backdoor_example.description

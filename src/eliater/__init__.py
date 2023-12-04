@@ -2,4 +2,8 @@
 
 """A high level, end-to-end causal inference workflow."""
 
-__all__ = ["network_validation"]
+from .discover_latent_nodes import remove_nuisance_variables
+
+__all__ = [
+    "remove_nuisance_variables",
+]
