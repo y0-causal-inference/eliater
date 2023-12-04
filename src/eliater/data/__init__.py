@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 __all__ = [
-    "SACHS_PATH",
+    "load_sachs_df",
 ]
 
 HERE = Path(__file__).parent.resolve()
