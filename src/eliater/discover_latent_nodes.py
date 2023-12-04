@@ -1,4 +1,4 @@
-"""This module contains methods to discover nuisance nodes in a network.
+r"""This module contains methods to discover nuisance nodes in a network.
 
 Given an acyclic directed mixed graph (ADMG), along with the treatment and the outcome
 of interest, certain observable variables can be regarded as nuisances. This
@@ -18,7 +18,7 @@ from the graph which leads to simpler, more interpretable, and visually more app
 Example
 -------
 We'll work with the following example where $X$ is the treatment, $Y$ is the outcome,
-and the estimand from the ID algorithm is $\\sum\\limits_{M_1} P(M_1 | X) \\sum\\limits_{X} P(X) P(Y | M_1, X)$.
+and the estimand from the ID algorithm is $\sum\limits_{M_1} P(M_1 | X) \sum\limits_{X} P(X) P(Y | M_1, X)$.
 
 .. code-block:: python
 
@@ -69,7 +69,7 @@ Note that the estimand does not change since the nodes removed did not contribut
 
     identify_outcomes(new_graph, treatments=X, outcomes=Y)
 
-$\\sum\\limits_{M_1} P(M_1 | X) \\sum\\limits_{X} P(X) P(Y | M_1, X)$
+$\sum\limits_{M_1} P(M_1 | X) \sum\limits_{X} P(X) P(Y | M_1, X)$
 
 Explanation
 -----------
