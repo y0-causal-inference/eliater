@@ -18,16 +18,14 @@ from the graph which leads to simpler, more interpretable, and visually more app
 Here is an example of an ADMG where $X$ is the treatment and $Y$ is the outcome. This ADMG has
 only one causal path from $X$ to $Y$ which is $X$ -> $M_1$ -> $Y$. The descendants of these variables
 that are not ancestors of the outcome are $R_1$, $R_2$, and $R_3$. The goal of this example is to identify these
-nuisance variables.
+nuisance variables and remove them from the graph.
 
 .. figure:: img/discover_latent_nodes_docstring_example.png
-   :width: 120px
-   :height: 120px
    :scale: 150 %
 
 .. code-block:: python
 
-    from eliater.discover_latent_nodes import remove_latent_variables
+    from eliater.discover_latent_nodes import remove_nuisance_variables
     from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
     from y0.graph import NxMixedGraph
@@ -48,15 +46,13 @@ nuisance variables.
         ],
     )
 
-    new_graph = remove_latent_variables(graph, treatments=X, outcomes=Y)
+    new_graph = remove_nuisance_variables(graph, treatments=X, outcomes=Y)
 
 The nuisance variables are identified as $R_1$, $R_2$, and $R_3$. The new graph does not contain these variables.
 It is simpler than the original graph and only contains variables necessary for estimation of the
 causal effect of interest.
 
 .. figure:: img/discover_latent_nodes_docstring_example_output.png
-   :width: 120px
-   :height: 100px
    :scale: 130 %
 
 .. code-block:: python
@@ -78,9 +74,10 @@ The new graph can be used to check if the query is identifiable, and if so, gene
     set_latent(graph, [Z1])
     simplified_graph = simplify_latent_dag(graph).graph
 
-The edges in the resultant graph are [(X, Z2), (X, Y), (Z1_prime, Z2), (Z1_prime, Y)].
-The parent of the latent node Z1 becomes attached to latter's children (Z2 and Y).
-The edge between X and Z1 is removed, and Z1 is transformed into Z1_prime while remaining connected to its children.
+The edges in the resultant graph are [($X$, $Z_2$), ($X$, $Y$), ($Z_1^{prime}$, $Z_2$), ($Z_1^{prime}$, $Y$)].
+The parent of the latent node $Z_1$ becomes attached to latter's children ($Z_2$ and $Y$).
+The edge between $X$ and $Z_1$ is removed, and $Z_1$ is transformed into $Z_1^{prime}$ while remaining connected
+to its children.
 
 .. code-block:: python
 
@@ -95,8 +92,8 @@ The edge between X and Z1 is removed, and Z1 is transformed into Z1_prime while 
     set_latent(graph, [Z1])
     simplified_graph = simplify_latent_dag(graph).graph
 
-The edges in the resultant graph are [(X, Y)].
-Z1 is removed as it is a latent node with no children.
+The edges in the resultant graph are [($X$, $Y$)].
+$Z_1$ is removed as it is a latent node with no children.
 
 .. code-block:: python
 
@@ -111,8 +108,8 @@ Z1 is removed as it is a latent node with no children.
     set_latent(graph, [Z1])
     simplified_graph = simplify_latent_dag(graph).graph
 
-The edges in the resultant graph are [(X, Y)].
-Z1 is removed as it is a latent node with a single child.
+The edges in the resultant graph are [($X$, $Y$)].
+$Z_1$ is removed as it is a latent node with a single child.
 
 .. code-block:: python
 
@@ -127,9 +124,8 @@ Z1 is removed as it is a latent node with a single child.
     set_latent(graph, [Z1, Z4])
     simplified_graph = simplify_latent_dag(graph).graph
 
-The edges in the resultant graph are [(X, Y), (Z1, Y), (Z1, Z2), (Z1, Z3)].
-Z4 is removed as its children are a subset of Z1's children.
-
+The edges in the resultant graph are [($X$, $Y$), ($Z_1$, $Y$), ($Z_1$, $Z_2$), ($Z_1$, $Z_3$)].
+$Z_4$ is removed as its children are a subset of $Z_1$'s children.
 """
 
 import itertools
@@ -142,20 +138,17 @@ from y0.dsl import Variable
 from y0.graph import DEFAULT_TAG, NxMixedGraph
 
 __all__ = [
-    "remove_latent_variables",
-    "mark_nuisance_variables_as_latent",
-    "find_all_nodes_in_causal_paths",
-    "find_nuisance_variables",
+    "remove_nuisance_variables",
 ]
 
 
-def remove_latent_variables(
+def remove_nuisance_variables(
     graph: NxMixedGraph,
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
     tag: Optional[str] = None,
 ) -> NxMixedGraph:
-    """Find all nuissance variables and remove them based on Evans' simplification rules.
+    """Find all nuisance variables and remove them based on Evans' simplification rules.
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
