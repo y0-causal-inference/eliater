@@ -2,7 +2,7 @@
 
 from y0.examples import Example
 
-from .base import base_example
+from .base import frontdoor_backdoor_example
 from .multiple_mediators_single_confounder import multiple_mediators_single_confounder_example
 from .multiple_mediators_with_multiple_confounders import multiple_mediators_confounders_example
 from .multiple_mediators_with_multiple_confounders_nuisances import (
@@ -10,7 +10,7 @@ from .multiple_mediators_with_multiple_confounders_nuisances import (
 )
 
 __all__ = [
-    "base_example",
+    "frontdoor_backdoor_example",
     "multiple_mediators_single_confounder_example",
     "multiple_mediators_confounders_example",
     "multi_mediators_confounders_nuisance_vars_example",

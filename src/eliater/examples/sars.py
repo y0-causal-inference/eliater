@@ -1,12 +1,8 @@
-"""Examples for SARS-CoV-2.
+"""Examples for SARS-CoV-2."""
 
-The data associated with this example is as follows:
-
-.. code-block:: python
-
-    from src.eliater.frontdoor_backdoor import sars_cov2_discrete
-    data = sars_cov2_discrete.generate(num_samples=1000, seed=1),
-"""
+__all__ = [
+    "sars_cov_2_example",
+]
 
 from y0.algorithm.identify import Query
 from y0.examples import Example
@@ -43,7 +39,7 @@ graph = NxMixedGraph.from_str_edges(
     ],
 )
 
-base_example = Example(
+sars_cov_2_example = Example(
     name="SARS-CoV-2 Graph",
     reference="Mohammad-Taheri, S., Zucker, J., Hoyt, C. T., Sachs, K., Tewari, V., Ness, R., & Vitek,"
     " O. (2022). Do-calculus enables estimation of causal effects in partially observed"
@@ -61,4 +57,4 @@ base_example = Example(
     ],
 )
 
-base_example.__doc__ = base_example.description
+sars_cov_2_example.__doc__ = sars_cov_2_example.description
