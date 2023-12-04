@@ -1,3 +1,7 @@
+Workflow
+========
+.. automodule:: eliater.api
+
 Remove Nuisance Variables
 =========================
 .. automodapi:: eliater.discover_latent_nodes

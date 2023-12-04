@@ -266,25 +266,25 @@ def _choose_default_test(data: pd.DataFrame) -> CITest:
 
 def _validate_test(
     data: pd.DataFrame,
-    test: Optional[CITest],
+    method: Optional[CITest],
 ) -> None:
     """Validate the conditional independency test passed by the user.
 
     :param data: observational data.
-    :param test: the conditional independency test passed by the user.
+    :param method: the conditional independency test passed by the user.
     :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
         chi-square is used for continuous data
     """
     tests = get_conditional_independence_tests()
-    if test not in tests:
-        raise ValueError(f"`{test}` is invalid. Supported CI tests are: {sorted(tests)}")
+    if method not in tests:
+        raise ValueError(f"`{method}` is invalid. Supported CI tests are: {sorted(tests)}")
 
-    if _is_data_continuous(data) and test != "pearson":
+    if _is_data_continuous(data) and method != "pearson":
         raise ValueError(
             "The data is continuous. Either discretize and use chi-square or use the pearson."
         )
 
-    if _is_data_discrete(data) and test == "pearson":
+    if _is_data_discrete(data) and method == "pearson":
         raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
 
 
@@ -294,7 +294,19 @@ def add_ci_undirected_edges(
     method: Optional[CITest] = None,
     significance_level: Optional[float] = None,
 ) -> NxMixedGraph:
-    """Add undirected edges between d-separated nodes that fail a data-driven conditional independency test."""
+    """Add undirected edges between d-separated nodes that fail a data-driven conditional independency test.
+
+    :param graph: An acyclic directed mixed graph
+    :param data: observational data corresponding to the graph
+    :param method:
+        The conditional independency test to use. If None, defaults to
+        :data:`y0.struct.DEFAULT_CONTINUOUS_CI_TEST` for continuous data
+        or :data:`y0.struct.DEFAULT_DISCRETE_CI_TEST` for discrete data.
+    :param significance_level: The statistical tests employ this value for
+        comparison with the p-value of the test to determine the independence of
+        the tested variables. If none, defaults to 0.01.
+    :returns: A copy of the input graph potentially with new undirected edges added
+    """
     rv = NxMixedGraph(
         directed=graph.directed.copy(),
         undirected=graph.undirected.copy(),
@@ -312,7 +324,7 @@ def add_ci_undirected_edges(
 def conditional_independence_test_summary(
     graph: NxMixedGraph,
     data: pd.DataFrame,
-    test: Optional[CITest] = None,
+    method: Optional[CITest] = None,
     max_given: Optional[int] = 5,
     significance_level: Optional[float] = None,
     verbose: Optional[bool] = False,
@@ -325,7 +337,7 @@ def conditional_independence_test_summary(
 
     :param graph: an NxMixedGraph
     :param data: observational data corresponding to the graph
-    :param test: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
+    :param method: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
         and ``chi-square`` for discrete data.
     :param max_given: The maximum set size in the power set of the vertices minus the d-separable pairs
     :param significance_level: The statistical tests employ this value for
@@ -337,11 +349,11 @@ def conditional_independence_test_summary(
     """
     if significance_level is None:
         significance_level = 0.01
-    if not test:
-        test = _choose_default_test(data)
+    if not method:
+        method = _choose_default_test(data)
     else:
         # Validate test and data
-        _validate_test(data=data, test=test)
+        _validate_test(data=data, method=method)
         if len(set(_get_state_space_map(data).values())) > 1:
             raise NotImplementedError(
                 "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
@@ -349,7 +361,7 @@ def conditional_independence_test_summary(
     test_results = get_graph_falsifications(
         graph=graph,
         df=data,
-        method=test,
+        method=method,
         significance_level=significance_level,
         max_given=max_given,
     ).evidence
@@ -404,7 +416,7 @@ def p_value_of_bootstrap_data(
     if test is None:
         test = _choose_default_test(df)
     else:
-        _validate_test(data=df, test=test)
+        _validate_test(data=df, method=test)
     bootstrap_data = df.sample(n=sample_size, replace=True)
     result = TESTS[test](
         X=left,
@@ -449,7 +461,7 @@ def p_value_statistics(
     if not test:
         test = _choose_default_test(df)
     else:
-        _validate_test(data=df, test=test)
+        _validate_test(data=df, method=test)
     samples = [
         p_value_of_bootstrap_data(
             df,
