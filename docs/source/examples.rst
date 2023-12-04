@@ -8,7 +8,7 @@ Frontdoor-Backdoor Example
 
 Frontdoor-Backdoor Discrete Example
 -----------------------------------
-.. automodapi:: eliater.frontdoor_backdoor_discrete
+.. automodapi:: eliater.examples.frontdoor_backdoor_discrete
     :no-heading:
     :include-all-objects:
 
