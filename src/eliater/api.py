@@ -1,5 +1,6 @@
 """Implementation of Eliater workflow."""
 
+import logging
 from typing import Optional, Union
 
 import pandas as pd
@@ -15,6 +16,8 @@ from .discover_latent_nodes import remove_nuisance_variables
 __all__ = [
     "workflow",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def workflow(
@@ -52,6 +55,9 @@ def workflow(
     :returns: A triple with a modified graph, the estimand, and the ACE value.
     :raises ValueError: If the graph becomes unidentifiable throughout the workflow
     """
+    logger.warning(
+        "TODO: add CI undirected edges with parameters %s, %s", ci_method, ci_significance_level
+    )
     # graph = add_ci_undirected_edges(
     #     graph, data, method=ci_method, significance_level=ci_significance_level
     # )
