@@ -15,18 +15,14 @@ variance and bias. In addition, if this process is combined with the simplificat
 :func:`y0.algorithm.simplify_latent.simplify_latent_dag` it can help to remove the nuisance variables
 from the graph which leads to simpler, more interpretable, and visually more appealing result.
 
-Here is an example of an ADMG where $X$ is the treatment and $Y$ is the outcome. This ADMG has
-only one causal path from $X$ to $Y$ which is $X$ -> $M_1$ -> $Y$. The descendants of these variables
-that are not ancestors of the outcome are $R_1$, $R_2$, and $R_3$. The goal of this example is to identify these
-nuisance variables and remove them from the graph.
-
-.. figure:: img/discover_latent_nodes_docstring_example.png
-   :scale: 150 %
+Example
+-------
+We'll work with the following example where $X$ is the treatment, $Y$ is the outcome,
+and the estimand from the ID algorithm is $\\sum\\limits_{M_1} P(M_1 | X) \\sum\\limits_{X} P(X) P(Y | M_1, X)$.
 
 .. code-block:: python
 
     from eliater.discover_latent_nodes import remove_nuisance_variables
-    from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
     from y0.graph import NxMixedGraph
 
@@ -45,21 +41,39 @@ nuisance variables and remove them from the graph.
             (X, Y),
         ],
     )
+    graph.draw()
 
-    new_graph = remove_nuisance_variables(graph, treatments=X, outcomes=Y)
+.. figure:: img/nuisance/original.svg
+    :scale: 70%
 
-The nuisance variables are identified as $R_1$, $R_2$, and $R_3$. The new graph does not contain these variables.
-It is simpler than the original graph and only contains variables necessary for estimation of the
-causal effect of interest.
+There is one causal path between the treatment ($X$ ) and outcome ($Y$): $X$ -> $M_1$ -> $Y$.
 
-.. figure:: img/discover_latent_nodes_docstring_example_output.png
-   :scale: 130 %
+The descendants of these variables that are not ancestors of the outcome are $R_1$, $R_2$, and $R_3$.
+The :func:`eliater.remove_nuisance_variables` function identifies and removes these variables from the
+graph.
 
 .. code-block:: python
 
-    estimand = identify_outcomes(new_graph, treatments=X, outcomes=Y)
+    new_graph = remove_nuisance_variables(graph, treatments=X, outcomes=Y)
+    new_graph.draw()
+
+.. figure:: img/nuisance/reduced.svg
+   :scale: 70%
 
 The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
+
+.. code-block:: python
+
+    from y0.algorithm.identify import identify_outcomes
+
+    identify_outcomes(new_graph, treatments=X, outcomes=Y)
+
+$\\sum\\limits_{M_1} P(M_1 | X) \\sum\\limits_{X} P(X) P(Y | M_1, X)$
+
+Note that the estimand did not change.
+
+Explanation
+-----------
 
 .. code-block:: python
 

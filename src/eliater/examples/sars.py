@@ -51,6 +51,8 @@ sars_cov_2_example = Example(
     " Reasoner and Assembler (INDRA) workflow, and by quering and expressing the corresponding causal"
     " statements in the Biological Expression Language (BEL). Presence of latent variables was determined"
     " by querying pairs of entities in the network for common causes in the corpus.",
+    # FIXME 100% detail on exactly how this network was constructed. What queries were run on INDRA,
+    #  what code was used to do it, what parts were done by hand
     example_queries=[
         Query.from_str(treatments="Sil6r", outcomes="cytok"),
         Query.from_str(treatments="EGFR", outcomes="cytok"),

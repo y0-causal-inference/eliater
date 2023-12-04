@@ -1,5 +1,11 @@
 """Examples for transcriptional Escherichia coli K-12 regulatory network."""
 
+# FIXME add the following documentation. DO NOT remove this fixme without review and confirmation.
+#  1. Where did this network come from? What physical experimentation was used to create it?
+#     What database was it in and how was the database accessed (via code? by hand?)
+#  2. What is the biological phenomena described here? More detail needed.
+#  3. Is there associated data to go with this graph? Commit in the examples repository
+
 from y0.algorithm.identify import Query
 from y0.examples import Example
 from y0.graph import NxMixedGraph
