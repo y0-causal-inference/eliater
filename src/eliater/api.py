@@ -31,10 +31,10 @@ def workflow(
 ) -> tuple[NxMixedGraph, Expression, float]:
     """Run the Eliater workflow.
 
-    This workflow has two parts:
+    This workflow has three parts:
 
     1. Add undirected edges between d-separated nodes for which a data-driven conditional independency test fails
-    2. Remove nuissance variables.
+    2. Remove nuisance variables.
     3. Estimates the average causal effect (ACE) of the treatments on outcomes
 
     :param graph: An acyclic directed mixed graph
