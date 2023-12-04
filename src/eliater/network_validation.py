@@ -188,12 +188,14 @@ import seaborn as sns
 from numpy import mean, quantile
 from tqdm.auto import trange
 
+from y0.algorithm.conditional_independencies import get_conditional_independencies
 from y0.algorithm.falsification import get_graph_falsifications
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 from y0.struct import CITest, get_conditional_independence_tests
 
 __all__ = [
+    "add_ci_undirected_edges",
     "conditional_independence_test_summary",
     "p_value_of_bootstrap_data",
     "p_value_statistics",
@@ -284,6 +286,27 @@ def _validate_test(
 
     if _is_data_discrete(data) and test == "pearson":
         raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
+
+
+def add_ci_undirected_edges(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    method: Optional[CITest] = None,
+    significance_level: Optional[float] = None,
+) -> NxMixedGraph:
+    """Add undirected edges between d-separated nodes that fail a data-driven conditional independency test."""
+    rv = NxMixedGraph(
+        directed=graph.directed.copy(),
+        undirected=graph.undirected.copy(),
+    )
+    if significance_level is None:
+        significance_level = 0.05
+    for judgement in get_conditional_independencies(rv):
+        if not judgement.test(
+            data, boolean=True, method=method, significance_level=significance_level
+        ):
+            rv.add_undirected_edge(judgement.left, judgement.right)
+    return rv
 
 
 def conditional_independence_test_summary(
