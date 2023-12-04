@@ -1,6 +1,8 @@
 Workflow
 ========
-.. automodule:: eliater.api
+.. automodapi:: eliater.api
+    :no-heading:
+    :include-all-objects:
 
 Remove Nuisance Variables
 =========================
