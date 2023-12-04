@@ -252,7 +252,6 @@ def print_graph_falsifications(
         the tested variables. If none, defaults to 0.01.
     :param verbose: If `False`, only print the details of failed tests.
         If 'True', print the details of all the conditional independency results. Defaults to `False`
-    :raises NotImplementedError: if data is of mixed type (contains both discrete and continuous columns)
     """
     if significance_level is None:
         significance_level = DEFAULT_SIGNIFICANCE
@@ -268,9 +267,9 @@ def print_graph_falsifications(
     print(f"Failed tests: {n_failed}/{n_total} ({n_failed / n_total:.2%})")  # noqa:T201
     print(f"Reject null hypothesis when p<{significance_level}")  # noqa:T201
     if verbose:
-        print(evidence_df.to_string(index=False))
+        print(evidence_df.to_string(index=False))  # noqa:T201
     else:
-        print(evidence_df[evidence_df["p_adj_significant"]].to_string(index=False))
+        print(evidence_df[evidence_df["p_adj_significant"]].to_string(index=False))  # noqa:T201
 
 
 def p_value_of_bootstrap_data(
