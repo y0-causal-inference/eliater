@@ -1,5 +1,5 @@
-Frontdoor-Backdoor Example
-==========================
-.. automodapi:: eliater.frontdoor_backdoor
+Remove Nuisance Variables
+=========================
+.. automodapi:: eliater.discover_latent_nodes
     :no-heading:
     :include-all-objects:

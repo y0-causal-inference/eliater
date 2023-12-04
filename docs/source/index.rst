@@ -12,6 +12,7 @@ Table of Contents
 
    installation
    usage
+   examples
 
 
 Indices and Tables
