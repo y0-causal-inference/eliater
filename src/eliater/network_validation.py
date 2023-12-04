@@ -11,10 +11,9 @@ tests, and a list of all (or the failed tests) with their corresponding p-value.
 
 This process allows for checking if the network structure is consistent with the data by checking
 the percentage of failed tests. If the percentage of failed tests is lower than 30 percent, the effect
-that the inconsistentcy between the structure and the data may have on causal quewry estimation is minor.
-However, if the percentage of failed tests is larger than 30 percent, we recommend the usewr to revise
+that the inconsistency between the structure and the data may have on causal query estimation is minor.
+However, if the percentage of failed tests is larger than 30 percent, we recommend the user to revise
 the network structure or the corresponding data.
-
 
 T Cell Signalling Example
 -------------------------
@@ -194,9 +193,6 @@ from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 from y0.struct import CITest, get_conditional_independence_tests
 
-logging.basicConfig(format="%(message)s", level=logging.DEBUG)
-
-
 __all__ = [
     "conditional_independence_test_summary",
     "validate_test",
@@ -209,6 +205,8 @@ __all__ = [
     "p_value_statistics",
     "generate_plot_expected_p_value_vs_num_data_points",
 ]
+
+logger = logging.getLogger(__name__)
 
 TESTS = get_conditional_independence_tests()
 
@@ -351,13 +349,13 @@ def conditional_independence_test_summary(
     total_no_of_tests = len(test_results)
     total_no_of_failed_tests = len(failed_tests)
     percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_tests
-    logging.info(f"Total number of conditional independencies: {total_no_of_tests:,}")
-    logging.info(f"Total number of failed tests: {total_no_of_failed_tests:,}")
-    logging.info(f"Percentage of failed tests: {percentage_of_failed_tests:.2%}")
+    logger.info(f"Total number of conditional independencies: {total_no_of_tests:,}")
+    logger.info(f"Total number of failed tests: {total_no_of_failed_tests:,}")
+    logger.info(f"Percentage of failed tests: {percentage_of_failed_tests:.2%}")
     if verbose:
-        logging.info(test_results.to_string(index=False))
+        logger.info(test_results.to_string(index=False))
     else:
-        logging.info(failed_tests.to_string(index=False))
+        logger.info(failed_tests.to_string(index=False))
 
 
 def p_value_of_bootstrap_data(
