@@ -23,6 +23,7 @@ and the estimand from the ID algorithm is $\\sum\\limits_{M_1} P(M_1 | X) \\sum\
 .. code-block:: python
 
     from eliater.discover_latent_nodes import remove_nuisance_variables
+    from y0.algorithm.identify import identify_outcomes
     from y0.dsl import Variable, X, Y
     from y0.graph import NxMixedGraph
 
@@ -41,6 +42,7 @@ and the estimand from the ID algorithm is $\\sum\\limits_{M_1} P(M_1 | X) \\sum\
             (X, Y),
         ],
     )
+    estimand = identify_outcomes(graph, X, Y)
     graph.draw()
 
 .. figure:: img/nuisance/original.svg
@@ -61,16 +63,13 @@ graph.
    :scale: 70%
 
 The new graph can be used to check if the query is identifiable, and if so, generate an estimand for it.
+Note that the estimand does not change since the nodes removed did not contribute to it.
 
 .. code-block:: python
-
-    from y0.algorithm.identify import identify_outcomes
 
     identify_outcomes(new_graph, treatments=X, outcomes=Y)
 
 $\\sum\\limits_{M_1} P(M_1 | X) \\sum\\limits_{X} P(X) P(Y | M_1, X)$
-
-Note that the estimand did not change.
 
 Explanation
 -----------
