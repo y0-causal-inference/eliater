@@ -183,6 +183,7 @@ from y0.algorithm.falsification import get_graph_falsifications
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph
 from y0.struct import CITest, get_conditional_independence_tests
+from y0.struct import _ensure_method
 
 __all__ = [
     "add_ci_undirected_edges",
@@ -193,87 +194,7 @@ __all__ = [
 ]
 
 TESTS = get_conditional_independence_tests()
-
-
-def _get_state_space_map(
-    data: pd.DataFrame, threshold: Optional[int] = 10
-) -> Dict[Variable, Literal["discrete", "continuous"]]:
-    """Get a dictionary from each variable to its type.
-
-    :param data: the observed data
-    :param threshold: The threshold for determining a column as discrete
-        based on the number of unique values
-    :return: the mapping from column name to its type
-    """
-    column_values_unique_count = {
-        column_name: data[column_name].nunique() for column_name in data.columns
-    }
-    return {
-        Variable(column): "discrete"
-        if column_values_unique_count[column] <= threshold
-        else "continuous"
-        for column in data.columns
-    }
-
-
-def _is_data_discrete(data: pd.DataFrame) -> bool:
-    """Check if all the columns in the dataframe has discrete data.
-
-    :param data: observational data.
-    :return: True, if all the columns have discrete data, False, otherwise
-    """
-    variable_types = set(_get_state_space_map(data=data).values())
-    return variable_types == {"discrete"}
-
-
-def _is_data_continuous(data: pd.DataFrame) -> bool:
-    """Check if all the columns in the dataframe has continuous data.
-
-    :param data: observational.
-    :return: True, if all the columns have continuous data, False, otherwise
-    """
-    variable_types = set(_get_state_space_map(data).values())
-    return variable_types == {"continuous"}
-
-
-def _choose_default_test(data: pd.DataFrame) -> CITest:
-    """Choose the default statistical test for testing conditional independencies based on the data.
-
-    :param data: observational data.
-    :return: the default test based on data
-    :raises NotImplementedError: if data is of mixed type (contains both discrete and continuous columns)
-    """
-    if _is_data_discrete(data):
-        return "chi-square"
-    if _is_data_continuous(data):
-        return "pearson"
-    raise NotImplementedError(
-        "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
-    )
-
-
-def _validate_test(
-    data: pd.DataFrame,
-    method: Optional[CITest],
-) -> None:
-    """Validate the conditional independency test passed by the user.
-
-    :param data: observational data.
-    :param method: the conditional independency test passed by the user.
-    :raises ValueError: if the passed test is invalid / unsupported, pearson is used for discrete data or
-        chi-square is used for continuous data
-    """
-    tests = get_conditional_independence_tests()
-    if method not in tests:
-        raise ValueError(f"`{method}` is invalid. Supported CI tests are: {sorted(tests)}")
-
-    if _is_data_continuous(data) and method != "pearson":
-        raise ValueError(
-            "The data is continuous. Either discretize and use chi-square or use the pearson."
-        )
-
-    if _is_data_discrete(data) and method == "pearson":
-        raise ValueError("Cannot run pearson on discrete data. Use chi-square instead.")
+DEFAULT_SIGNIFICANCE = 0.01
 
 
 def add_ci_undirected_edges(
@@ -292,7 +213,7 @@ def add_ci_undirected_edges(
         or :data:`y0.struct.DEFAULT_DISCRETE_CI_TEST` for discrete data.
     :param significance_level: The statistical tests employ this value for
         comparison with the p-value of the test to determine the independence of
-        the tested variables. If none, defaults to 0.01.
+        the tested variables. If none, defaults to 0.05.
     :returns: A copy of the input graph potentially with new undirected edges added
     """
     rv = NxMixedGraph(
@@ -300,7 +221,7 @@ def add_ci_undirected_edges(
         undirected=graph.undirected.copy(),
     )
     if significance_level is None:
-        significance_level = 0.05
+        significance_level = DEFAULT_SIGNIFICANCE
     for judgement in get_conditional_independencies(rv):
         if not judgement.test(
             data, boolean=True, method=method, significance_level=significance_level
@@ -336,16 +257,7 @@ def print_graph_falsifications(
     :raises NotImplementedError: if data is of mixed type (contains both discrete and continuous columns)
     """
     if significance_level is None:
-        significance_level = 0.01
-    if not method:
-        method = _choose_default_test(data)
-    else:
-        # Validate test and data
-        _validate_test(data=data, method=method)
-        if len(set(_get_state_space_map(data).values())) > 1:
-            raise NotImplementedError(
-                "Mixed data types are not allowed. Either all of the columns of data should be discrete / continuous."
-            )
+        significance_level = DEFAULT_SIGNIFICANCE
     test_results = get_graph_falsifications(
         graph=graph,
         df=data,
@@ -354,16 +266,18 @@ def print_graph_falsifications(
         max_given=max_given,
     ).evidence
     # Find the result based on p-value
-    test_results["pass"] = test_results["p"].apply(lambda p_value: p_value >= significance_level)
-    test_results = test_results[["left", "right", "given", "p", "pass"]]
+    test_results["p_significant"] = test_results["p"].apply(
+        lambda p_value: p_value < significance_level
+    )
     test_results = test_results.sort_values("p")
-    failed_tests = test_results[~test_results["pass"]]
+    failed_tests = test_results[~test_results["p_significant"]]
     total_no_of_tests = len(test_results)
     total_no_of_failed_tests = len(failed_tests)
     percentage_of_failed_tests = total_no_of_failed_tests / total_no_of_tests
     print(f"Total number of conditional independencies: {total_no_of_tests:,}")
     print(f"Total number of failed tests: {total_no_of_failed_tests:,}")
     print(f"Percentage of failed tests: {percentage_of_failed_tests:.2%}")
+    print(f"Reject null hypothesis when p<{significance_level}")
     if verbose:
         print(test_results.to_string(index=False))
     else:
@@ -396,10 +310,7 @@ def p_value_of_bootstrap_data(
     """
     if significance_level is None:
         significance_level = 0.05
-    if test is None:
-        test = _choose_default_test(df)
-    else:
-        _validate_test(data=df, method=test)
+    test = _ensure_method(method=test, df=df)
     bootstrap_data = df.sample(n=sample_size, replace=True)
     result = TESTS[test](
         X=left,
@@ -441,10 +352,7 @@ def p_value_statistics(
     """
     if boot_size is None:
         boot_size = 1_000
-    if not test:
-        test = _choose_default_test(df)
-    else:
-        _validate_test(data=df, method=test)
+    test = _ensure_method(method=test, df=df)
     samples = [
         p_value_of_bootstrap_data(
             df,
