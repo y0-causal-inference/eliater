@@ -243,7 +243,7 @@ sars_large_example = Example(
 )
 
 
-#obs_data = generate(num_samples=100, seed=1)
+# obs_data = generate(num_samples=260, seed=1)
 #obs_data.to_csv("~/Github/Causal_workflow_in_R/Covid_case_study/covid_data_discrete.csv")
 #intv_data_1 = generate(num_samples=40, seed=1, treatments = {Variable('EGFR'): 1})
 #intv_data_0 = generate(num_samples=40, seed=1, treatments = {Variable('EGFR'): 0})
