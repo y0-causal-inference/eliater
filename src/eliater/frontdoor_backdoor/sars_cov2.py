@@ -1,4 +1,5 @@
 """This module contains a method to generate testing data for sars_large_example case study."""
+import csv
 
 import numpy as np
 import pandas as pd
@@ -266,7 +267,7 @@ sars_large_example = Example(
 )
 
 
-#obs_data = generate(num_samples=1000, seed=1)
+# obs_data = generate(num_samples=260, seed=1)
 #print(np.mean(obs_data['cytok']))
 #intv_data_1 = generate(num_samples=1000, seed=1, treatments = {Variable('EGFR'): 1})
 #intv_data_0 = generate(num_samples=1000, seed=1, treatments = {Variable('EGFR'): 0})
