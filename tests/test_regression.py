@@ -4,11 +4,10 @@ import unittest
 
 import pandas as pd
 
-from eliater.regression import get_regression_coefficients
-from y0.dsl import Variable
-from y0.graph import NxMixedGraph
 from eliater.frontdoor_backdoor import frontdoor_backdoor_example
-from y0.dsl import X, Y
+from eliater.regression import get_regression_coefficients
+from y0.dsl import Variable, X, Y
+from y0.graph import NxMixedGraph
 
 
 class TestRegression(unittest.TestCase):
@@ -27,7 +26,7 @@ class TestRegression(unittest.TestCase):
         expected_coefficients: set[Variable] = ...  # TODO
 
         name_to_coefficient = get_regression_coefficients(
-            graph=graph, data=data, treatments=treatments, outcome=outcome
+            graph=graph, data=data, treatments=treatments, outcomes=outcome
         )
         self.assertEqual(
             {c.name for c in expected_coefficients},

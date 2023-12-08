@@ -12,6 +12,7 @@ from y0.graph import NxMixedGraph, _ensure_set
 from y0.struct import CITest
 
 from .discover_latent_nodes import remove_nuisance_variables
+from .regression import get_regression_coefficients
 
 __all__ = [
     "workflow",
@@ -30,7 +31,7 @@ def workflow(
     ci_significance_level: Optional[float] = None,
     ace_bootstraps: int | None = None,
     ace_significance_level: float | None = None,
-) -> tuple[NxMixedGraph, Expression, float]:
+):
     """Run the Eliater workflow.
 
     This workflow has two parts:
@@ -81,4 +82,7 @@ def workflow(
         bootstraps=ace_bootstraps,
         alpha=ace_significance_level,
     )
-    return graph, estimand, ace
+    coefficients = get_regression_coefficients(
+        graph=graph, data=data, treatments=treatments, outcomes=outcomes
+    )
+    return graph, estimand, ace, coefficients

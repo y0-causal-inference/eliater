@@ -20,6 +20,7 @@ is the direct effect X -> Y.
     with X will no longer represent the direct effect
 """
 
+from operator import attrgetter
 from typing import Sequence
 
 import pandas as pd
@@ -37,10 +38,20 @@ def get_regression_coefficients(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
-    outcome: Variable,
-) -> dict[str, float]:
-    labels, model = fit_regression(graph=graph, data=data, treatments=treatments, outcome=outcome)
-    return dict(zip(labels, model.coef_))
+    outcomes: Variable | set[Variable],
+    conditions: None | Variable | set[Variable] = None,
+) -> dict[Variable, dict[Variable, float]]:
+    rv = {}
+    for outcomes in _ensure_set(outcomes):
+        variables, model = fit_regression(
+            graph=graph,
+            data=data,
+            treatments=treatments,
+            outcome=outcomes,
+            conditions=conditions,
+        )
+        rv[outcomes] = dict(zip(variables, model.coef_))
+    return rv
 
 
 def fit_regression(
@@ -48,19 +59,22 @@ def fit_regression(
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcome: Variable,
-) -> tuple[Sequence[str], LinearRegression]:
+    conditions: None | Variable | set[Variable] = None,
+) -> tuple[Sequence[Variable], LinearRegression]:
     """Determine the parameters of a structural causal model (SCM)."""
+    if conditions is not None:
+        raise NotImplementedError
     treatments = _ensure_set(treatments)
 
-    variables = (
+    variable_set = (
         get_variables(graph=graph, treatments=treatments, outcome=outcome)
         .union(treatments)
         .difference({outcome})
     )
-    labels = sorted(v.name for v in variables)
+    variables = sorted(variable_set, key=attrgetter("name"))
     model = LinearRegression()
-    model.fit(data[labels], data[outcome.name])
-    return labels, model
+    model.fit(data[[v.name for v in variable_set]], data[outcome.name])
+    return variables, model
 
 
 def get_variables(
@@ -79,7 +93,7 @@ def _demo():
     treatments = {X}
     outcome = Y
     coefficients = get_regression_coefficients(
-        graph=graph, data=data, treatments=treatments, outcome=outcome
+        graph=graph, data=data, treatments=treatments, outcomes=outcome
     )
     print(coefficients)
 
