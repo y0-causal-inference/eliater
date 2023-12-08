@@ -42,12 +42,12 @@ def get_regression_coefficients(
     conditions: None | Variable | set[Variable] = None,
 ) -> dict[Variable, dict[Variable, float]]:
     rv = {}
-    for outcomes in _ensure_set(outcomes):
+    for outcome in _ensure_set(outcomes):
         variables, model = fit_regression(
             graph=graph,
             data=data,
             treatments=treatments,
-            outcome=outcomes,
+            outcome=outcome,
             conditions=conditions,
         )
         rv[outcomes] = dict(zip(variables, model.coef_))
@@ -81,7 +81,10 @@ def get_variables(
     graph: NxMixedGraph, treatments: Variable | set[Variable], outcome: Variable
 ) -> set[Variable]:
     treatments = _ensure_set(treatments)
-    raise NotImplementedError
+    raise NotImplementedError(
+        "see pruthvi's comment about copying ananke code: "
+        "https://olga-vitek-lab.slack.com/archives/C04NQ38BQ1Y/p1701985938163269"
+    )
 
 
 def _demo():
@@ -95,7 +98,7 @@ def _demo():
     coefficients = get_regression_coefficients(
         graph=graph, data=data, treatments=treatments, outcomes=outcome
     )
-    print(coefficients)
+    print(coefficients)  # noqa:T201
 
 
 if __name__ == "__main__":
