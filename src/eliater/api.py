@@ -7,7 +7,7 @@ import pandas as pd
 
 from y0.algorithm.estimation import estimate_ace
 from y0.algorithm.identify import identify_outcomes
-from y0.dsl import Expression, Variable
+from y0.dsl import Variable
 from y0.graph import NxMixedGraph, _ensure_set
 from y0.struct import CITest
 

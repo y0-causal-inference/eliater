@@ -41,6 +41,7 @@ def get_regression_coefficients(
     outcomes: Variable | set[Variable],
     conditions: None | Variable | set[Variable] = None,
 ) -> dict[Variable, dict[Variable, float]]:
+    """Get the regression coefficients from fitting to the optimal adjustment set over the treatments and outcomes."""
     rv = {}
     for outcome in _ensure_set(outcomes):
         variables, model = fit_regression(
@@ -61,13 +62,13 @@ def fit_regression(
     outcome: Variable,
     conditions: None | Variable | set[Variable] = None,
 ) -> tuple[Sequence[Variable], LinearRegression]:
-    """Determine the parameters of a structural causal model (SCM)."""
+    """Fit a regression model to the optimal adjustment set over the treatments and a given outcome."""
     if conditions is not None:
         raise NotImplementedError
     treatments = _ensure_set(treatments)
 
     variable_set = (
-        get_variables(graph=graph, treatments=treatments, outcome=outcome)
+        get_optimal_adjustment_set(graph=graph, treatments=treatments, outcome=outcome)
         .union(treatments)
         .difference({outcome})
     )
@@ -77,9 +78,10 @@ def fit_regression(
     return variables, model
 
 
-def get_variables(
+def get_optimal_adjustment_set(
     graph: NxMixedGraph, treatments: Variable | set[Variable], outcome: Variable
 ) -> set[Variable]:
+    """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
     treatments = _ensure_set(treatments)
     raise NotImplementedError(
         "see pruthvi's comment about copying ananke code: "
