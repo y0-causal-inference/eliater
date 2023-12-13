@@ -4,8 +4,12 @@ import unittest
 
 import pandas as pd
 
-from eliater.frontdoor_backdoor import frontdoor_backdoor_example
-from eliater.regression import get_regression_coefficients
+from eliater.frontdoor_backdoor import (
+    frontdoor_backdoor_example,
+    multiple_mediators_confounders_example,
+    multiple_mediators_single_confounder_example,
+)
+from eliater.regression import get_optimal_adjustment_set, get_regression_coefficients
 from y0.dsl import Variable, X, Y
 from y0.graph import NxMixedGraph
 
@@ -35,3 +39,28 @@ class TestRegression(unittest.TestCase):
         )
         # TODO since there's some random aspect, set the appropriate delta
         self.assertAlmostEqual(expected_x_coefficient, name_to_coefficient[X.name])
+
+
+class TestAdjustmentSet(unittest.TestCase):
+    """Tests for deriving adjustment sets."""
+
+    def test_example1(self):
+        """Test getting adjustment set for the frontdoor-backdoor graph."""
+        graph = frontdoor_backdoor_example.graph
+        expected = {Variable("W")}
+        actual = get_optimal_adjustment_set(graph, Variable("X"), Variable("Y"))
+        self.assertEqual(expected, actual)
+
+    def test_example2(self):
+        """Test getting adjustment set for the multiple-mediators-single-confounder graph."""
+        graph = multiple_mediators_single_confounder_example.graph
+        self.assertRaises(
+            ValueError, get_optimal_adjustment_set, graph, Variable("X"), Variable("Y")
+        )
+
+    def test_example3(self):
+        """Test getting adjustment set for the multiple-mediators-multiple-confounders graph."""
+        graph = multiple_mediators_confounders_example.graph
+        expected = {Variable("Z1")}
+        actual = get_optimal_adjustment_set(graph, Variable("X"), Variable("Y"))
+        self.assertEqual(expected, actual)

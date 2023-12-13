@@ -20,12 +20,13 @@ is the direct effect X -> Y.
     with X will no longer represent the direct effect
 """
 
-from itertools import count
+# from itertools import count
 from operator import attrgetter
 from typing import Sequence
 
 import pandas as pd
-from optimaladj.CausalGraph import CausalGraph
+
+# from optimaladj.CausalGraph import CausalGraph
 from pgmpy.inference.CausalInference import CausalInference
 from pgmpy.models import BayesianNetwork
 from sklearn.linear_model import LinearRegression
@@ -82,17 +83,17 @@ def fit_regression(
     return variables, model
 
 
-def to_causal_graph(graph: NxMixedGraph) -> CausalGraph:
-    """Convert y0 NxMixedGraph to equivalent optimaladj CausalGraph."""
-    causal_graph = CausalGraph()
-    ananke_admg = graph.to_admg()
-    causal_graph.add_edges_from(ananke_admg.di_edges)
-    counter = count(start=1)
-    for node1, node2 in ananke_admg.bi_edges:
-        latent = "U_{}".format(next(counter))
-        causal_graph.add_edge(latent, node1)
-        causal_graph.add_edge(latent, node2)
-    return causal_graph
+# def to_causal_graph(graph: NxMixedGraph) -> CausalGraph:
+#     """Convert y0 NxMixedGraph to equivalent optimaladj CausalGraph."""
+#     causal_graph = CausalGraph()
+#     ananke_admg = graph.to_admg()
+#     causal_graph.add_edges_from(ananke_admg.di_edges)
+#     counter = count(start=1)
+#     for node1, node2 in ananke_admg.bi_edges:
+#         latent = "U_{}".format(next(counter))
+#         causal_graph.add_edge(latent, node1)
+#         causal_graph.add_edge(latent, node2)
+#     return causal_graph
 
 
 def to_bayesian_network(graph: NxMixedGraph) -> BayesianNetwork:
@@ -116,19 +117,18 @@ def get_optimal_adjustment_set(
             "Support for multiple treatments will be released in future versions."
         )
     treatments = list(treatments)
-    try:
-        causal_graph = to_causal_graph(graph)
-        non_latent_nodes = graph.to_admg().vertices
-        adjustment_set = causal_graph.optimal_minimum_adj_set(
-            treatment=treatments[0].name, outcome=outcome.name, L=[], N=non_latent_nodes
-        )
-    except Exception:
-        model = to_bayesian_network(graph)
-        inference = CausalInference(model)
-        adjustment_sets = inference.get_all_backdoor_adjustment_sets(
-            treatments[0].name, outcome.name
-        )
-        adjustment_set = min(adjustment_sets, key=len)
+    # try:
+    #     causal_graph = to_causal_graph(graph)
+    #     non_latent_nodes = graph.to_admg().vertices
+    #     adjustment_set = causal_graph.optimal_minimum_adj_set(
+    #         treatment=treatments[0].name, outcome=outcome.name, L=[], N=non_latent_nodes
+    #     )
+    # except Exception:
+    model = to_bayesian_network(graph)
+    inference = CausalInference(model)
+    adjustment_sets = inference.get_all_backdoor_adjustment_sets(treatments[0].name, outcome.name)
+    adjustment_set = min(adjustment_sets, key=len)
+    adjustment_set = {Variable(node) for node in adjustment_set}
     return adjustment_set
 
 
