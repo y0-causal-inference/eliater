@@ -15,50 +15,47 @@ that the inconsistency between the structure and the data may have on causal que
 However, if the percentage of failed tests is larger than 30 percent, we recommend the user to revise
 the network structure or the corresponding data.
 
-T Cell Signalling Example
+Example
 -------------------------
-Here is an example of a protein signalling network of the T cell signaling pathway
-(:data:`eliater.examples.t_cell_signaling_example`).
-It models the molecular mechanisms and regulatory processes involved
-in T cell activation, proliferation, and function.
+We'll work with the following example where $X$ is the treatment, $Y$ is the outcome.
+The observational data is simulated specifically for this graph using
+:func:`eliater.frontdoor_backdoor.example2.generate`, and the application of subsampling.
 
-The data consist of simultaneous measurements of 11 phosphorylated proteins and phospholipids
-derived from thousands of individual primary human immune system cells.
-
-.. figure:: img/signaling.png
-   :width: 200px
-   :height: 200px
-   :scale: 150 %
+.. image:: img/multiple_mediators_with_multiple_confounders.png
+  :width: 200px
 
 .. code-block:: python
 
-    from eliater.examples import t_cell_signaling_example
-    from eliater.network_validation import log_graph_falsifications
+    from y0.graph import NxMixedGraph
+    from eliater.frontdoor_backdoor.example2 import generate
+    from eliater.network_validation import print_graph_falsifications
 
-    graph = t_cell_signaling_example.graph
-    data = t_cell_signaling_example.data
-    log_graph_falsifications(graph, data, verbose=True)
+    graph = NxMixedGraph.from_str_edges(
+       directed=[
+           ('Z1', 'X'),
+           ('X', 'M1'),
+           ('M1', 'M2'),
+           ('M2', 'Y'),
+           ('Z1', 'Z2'),
+           ('Z2', 'Z3'),
+           ('Z3', 'Y')
+       ]
+   )
 
-.. image:: img/sachs_table.png
-   :width: 200px
-   :height: 400px
+    # Generate observational data for this graph (this is a special example)
+    observational_df = generate(num_samples=500, seed=1)
+
+    print_graph_falsifications(graph, data=observational_df, verbose=True)
+
+.. image:: img/CI_example_table.png
+   :width: 300px
+   :height: 200px
    :scale: 150 %
    :alt: alternate text
    :align: right
 
-The results show that out of 35 cases, 1 failed. The failed test is
-the conditional independence between P38 and PIP2, given PKC, with a p-value of 0.00425.
-This means we should add an undirected edge between P38 and PIP2. This can be done in an automated
-fashion with:
-
-.. code-block:: python
-
-    from eliater import add_ci_undirected_edges
-    from eliater.examples import t_cell_signaling_example
-
-    graph = t_cell_signaling_example.graph
-    data = t_cell_signaling_example.data
-    new_graph = add_ci_undirected_edges(graph, data, verbose=True)
+The results show that out of 14 cases, 1 failed. The failed test is
+the conditional independence between Y and Z2, given M2 and Z3.
 
 Finding False Negatives
 -----------------------
