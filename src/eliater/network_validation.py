@@ -17,33 +17,19 @@ the network structure or the corresponding data.
 
 Example
 -------------------------
-We'll work with the following example where $X$ is the treatment, $Y$ is the outcome.
-The observational data is simulated specifically for this graph using
-:func:`eliater.frontdoor_backdoor.example2.generate`, and the application of subsampling.
+We'll work with :data:`eliater.examples.example_2` and take $X$ as the treatment, $Y$ as the outcome.
+The example includes a function for simulating observational data.
 
 .. image:: img/multiple_mediators_with_multiple_confounders.png
   :width: 200px
 
 .. code-block:: python
 
-    from y0.graph import NxMixedGraph
-    from eliater.frontdoor_backdoor.example2 import generate
+    from eliater.examples import example_2
     from eliater.network_validation import print_graph_falsifications
 
-    graph = NxMixedGraph.from_str_edges(
-       directed=[
-           ('Z1', 'X'),
-           ('X', 'M1'),
-           ('M1', 'M2'),
-           ('M2', 'Y'),
-           ('Z1', 'Z2'),
-           ('Z2', 'Z3'),
-           ('Z3', 'Y')
-       ]
-   )
-
-    # Generate observational data for this graph (this is a special example)
-    observational_df = generate(num_samples=500, seed=1)
+    graph = example_2.graph
+    observational_df = example_2.generate_data(500, seed=1)
 
     print_graph_falsifications(graph, data=observational_df, verbose=True)
 
@@ -106,28 +92,19 @@ workflow to graphically assess how this compares to a data-driven approach.
    from matplotlib_inline.backend_inline import set_matplotlib_formats
 
    from y0.graph import NxMixedGraph
-   from eliater.frontdoor_backdoor.example2 import generate
-   from eliater.network_validation import generate_plot_expected_p_value_vs_num_data_points
+   from eliater.examples import example_2
+   from eliater import plot_ci_size_dependence
 
-   graph = NxMixedGraph.from_str_edges(
-       directed=[
-           ('Z1', 'X'),
-           ('X', 'M1'),
-           ('M1', 'M2'),
-           ('M2', 'Y'),
-           ('Z1', 'Z2'),
-           ('Z2', 'Z3'),
-           ('Z3', 'Y')
-       ]
-   )
+   graph = example_2.graph
 
+   stop = 2_000
    # Generate observational data for this graph (this is a special example)
-   observational_df = generate(num_samples=2_000, seed=1)
+   observational_df = example_2.generate_data(stop, seed=1)
 
-   generate_plot_expected_p_value_vs_num_data_points(
+   plot_ci_size_dependence(
        observational_df,
        start=50,
-       stop=2_000,
+       stop=stop,
        step=100,
        left="Y",
        right="M1",
@@ -198,7 +175,7 @@ __all__ = [
     "print_graph_falsifications",
     "p_value_of_bootstrap_data",
     "p_value_statistics",
-    "generate_plot_expected_p_value_vs_num_data_points",
+    "plot_ci_size_dependence",
 ]
 
 TESTS = get_conditional_independence_tests()
@@ -376,7 +353,7 @@ def p_value_statistics(
     return p_val, lower_error, higher_error
 
 
-def generate_plot_expected_p_value_vs_num_data_points(
+def plot_ci_size_dependence(
     df: pd.DataFrame,
     start: int,
     stop: int,

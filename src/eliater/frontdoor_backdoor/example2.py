@@ -15,7 +15,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "multiple_mediators_with_multiple_confounders_example",
+    "example_2",
 ]
 
 M1 = Variable("M1")
@@ -144,7 +144,7 @@ def generate(
     )
 
 
-multiple_mediators_with_multiple_confounders_example = Example(
+example_2 = Example(
     name="front door with multiple mediators and multiple confounders example",
     reference="Sara Taheri",
     description="This is an extension of the frontdoor_backdoor example from y0 module"
