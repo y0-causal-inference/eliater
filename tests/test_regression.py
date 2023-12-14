@@ -10,7 +10,7 @@ from eliater.frontdoor_backdoor import (
     multiple_mediators_single_confounder_example,
 )
 from eliater.regression import get_adjustment_sets, get_regression_coefficients
-from y0.dsl import Variable, X, Y, W, Z1, Z2, Z3
+from y0.dsl import Z1, Z2, Z3, Variable, W, X, Y
 from y0.graph import NxMixedGraph
 
 
@@ -41,20 +41,20 @@ class TestRegression(unittest.TestCase):
         self.assertAlmostEqual(expected_x_coefficient, name_to_coefficient[X.name])
 
 
-class TestAdjustmentSet(unittest.TestCase):
-    """Tests for deriving adjustment sets."""
+class TestPGMpyAdjustmentSet(unittest.TestCase):
+    """Tests for deriving adjustment sets with :mod:`pgmpy`."""
 
     def test_example1(self):
         """Test getting adjustment set for the frontdoor-backdoor graph."""
         graph = frontdoor_backdoor_example.graph
         expected = {frozenset([W])}
-        actual = get_adjustment_sets(graph, X, Y)
+        actual = get_adjustment_sets(graph, X, Y, impl="pgmpy")
         self.assertEqual(expected, actual)
 
     def test_example2(self):
         """Test getting adjustment set for the multiple-mediators-single-confounder graph."""
         graph = multiple_mediators_single_confounder_example.graph
-        self.assertRaises(ValueError, get_adjustment_sets, graph, X, Y)
+        self.assertRaises(ValueError, get_adjustment_sets, graph, X, Y, impl="pgmpy")
 
     def test_example3(self):
         """Test multiple possible adjustment sets for multiple-mediators-multiple-confounders graph."""
@@ -64,5 +64,5 @@ class TestAdjustmentSet(unittest.TestCase):
             frozenset([Z2]),
             frozenset([Z3]),
         }
-        actual = get_adjustment_sets(graph, X, Y)
+        actual = get_adjustment_sets(graph, X, Y, impl="pgmpy")
         self.assertEqual(expected, actual)

@@ -21,25 +21,72 @@ is the direct effect X -> Y.
 """
 
 from operator import attrgetter
-from typing import Sequence, TYPE_CHECKING, Optional, Literal
+from typing import TYPE_CHECKING, Literal, Optional, Sequence
 
 import pandas as pd
-
-
 from sklearn.linear_model import LinearRegression
 
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph, _ensure_set
 
 if TYPE_CHECKING:
-    import pgmpy.models
     import optimaladj.CausalGraph
+    import pgmpy.models
 
 
 __all__ = [
+    "get_eliater_regression",
     "get_regression_coefficients",
     "get_adjustment_sets",
 ]
+
+
+Impl = Literal["pgmpy", "optimaladj"]
+
+
+def get_eliater_regression(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatment: Variable,
+    outcome: Variable,
+    impl: Optional[Impl] = None,
+) -> float:
+    """Return a simplified view for a simplified regression scenario.
+
+    1. Gets all adjustment sets returned by the implementation. If using :mod:`pgmpy`, then
+       returns multiple. The shortest is non-deterministically chosen. If using  :mod:`optimaladj`,
+       then a single optimal set is chosen (though might error if not possible)
+    2. Fits a linear regression between the union of the treatment and variables in the adjustment
+       set against the outcome
+    3. Returns the coefficient for the treatment in the linear regression, which represents the direct
+       effect of the treatment on the outcome
+
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param data: Observational data corresponding to the ADMG
+    :param treatment: The treatment variable
+    :param outcome: The outcome variable
+    :param impl: The implementation for getting adjustment sets.
+    :returns: The coefficient for the treatment in the linear regression between
+        the union of the treatment and (optimal/chosen) adjustment set and the outcome
+        as the response
+    """
+    adjustment_set_to_variable_to_coefficient = get_regression_coefficients(
+        graph=graph,
+        data=data,
+        treatments=treatment,
+        outcomes=outcome,
+    )[outcome]
+    if impl == "pgmpy":
+        # TODO how else to do this aggregation?
+        #  Return a distribution of all treatment coefficients?
+        #  Average them?
+        adjustment_set = min(adjustment_set_to_variable_to_coefficient, key=len)
+    elif impl == "optimaladj":
+        assert len(adjustment_set_to_variable_to_coefficient) == 1
+        adjustment_set = list(adjustment_set_to_variable_to_coefficient)[0]
+    else:
+        raise TypeError
+    return adjustment_set_to_variable_to_coefficient[adjustment_set][treatment]
 
 
 def get_regression_coefficients(
@@ -76,7 +123,7 @@ def fit_regressions(
     treatments: Variable | set[Variable],
     outcome: Variable,
     conditions: None | Variable | set[Variable] = None,
-    impl=None,
+    impl: Optional[Impl] = None,
 ) -> list[tuple[frozenset[Variable], Sequence[Variable], LinearRegression]]:
     """Fit a regression model to each adjustment set over the treatments and a given outcome."""
     if conditions is not None:
@@ -96,7 +143,7 @@ def fit_regressions(
 
 
 def to_causal_graph(graph: NxMixedGraph) -> "optimaladj.CausalGraph.CausalGraph":
-    """Convert y0 NxMixedGraph to equivalent optimaladj CausalGraph."""
+    """Convert a mixed graph to an equivalent :class:`optimaladj.CausalGraph.CausalGraph`."""
     from optimaladj.CausalGraph import CausalGraph
 
     causal_graph = CausalGraph()
@@ -110,7 +157,7 @@ def to_causal_graph(graph: NxMixedGraph) -> "optimaladj.CausalGraph.CausalGraph"
 
 
 def to_bayesian_network(graph: NxMixedGraph) -> "pgmpy.models.BayesianNetwork":
-    """Convert a mixed graph to equivalent :class:`pgmpy.BayesianNetwork`."""
+    """Convert a mixed graph to an equivalent :class:`pgmpy.BayesianNetwork`."""
     from pgmpy.models import BayesianNetwork
 
     ananke_admg = graph.to_admg()
@@ -127,11 +174,9 @@ def get_adjustment_sets(
     graph: NxMixedGraph,
     treatments: Variable | set[Variable],
     outcome: Variable,
-    impl: Optional[Literal["pgmpy", "optimaladj"]] = None,
+    impl: Optional[Impl] = None,
 ) -> set[frozenset[Variable]]:
     """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
-    if impl is None:
-        impl = "pgmpy"
     treatments = list(_ensure_set(treatments))
     if len(treatments) > 1:
         raise NotImplementedError
@@ -143,15 +188,16 @@ def get_adjustment_sets(
         adjustment_sets = inference.get_all_backdoor_adjustment_sets(
             treatments[0].name, outcome.name
         )
-        adjustment_sets = {frozenset([Variable(v) for v in s]) for s in adjustment_sets}
-        return adjustment_sets
+        return {
+            frozenset(Variable(v) for v in adjustment_set) for adjustment_set in adjustment_sets
+        }
     elif impl == "optimaladj":
         causal_graph = to_causal_graph(graph)
         non_latent_nodes = graph.to_admg().vertices
         adjustment_set = causal_graph.optimal_minimum_adj_set(
             treatment=treatments[0].name, outcome=outcome.name, L=[], N=non_latent_nodes
         )
-        return {frozenset([Variable(v) for v in adjustment_set])}
+        return {frozenset(Variable(v) for v in adjustment_set)}
     else:
         raise TypeError(f"Unknown implementation: {impl}")
 
