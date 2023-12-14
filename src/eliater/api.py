@@ -1,5 +1,10 @@
-"""Implementation of Eliater workflow."""
+"""Implementation of Eliater workflow.
 
+To run the workflow and reproduce results on all examples in the
+package, use ``python -m eliater.api``.
+"""
+
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
 
@@ -11,7 +16,7 @@ from eliater.examples import examples
 from eliater.network_validation import add_ci_undirected_edges
 from y0.algorithm.estimation import estimate_ace
 from y0.algorithm.identify import identify_outcomes
-from y0.dsl import Variable
+from y0.dsl import Expression, Variable
 from y0.graph import NxMixedGraph, _ensure_set
 from y0.struct import CITest
 
@@ -24,17 +29,28 @@ HERE = Path(__file__).parent.resolve()
 RESULTS_PATH = HERE.joinpath("case_studies.tsv")
 
 
+@dataclass
+class Step:
+    """Represents the state after a step in the workflow."""
+
+    graph: NxMixedGraph
+    estimand: Expression
+    ace: float
+    ace_delta: float
+
+
 def workflow(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatments: Union[Variable, set[Variable]],
     outcomes: Union[Variable, set[Variable]],
     *,
+    conditions: Union[None, Variable, set[Variable]] = None,
     ci_method: Optional[CITest] = None,
     ci_significance_level: Optional[float] = None,
     ace_bootstraps: int | None = None,
     ace_significance_level: float | None = None,
-):
+) -> list[Step]:
     """Run the Eliater workflow.
 
     This workflow has three parts:
@@ -47,6 +63,7 @@ def workflow(
     :param data: Data associated with nodes in the graph
     :param treatments: The node or nodes that are treated
     :param outcomes: The node or nodes that are outcomes
+    :param conditions: Conditions on the query (currently not implemented for all parts)
     :param ci_method:
         The conditional independency test to use. If None, defaults to
         :data:`y0.struct.DEFAULT_CONTINUOUS_CI_TEST` for continuous data
@@ -56,74 +73,97 @@ def workflow(
         the tested variables. If none, defaults to 0.01.
     :param ace_bootstraps: The number of bootstraps for calculating the ACE. Defaults to 0 (i.e., not used by default)
     :param ace_significance_level: The significance level for the ACE. Defaults to 0.05.
-    :returns: A triple with a modified graph, the estimand, and the ACE value.
+    :returns: A set of states after each step
     :raises ValueError: If the graph becomes unidentifiable throughout the workflow
     """
     treatments = _ensure_set(treatments)
     outcomes = _ensure_set(outcomes)
 
-    def _estimate_ace(_graph):
+    def _estimate_ace(_graph: NxMixedGraph) -> float:
         return estimate_ace(
             graph=_graph,
             treatments=list(treatments),
             outcomes=list(outcomes),
+            conditions=conditions,
             data=data,
             bootstraps=ace_bootstraps,
             alpha=ace_significance_level,
         )
 
-    input_estimand = identify_outcomes(graph, treatments=treatments, outcomes=outcomes)
+    def _identify(_graph: NxMixedGraph) -> Expression:
+        return identify_outcomes(
+            _graph, treatments=treatments, outcomes=outcomes, conditions=conditions
+        )
+
+    input_estimand = _identify(graph)
     if input_estimand is None:
         raise ValueError("input graph is not identifiable")
     input_ace = _estimate_ace(graph)
+    initial = Step(graph=graph, estimand=input_estimand, ace=input_ace, ace_delta=0.0)
 
     graph_1 = add_ci_undirected_edges(
         graph, data, method=ci_method, significance_level=ci_significance_level
     )
-    graph_1_estimand = identify_outcomes(graph_1, treatments=treatments, outcomes=outcomes)
+    graph_1_estimand = _identify(graph_1)
     if graph_1_estimand is None:
         raise ValueError("not identifiable after adding CI edges")
     graph_1_ace = _estimate_ace(graph_1)
     graph_1_ace_delta = graph_1_ace - input_ace
+    step_1 = Step(
+        graph=graph_1, estimand=graph_1_estimand, ace=graph_1_ace, ace_delta=graph_1_ace_delta
+    )
 
-    # TODO extend this to consider condition variables
     graph_2 = remove_nuisance_variables(graph_1, treatments=treatments, outcomes=outcomes)
-    graph_2_estimand = identify_outcomes(graph_2, treatments=treatments, outcomes=outcomes)
+    graph_2_estimand = _identify(graph_2)
     if not graph_2_estimand:
         raise ValueError("not identifiable after removing nuisance variables")
     graph_2_ace = _estimate_ace(graph_2)
     graph_2_ace_delta = graph_2_ace - input_ace
-
-    return (
-        input_estimand,
-        input_ace,
-        graph_1,
-        graph_1_estimand,
-        graph_1_ace,
-        graph_1_ace_delta,
-        graph_2,
-        graph_2_estimand,
-        graph_2_ace,
-        graph_2_ace_delta,
+    step_2 = Step(
+        graph=graph_2, estimand=graph_2_estimand, ace=graph_2_ace, ace_delta=graph_2_ace_delta
     )
 
+    return [initial, step_1, step_2]
 
+
+@click.command()
 def reproduce():
     """Run this function to generate the results for the paper."""
     click.echo("Make sure you're on the dev version of y0")
     rows = []
+    columns = [
+        "name",
+        "treatments",
+        "outcomes",
+        "initial_nodes",
+        "initial_estimand",
+        "initial_ace",
+        "step_1_nodes",
+        "step_1_estimand",
+        "step_1_ace",
+        "step_1_ace_delta",
+        "step_2_nodes",
+        "step_2_estimand",
+        "step_2_ace",
+        "step_2_ace_delta",
+    ]
     for example in examples:
-        if example.data is None:
+        if example.data is not None:
+            data = example.data
+        elif example.generate_data is not None:
+            data = example.generate_data(2000, seed=0)
+        else:
             continue
+
         for query in example.example_queries:
             if len(query.treatments) != 1 or len(query.outcomes) != 1:
                 click.echo(f"[{example.name}] skipping query:")
                 continue
 
             try:
-                record = workflow(
+                steps = workflow(
                     graph=example.graph,
-                    data=example.data,
+                    data=data,
                     treatments=query.treatments,
                     outcomes=query.outcomes,
                 )
@@ -131,16 +171,27 @@ def reproduce():
                 click.echo(f"[{example.name}] failed on query: {query.expression}")
                 click.secho(str(e), fg="red")
                 continue
+
+            parts = []
+            for i, step in enumerate(steps):
+                parts.append(step.graph.directed.number_of_nodes())
+                parts.append(step.estimand.to_y0())
+                parts.append(round(step.ace, 4))
+                if i > 0:
+                    parts.append(round(step.ace_delta, 4))
             rows.append(
                 (
                     example.name,
                     ", ".join(sorted(t.name for t in query.treatments)),
                     ", ".join(sorted(o.name for o in query.outcomes)),
-                    *record,
+                    *parts,
                 )
             )
-    df = pd.DataFrame(rows)
+    if not rows:
+        raise ValueError("No examples available!")
+    df = pd.DataFrame(rows, columns=columns)
     df.to_csv(RESULTS_PATH, sep="\t", index=False)
+    click.echo(f"Output results to {RESULTS_PATH}")
     return df
 
 
