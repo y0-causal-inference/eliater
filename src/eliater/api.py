@@ -15,6 +15,7 @@ import pandas as pd
 from eliater.discover_latent_nodes import remove_nuisance_variables
 from eliater.examples import examples
 from eliater.network_validation import add_ci_undirected_edges
+from eliater.regression import get_eliater_regression
 from y0.algorithm.estimation import estimate_ace
 from y0.algorithm.identify import identify_outcomes
 from y0.dsl import Expression, Variable
@@ -41,6 +42,7 @@ class Step:
     estimand: Expression
     ace: float
     ace_delta: float
+    direct_effect: float
 
 
 def workflow(
@@ -99,11 +101,23 @@ def workflow(
             _graph, treatments=treatments, outcomes=outcomes, conditions=conditions
         )
 
+    def _get_direct_effect(_graph: NxMixedGraph) -> float:
+        return get_eliater_regression(
+            graph, treatment=list(treatments)[0], outcome=list(outcomes)[0]
+        )
+
     input_estimand = _identify(graph)
     if input_estimand is None:
         raise ValueError("input graph is not identifiable")
     input_ace = _estimate_ace(graph)
-    initial = Step(graph=graph, estimand=input_estimand, ace=input_ace, ace_delta=0.0)
+    input_direct_effect = _get_direct_effect(graph)
+    initial = Step(
+        graph=graph,
+        estimand=input_estimand,
+        ace=input_ace,
+        ace_delta=0.0,
+        direct_effect=input_direct_effect,
+    )
 
     graph_1 = add_ci_undirected_edges(
         graph, data, method=ci_method, significance_level=ci_significance_level
@@ -112,9 +126,14 @@ def workflow(
     if graph_1_estimand is None:
         raise ValueError("not identifiable after adding CI edges")
     graph_1_ace = _estimate_ace(graph_1)
+    graph_1_direct_effect = _get_direct_effect(graph_1)
     graph_1_ace_delta = graph_1_ace - input_ace
     step_1 = Step(
-        graph=graph_1, estimand=graph_1_estimand, ace=graph_1_ace, ace_delta=graph_1_ace_delta
+        graph=graph_1,
+        estimand=graph_1_estimand,
+        ace=graph_1_ace,
+        ace_delta=graph_1_ace_delta,
+        direct_effect=graph_1_direct_effect,
     )
 
     graph_2 = remove_nuisance_variables(graph_1, treatments=treatments, outcomes=outcomes)
@@ -122,9 +141,14 @@ def workflow(
     if not graph_2_estimand:
         raise ValueError("not identifiable after removing nuisance variables")
     graph_2_ace = _estimate_ace(graph_2)
+    graph_2_direct_effect = _get_direct_effect(graph_2)
     graph_2_ace_delta = graph_2_ace - input_ace
     step_2 = Step(
-        graph=graph_2, estimand=graph_2_estimand, ace=graph_2_ace, ace_delta=graph_2_ace_delta
+        graph=graph_2,
+        estimand=graph_2_estimand,
+        ace=graph_2_ace,
+        ace_delta=graph_2_ace_delta,
+        direct_effect=graph_2_direct_effect,
     )
 
     return [initial, step_1, step_2]
@@ -142,14 +166,17 @@ def reproduce():
         "initial_nodes",
         "initial_estimand",
         "initial_ace",
+        "initial_direct_effect",
         "step_1_nodes",
         "step_1_estimand",
         "step_1_ace",
         "step_1_ace_delta",
+        "step_1_direct_effect",
         "step_2_nodes",
         "step_2_estimand",
         "step_2_ace",
         "step_2_ace_delta",
+        "step_2_direct_effect",
     ]
     for example in examples:
         if example.data is not None:
@@ -184,6 +211,8 @@ def reproduce():
                 parts.append(round(step.ace, 4))
                 if i > 0:
                     parts.append(round(step.ace_delta, 4))
+                parts.append(round(step.direct_effect, 4))
+
             rows.append(
                 (
                     example.name,
