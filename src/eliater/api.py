@@ -4,6 +4,7 @@ To run the workflow and reproduce results on all examples in the
 package, use ``python -m eliater.api``.
 """
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
@@ -27,6 +28,9 @@ __all__ = [
 
 HERE = Path(__file__).parent.resolve()
 RESULTS_PATH = HERE.joinpath("case_studies.tsv")
+
+# Ignore all warnings
+warnings.filterwarnings("ignore")
 
 
 @dataclass
@@ -156,6 +160,7 @@ def reproduce():
             continue
 
         for query in example.example_queries:
+            click.echo(f"\n> {example.name}")
             if len(query.treatments) != 1 or len(query.outcomes) != 1:
                 click.echo(f"[{example.name}] skipping query:")
                 continue
@@ -168,8 +173,8 @@ def reproduce():
                     outcomes=query.outcomes,
                 )
             except Exception as e:
-                click.echo(f"[{example.name}] failed on query: {query.expression}")
-                click.secho(str(e), fg="red")
+                click.echo(f"Failed on query: {query.expression}")
+                click.secho(f"{type(e).__name__}: {e}", fg="red")
                 continue
 
             parts = []
@@ -191,7 +196,7 @@ def reproduce():
         raise ValueError("No examples available!")
     df = pd.DataFrame(rows, columns=columns)
     df.to_csv(RESULTS_PATH, sep="\t", index=False)
-    click.echo(f"Output results to {RESULTS_PATH}")
+    click.echo(f"\nOutputting {len(rows)} results to {RESULTS_PATH}")
     return df
 
 
