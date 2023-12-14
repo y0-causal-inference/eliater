@@ -15,8 +15,10 @@ that the inconsistency between the structure and the data may have on causal que
 However, if the percentage of failed tests is larger than 30 percent, we recommend the user to revise
 the network structure or the corresponding data.
 
+.. warning:: This functionality is not unit tested! Use at your own risk.
+
 Example
--------------------------
+-------
 We'll work with :data:`eliater.examples.example_2` and take $X$ as the treatment, $Y$ as the outcome.
 The example includes a function for simulating observational data.
 
