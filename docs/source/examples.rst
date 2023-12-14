@@ -6,6 +6,12 @@ Frontdoor-Backdoor Example
     :no-heading:
     :include-all-objects:
 
+Frontdoor-Backdoor Discrete Example
+-----------------------------------
+.. automodapi:: eliater.examples.frontdoor_backdoor_discrete
+    :no-heading:
+    :include-all-objects:
+
 Escherichia coli K-12 Example
 -----------------------------
 .. automodapi:: eliater.examples.ecoli

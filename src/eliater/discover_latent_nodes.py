@@ -171,8 +171,12 @@ def remove_nuisance_variables(
     :param tag: The tag for which variables are latent
     :return: the new graph after simplification
     """
+    rv = NxMixedGraph(
+        directed=graph.directed.copy(),
+        undirected=graph.undirected.copy(),
+    )
     lv_dag = mark_nuisance_variables_as_latent(
-        graph=graph, treatments=treatments, outcomes=outcomes, tag=tag
+        graph=rv, treatments=treatments, outcomes=outcomes, tag=tag
     )
     simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
     return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
