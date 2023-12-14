@@ -47,15 +47,27 @@ The observational data is simulated specifically for this graph using
 
     print_graph_falsifications(graph, data=observational_df, verbose=True)
 
-.. image:: img/CI_example_table.png
-   :width: 300px
-   :height: 200px
-   :scale: 150 %
-   :alt: alternate text
-   :align: right
+======  =======  =======  ===========  ===========  =====  ===========  ===================
+left    right    given          stats            p  dof          p_adj  p_adj_significant
+======  =======  =======  ===========  ===========  =====  ===========  ===================
+Y       Z2       M2|Z3     0.392472    7.33647e-20         1.02711e-18  True
+M2      Z3       X         0.0887728   0.047259            0.614367     False
+M2      Z2       X         0.0874659   0.0506246           0.614367     False
+X       Z3       Z1        0.0097293   0.828197            1            False
+Z1      Z3       Z2        0.0700012   0.117988            1            False
+X       Y        M2|Z3    -0.00485697  0.913731            1            False
+X       Z2       Z1       -0.0109544   0.806966            1            False
+M1      Y        M2|Z3     0.0124796   0.780733            1            False
+M2      Z1       X         0.0697175   0.119489            1            False
+Y       Z1       M2|Z3     0.0169804   0.704858            1            False
+M2      X        M1        0.0435465   0.331173            1            False
+M1      Z3       X         0.0664571   0.137823            1            False
+M1      Z1       X        -0.0108138   0.809395            1            False
+M1      Z2       X         0.0372645   0.405713            1            False
+======  =======  =======  ===========  ===========  =====  ===========  ===================
 
 The results show that out of 14 cases, 1 failed. The failed test is
-the conditional independence between Y and Z2, given M2 and Z3.
+the conditional independence between $Y$ and $Z_2$, given $M_2$ and $Z_3$.
 
 Finding False Negatives
 -----------------------
@@ -173,6 +185,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from numpy import mean, quantile
+from tabulate import tabulate
 from tqdm.auto import trange
 
 from y0.algorithm.conditional_independencies import get_conditional_independencies
@@ -232,6 +245,7 @@ def print_graph_falsifications(
     max_given: Optional[int] = 5,
     significance_level: Optional[float] = None,
     verbose: Optional[bool] = False,
+    tablefmt: str = "rst",
 ) -> None:
     """Print the summary of conditional independency test results.
 
@@ -249,6 +263,8 @@ def print_graph_falsifications(
         the tested variables. If none, defaults to 0.01.
     :param verbose: If `False`, only print the details of failed tests.
         If 'True', print the details of all the conditional independency results. Defaults to `False`
+    :param tablefmt: The format for the table that gets printed. By default, uses RST so it can be
+        directly copy/pasted into Python documentation
     """
     if significance_level is None:
         significance_level = DEFAULT_SIGNIFICANCE
@@ -264,9 +280,10 @@ def print_graph_falsifications(
     print(f"Failed tests: {n_failed}/{n_total} ({n_failed / n_total:.2%})")  # noqa:T201
     print(f"Reject null hypothesis when p<{significance_level}")  # noqa:T201
     if verbose:
-        print(evidence_df.to_string(index=False))  # noqa:T201
+        dd = evidence_df
     else:
-        print(evidence_df[evidence_df["p_adj_significant"]].to_string(index=False))  # noqa:T201
+        dd = evidence_df[evidence_df["p_adj_significant"]]
+    print(tabulate(dd, headers=list(dd.columns), tablefmt=tablefmt, showindex=False))  # noqa:T201
 
 
 def p_value_of_bootstrap_data(

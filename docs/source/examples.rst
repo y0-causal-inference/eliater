@@ -29,9 +29,3 @@ T cell signaling pathway Example
 .. automodapi:: eliater.examples.t_cell_signaling_pathway
     :no-heading:
     :include-all-objects:
-
-Data Examples
--------------
-.. automodapi:: eliater.data
-    :no-heading:
-    :include-all-objects:
