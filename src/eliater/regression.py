@@ -49,6 +49,7 @@ def get_eliater_regression(
     data: pd.DataFrame,
     treatment: Variable,
     outcome: Variable,
+    *,
     impl: Optional[Impl] = None,
 ) -> float:
     """Return a simplified view for a simplified regression scenario.
@@ -94,6 +95,7 @@ def get_regression_coefficients(
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcomes: Variable | set[Variable],
+    *,
     conditions: None | Variable | set[Variable] = None,
 ) -> dict[Variable, dict[frozenset[Variable], dict[Variable, float]]]:
     """Get the regression coefficients for potentially multiple adjustment sets w.r.t. the treatments and outcomes.
@@ -122,6 +124,7 @@ def fit_regressions(
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcome: Variable,
+    *,
     conditions: None | Variable | set[Variable] = None,
     impl: Optional[Impl] = None,
 ) -> list[tuple[frozenset[Variable], Sequence[Variable], LinearRegression]]:
@@ -174,6 +177,7 @@ def get_adjustment_sets(
     graph: NxMixedGraph,
     treatments: Variable | set[Variable],
     outcome: Variable,
+    *,
     impl: Optional[Impl] = None,
 ) -> set[frozenset[Variable]]:
     """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
