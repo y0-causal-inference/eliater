@@ -77,7 +77,7 @@ def get_eliater_regression(
         treatments=treatment,
         outcomes=outcome,
     )[outcome]
-    if impl == "pgmpy":
+    if impl == "pgmpy" or impl is None:
         # TODO how else to do this aggregation?
         #  Return a distribution of all treatment coefficients?
         #  Average them?
@@ -86,7 +86,7 @@ def get_eliater_regression(
         assert len(adjustment_set_to_variable_to_coefficient) == 1
         adjustment_set = list(adjustment_set_to_variable_to_coefficient)[0]
     else:
-        raise TypeError
+        raise TypeError(f"Invalid implementation: {impl}")
     return adjustment_set_to_variable_to_coefficient[adjustment_set][treatment]
 
 

@@ -43,6 +43,7 @@ class Step:
     ace: float
     ace_delta: float
     direct_effect: float
+    direct_effect_delta: float
 
 
 def workflow(
@@ -103,7 +104,7 @@ def workflow(
 
     def _get_direct_effect(_graph: NxMixedGraph) -> float:
         return get_eliater_regression(
-            graph, treatment=list(treatments)[0], outcome=list(outcomes)[0]
+            graph, treatment=list(treatments)[0], outcome=list(outcomes)[0], data=data
         )
 
     input_estimand = _identify(graph)
@@ -117,6 +118,7 @@ def workflow(
         ace=input_ace,
         ace_delta=0.0,
         direct_effect=input_direct_effect,
+        direct_effect_delta=0.0,
     )
 
     graph_1 = add_ci_undirected_edges(
@@ -127,13 +129,13 @@ def workflow(
         raise ValueError("not identifiable after adding CI edges")
     graph_1_ace = _estimate_ace(graph_1)
     graph_1_direct_effect = _get_direct_effect(graph_1)
-    graph_1_ace_delta = graph_1_ace - input_ace
     step_1 = Step(
         graph=graph_1,
         estimand=graph_1_estimand,
         ace=graph_1_ace,
-        ace_delta=graph_1_ace_delta,
+        ace_delta=graph_1_ace - input_ace,
         direct_effect=graph_1_direct_effect,
+        direct_effect_delta=graph_1_direct_effect - input_direct_effect,
     )
 
     graph_2 = remove_nuisance_variables(graph_1, treatments=treatments, outcomes=outcomes)
@@ -142,13 +144,13 @@ def workflow(
         raise ValueError("not identifiable after removing nuisance variables")
     graph_2_ace = _estimate_ace(graph_2)
     graph_2_direct_effect = _get_direct_effect(graph_2)
-    graph_2_ace_delta = graph_2_ace - input_ace
     step_2 = Step(
         graph=graph_2,
         estimand=graph_2_estimand,
         ace=graph_2_ace,
-        ace_delta=graph_2_ace_delta,
+        ace_delta=graph_2_ace - input_ace,
         direct_effect=graph_2_direct_effect,
+        direct_effect_delta=graph_2_direct_effect - input_direct_effect,
     )
 
     return [initial, step_1, step_2]
@@ -172,11 +174,13 @@ def reproduce():
         "step_1_ace",
         "step_1_ace_delta",
         "step_1_direct_effect",
+        "step_1_direct_effect_delta",
         "step_2_nodes",
         "step_2_estimand",
         "step_2_ace",
         "step_2_ace_delta",
         "step_2_direct_effect",
+        "step_2_direct_effect_delta",
     ]
     for example in examples:
         if example.data is not None:
@@ -199,7 +203,7 @@ def reproduce():
                     treatments=query.treatments,
                     outcomes=query.outcomes,
                 )
-            except Exception as e:
+            except (ValueError, RuntimeError) as e:
                 click.echo(f"Failed on query: {query.expression}")
                 click.secho(f"{type(e).__name__}: {e}", fg="red")
                 continue
@@ -212,6 +216,8 @@ def reproduce():
                 if i > 0:
                     parts.append(round(step.ace_delta, 4))
                 parts.append(round(step.direct_effect, 4))
+                if i > 0:
+                    parts.append(round(step.direct_effect_delta, 4))
 
             rows.append(
                 (
