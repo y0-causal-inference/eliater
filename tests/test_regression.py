@@ -9,8 +9,8 @@ from eliater.frontdoor_backdoor import (
     multiple_mediators_confounders_example,
     multiple_mediators_single_confounder_example,
 )
-from eliater.regression import get_optimal_adjustment_set, get_regression_coefficients
-from y0.dsl import Variable, X, Y
+from eliater.regression import get_adjustment_sets, get_regression_coefficients
+from y0.dsl import Variable, X, Y, W, Z1, Z2, Z3
 from y0.graph import NxMixedGraph
 
 
@@ -47,20 +47,22 @@ class TestAdjustmentSet(unittest.TestCase):
     def test_example1(self):
         """Test getting adjustment set for the frontdoor-backdoor graph."""
         graph = frontdoor_backdoor_example.graph
-        expected = {Variable("W")}
-        actual = get_optimal_adjustment_set(graph, Variable("X"), Variable("Y"))
+        expected = {frozenset([W])}
+        actual = get_adjustment_sets(graph, X, Y)
         self.assertEqual(expected, actual)
 
     def test_example2(self):
         """Test getting adjustment set for the multiple-mediators-single-confounder graph."""
         graph = multiple_mediators_single_confounder_example.graph
-        self.assertRaises(
-            ValueError, get_optimal_adjustment_set, graph, Variable("X"), Variable("Y")
-        )
+        self.assertRaises(ValueError, get_adjustment_sets, graph, X, Y)
 
     def test_example3(self):
-        """Test getting adjustment set for the multiple-mediators-multiple-confounders graph."""
+        """Test multiple possible adjustment sets for multiple-mediators-multiple-confounders graph."""
         graph = multiple_mediators_confounders_example.graph
-        expected = {Variable("Z1")}
-        actual = get_optimal_adjustment_set(graph, Variable("X"), Variable("Y"))
+        expected = {
+            frozenset([Z1]),
+            frozenset([Z2]),
+            frozenset([Z3]),
+        }
+        actual = get_adjustment_sets(graph, X, Y)
         self.assertEqual(expected, actual)
