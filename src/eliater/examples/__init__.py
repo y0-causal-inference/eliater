@@ -8,7 +8,7 @@ from .sars import sars_cov_2_example
 from .t_cell_signaling_pathway import t_cell_signaling_example
 from ..frontdoor_backdoor.base import frontdoor_backdoor_example
 from ..frontdoor_backdoor.example1 import multiple_mediators_single_confounder_example as example_1
-from ..frontdoor_backdoor.example2 import example_2
+from ..frontdoor_backdoor.example2 import multiple_mediators_confounders_example as example_2
 from ..frontdoor_backdoor.example3 import (
     multiple_mediators_confounders_nuisance_vars_example as example_3,
 )

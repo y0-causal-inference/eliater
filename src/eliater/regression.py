@@ -23,6 +23,7 @@ is the direct effect X -> Y.
 from operator import attrgetter
 from typing import TYPE_CHECKING, Literal, Optional, Sequence
 
+import networkx.exception
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
@@ -134,7 +135,7 @@ def fit_regressions(
     treatments = _ensure_set(treatments)
     rv = []
     adjustment_sets = get_adjustment_sets(
-        graph=graph, treatments=treatments, outcome=outcome, impl=impl
+        graph=graph, treatments=treatments, outcome=outcome
     )
     for adjustment_set in adjustment_sets:
         variable_set = adjustment_set.union(treatments).difference({outcome})
@@ -173,37 +174,78 @@ def to_bayesian_network(graph: NxMixedGraph) -> "pgmpy.models.BayesianNetwork":
     return model
 
 
+# def get_adjustment_sets(
+#     graph: NxMixedGraph,
+#     treatments: Variable | set[Variable],
+#     outcome: Variable,
+#     *,
+#     impl: Optional[Impl] = None,
+# ) -> set[frozenset[Variable]]:
+#     """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
+#     treatments = list(_ensure_set(treatments))
+#     if len(treatments) > 1:
+#         raise NotImplementedError
+#     if impl is None or impl == "pgmpy":
+#         from pgmpy.inference.CausalInference import CausalInference
+#
+#         model = to_bayesian_network(graph)
+#         inference = CausalInference(model)
+#         adjustment_sets = inference.get_all_backdoor_adjustment_sets(
+#             treatments[0].name, outcome.name
+#         )
+#         return {
+#             frozenset(Variable(v) for v in adjustment_set) for adjustment_set in adjustment_sets
+#         }
+#     elif impl == "optimaladj":
+#         causal_graph = to_causal_graph(graph)
+#         non_latent_nodes = graph.to_admg().vertices
+#         adjustment_set = causal_graph.optimal_minimum_adj_set(
+#             treatment=treatments[0].name, outcome=outcome.name, L=[], N=non_latent_nodes
+#         )
+#         return {frozenset(Variable(v) for v in adjustment_set)}
+#     else:
+#         raise TypeError(f"Unknown implementation: {impl}")
+
+
 def get_adjustment_sets(
-    graph: NxMixedGraph,
-    treatments: Variable | set[Variable],
-    outcome: Variable,
-    *,
-    impl: Optional[Impl] = None,
+    graph: NxMixedGraph, treatments: Variable | set[Variable], outcome: Variable
 ) -> set[frozenset[Variable]]:
     """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
     treatments = list(_ensure_set(treatments))
     if len(treatments) > 1:
         raise NotImplementedError
-    if impl is None or impl == "pgmpy":
-        from pgmpy.inference.CausalInference import CausalInference
 
-        model = to_bayesian_network(graph)
-        inference = CausalInference(model)
-        adjustment_sets = inference.get_all_backdoor_adjustment_sets(
-            treatments[0].name, outcome.name
+    import optimaladj
+
+    causal_graph = to_causal_graph(graph)
+    observable_nodes = graph.to_admg().vertices
+    try:
+        adjustment_set = causal_graph.optimal_minimal_adj_set(
+            treatment=treatments[0].name, outcome=outcome.name, L=[], N=observable_nodes
         )
-        return {
-            frozenset(Variable(v) for v in adjustment_set) for adjustment_set in adjustment_sets
-        }
-    elif impl == "optimaladj":
-        causal_graph = to_causal_graph(graph)
-        non_latent_nodes = graph.to_admg().vertices
-        adjustment_set = causal_graph.optimal_minimum_adj_set(
-            treatment=treatments[0].name, outcome=outcome.name, L=[], N=non_latent_nodes
-        )
-        return {frozenset(Variable(v) for v in adjustment_set)}
-    else:
-        raise TypeError(f"Unknown implementation: {impl}")
+    except (
+        networkx.exception.NetworkXError,
+        optimaladj.CausalGraph.NoAdjException,
+        optimaladj.CausalGraph.ConditionException,
+    ):
+        try:
+            adjustment_set = causal_graph.optimal_adj_set(
+                treatment=treatments[0].name, outcome=outcome.name, L=[], N=observable_nodes
+            )
+        except (
+            networkx.exception.NetworkXError,
+            optimaladj.CausalGraph.NoAdjException,
+            optimaladj.CausalGraph.ConditionException,
+        ):
+            from pgmpy.inference.CausalInference import CausalInference
+
+            model = to_bayesian_network(graph)
+            inference = CausalInference(model)
+            adjustment_sets = inference.get_all_backdoor_adjustment_sets(
+                treatments[0].name, outcome.name
+            )
+            adjustment_set = min(adjustment_sets, key=len)
+    return {frozenset(Variable(v) for v in adjustment_set)}
 
 
 def _demo():
