@@ -98,9 +98,9 @@ class TestAdjustmentSet(unittest.TestCase):
     def test_example5(self):
         """Test getting adjustment set for a sample graph."""
         graph = NxMixedGraph.from_str_adj(
-            directed={"A": ["B", "X"], "C": ["B", "Y"], "X": ["Y"], "D": ["X"]}
+            directed={"A": ["B", "X"], "C": ["Y"], "X": ["Y"], "D": ["X"], "B": ["C"]}
         )
-        expected = frozenset({}), "Optimal Minimal Adjustment Set"
+        expected = frozenset({Variable("C")}), "Optimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)
         self.assertTrue(self._compare(actual, expected))
 
@@ -125,6 +125,15 @@ class TestAdjustmentSet(unittest.TestCase):
             actual_adjustment_set in expected_adjustment_sets
             and actual_adjustment_set_type == expected_adjustment_set_type
         )
+
+    def test_example7(self):
+        """Test getting adjustment set for a sample graph."""
+        graph = NxMixedGraph.from_str_adj(
+            directed={"A": ["X"], "B": ["X", "C"], "C": ["Y"], "X": ["D", "Y"]}
+        )
+        expected = frozenset([Variable("C")]), "Optimal Minimal Adjustment Set"
+        actual = get_adjustment_set(graph, X, Y)
+        self.assertTrue(self._compare(actual, expected))
 
     def test_t_cell_signaling_example(self):
         """Test getting adjustment set for the t_cell_signaling graph."""

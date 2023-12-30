@@ -21,7 +21,7 @@ is the direct effect X -> Y.
 """
 
 from operator import attrgetter
-from typing import TYPE_CHECKING, Literal, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple
 
 import networkx.exception
 import optimaladj
@@ -259,9 +259,8 @@ def fit_regression(
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcome: Variable,
-    *,
     conditions: None | Variable | set[Variable] = None,
-) -> dict[Variable, float]:
+) -> Tuple[dict[Variable, float], float]:
     """Fit a regression model to the adjustment set over the treatments and a given outcome."""
     if conditions is not None:
         raise NotImplementedError
@@ -271,7 +270,40 @@ def fit_regression(
     variables = sorted(variable_set, key=attrgetter("name"))
     model = LinearRegression()
     model.fit(data[[v.name for v in variables]], data[outcome.name])
-    return dict(zip(variables, model.coef_))
+    return dict(zip(variables, model.coef_)), model.intercept_
+
+
+def estimate_query(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatments: Variable | set[Variable],
+    outcome: Variable,
+    *,
+    query_type: str = "ate",
+    conditions: None | Variable | set[Variable] = None,
+    interventions: Dict[Variable, float] = None,
+):
+    """Estimate treatment effects using Linear Regression."""
+    treatments = _ensure_set(treatments)
+    if len(treatments) > 1:
+        raise NotImplementedError
+    treatments = list(treatments)
+    coefficients, intercept = fit_regression(graph, data, treatments, outcome, conditions)
+    if query_type == "ate":
+        return coefficients[treatments[0]]
+    if treatments[0] not in interventions:
+        raise Exception
+    y = []
+    x = interventions[treatments[0]]
+    for row in data:
+        value = intercept + coefficients[treatments[0]] * x
+        for variable in set(coefficients.keys()).difference(treatments):
+            value += coefficients[variable] * row[variable]
+        y.append(value)
+    if query_type == "expected_value":
+        return sum(y) / len(y)
+    if query_type == "probability":
+        return y
 
 
 def _demo():
