@@ -33,7 +33,11 @@ from y0.dsl import Variable
 from y0.graph import NxMixedGraph, _ensure_set
 
 __all__ = [
+    # High-level functions
+    "estimate_query",
     "estimate_ate",
+    "estimate_probabilities",
+    # Helper functions
     "get_regression_results",
     "get_adjustment_sets",
     "fit_regressions",
@@ -87,6 +91,7 @@ def estimate_ate(
         impl=impl,
         conditions=conditions,
     )
+    # TODO how would you aggregate the coefficients on multiple treatments?
     return results.coefficients[treatment]
 
 
@@ -109,8 +114,8 @@ def _get_regression_result(
         impl=impl,
     )[outcome]
     if impl == "pgmpy" or impl is None:
-        # TODO how else to do this aggregation?
-        #  Return a distribution of all treatment coefficients?
+        # TODO how else to do this aggregation over multiple adjustment sets?
+        #  Return a distribution of coefficients for each treatment?
         #  Average them?
         adjustment_set = min(adjustment_set_to_variable_to_coefficient, key=len)
     elif impl == "optimaladj":
