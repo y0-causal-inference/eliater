@@ -123,7 +123,7 @@ def fit_regressions(
     *,
     conditions: None | Variable | set[Variable] = None,
     impl: Optional[Impl] = None,
-) -> list[tuple[frozenset[Variable], Sequence[Variable], LinearRegression]]:
+) -> Sequence[tuple[frozenset[Variable], Sequence[Variable], LinearRegression]]:
     """Fit a regression model to each adjustment set over the treatments and a given outcome."""
     if conditions is not None:
         raise NotImplementedError
