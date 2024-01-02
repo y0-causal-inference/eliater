@@ -21,7 +21,7 @@ is the direct effect X -> Y.
 """
 
 from operator import attrgetter
-from typing import Dict, Literal, Optional, Sequence, Tuple, NamedTuple
+from typing import Dict, Literal, NamedTuple, Optional, Sequence, Tuple
 
 import networkx.exception
 import pandas as pd
