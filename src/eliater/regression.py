@@ -82,7 +82,7 @@ def estimate_ate(
     _adjustment_set, results = _get_regression_result(
         graph=graph,
         data=data,
-        treatment=treatment,
+        treatments=treatment,
         outcome=outcome,
         impl=impl,
         conditions=conditions,
@@ -93,7 +93,7 @@ def estimate_ate(
 def _get_regression_result(
     graph: NxMixedGraph,
     data: pd.DataFrame,
-    treatment: Variable,
+    treatments: Variable | set[Variable],
     outcome: Variable,
     *,
     impl: Optional[Impl] = None,
@@ -103,7 +103,7 @@ def _get_regression_result(
     adjustment_set_to_variable_to_coefficient = get_regression_results(
         graph=graph,
         data=data,
-        treatments=treatment,
+        treatments=treatments,
         outcomes=outcome,
         conditions=conditions,
         impl=impl,
@@ -297,11 +297,11 @@ def estimate_query(
 ) -> float | list[float]:
     """Estimate treatment effects using Linear Regression."""
     treatments = _ensure_set(treatments)
-    if len(treatments) > 1:
-        raise NotImplementedError
-    treatment = list(treatments)[0]
 
     if query_type == "ate":
+        if len(treatments) > 1:
+            raise NotImplementedError
+        treatment = list(treatments)[0]
         return estimate_ate(
             graph=graph,
             data=data,
@@ -316,7 +316,7 @@ def estimate_query(
         y = estimate_probabilities(
             graph=graph,
             data=data,
-            treatment=treatment,
+            treatments=treatments,
             outcome=outcome,
             conditions=conditions,
             interventions=interventions,
@@ -332,27 +332,31 @@ def estimate_query(
 def estimate_probabilities(
     graph: NxMixedGraph,
     data: pd.DataFrame,
-    treatment: Variable | set[Variable],
+    treatments: Variable | set[Variable],
     outcome: Variable,
     interventions: Dict[Variable, float],
     *,
     conditions: None | Variable | set[Variable] = None,
 ) -> list[float]:
-    if treatment not in interventions:
-        raise KeyError
+    treatments = _ensure_set(treatments)
+    missing = set(interventions).difference(treatments)
+    if missing:
+        raise ValueError(f"Missing treatments: {missing}")
 
     # TODO reuse existing function
-    # _, (coefficients, intercept) = _get_regression_result(graph, data, treatment, outcome)
-    coefficients, intercept = fit_regression(graph, data, treatment, outcome, conditions)
+    # _, (coefficients, intercept) = _get_regression_result(
+    #     graph, data, treatments=treatments, outcome=outcome, conditions=conditions
+    # )
+    coefficients, intercept = fit_regression(
+        graph, data, treatments=treatments, outcome=outcome, conditions=conditions
+    )
 
     y = [
-        (
-            intercept
-            + sum(
-                coefficients[variable]
-                * (interventions[variable] if variable == treatment else row[variable])
-                for variable in coefficients
-            )
+        intercept
+        + sum(
+            coefficients[variable]
+            * (interventions[variable] if variable in treatments else row[variable])
+            for variable in coefficients
         )
         for row in data
     ]
