@@ -11,7 +11,7 @@ from eliater.frontdoor_backdoor import (
     frontdoor_backdoor_example,
     multiple_mediators_single_confounder_example,
 )
-from eliater.regression import get_adjustment_set, get_regression_coefficients
+from eliater.regression import get_adjustment_set, get_regression_results
 from y0.dsl import Z1, Z2, Z3, Variable, X, Y
 from y0.graph import NxMixedGraph
 
@@ -31,7 +31,7 @@ class TestRegression(unittest.TestCase):
         expected_x_coefficient: float = ...  # TODO
         expected_coefficients: set[Variable] = ...  # TODO
 
-        name_to_coefficient = get_regression_coefficients(
+        name_to_coefficient = get_regression_results(
             graph=graph, data=data, treatments=treatments, outcomes=outcome
         )
         self.assertEqual(

@@ -21,7 +21,7 @@ is the direct effect X -> Y.
 """
 
 from operator import attrgetter
-from typing import Dict, Literal, Optional, Sequence, Tuple
+from typing import Dict, Literal, Optional, Sequence, Tuple, NamedTuple
 
 import networkx.exception
 import pandas as pd
@@ -32,25 +32,31 @@ from y0.dsl import Variable
 from y0.graph import NxMixedGraph, _ensure_set
 
 __all__ = [
-    "get_eliater_regression",
-    "get_regression_coefficients",
+    "estimate_ate",
+    "get_regression_results",
     "get_adjustment_sets",
     "fit_regressions",
-    "get_adjustment_set",
-    "fit_regression",
 ]
 
 
 Impl = Literal["pgmpy", "optimaladj"]
 
 
-def get_eliater_regression(
+class RegressionResult(NamedTuple):
+    """Represents a regression."""
+
+    coefficients: dict[Variable, float]
+    intercept: float
+
+
+def estimate_ate(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatment: Variable,
     outcome: Variable,
     *,
     impl: Optional[Impl] = None,
+    conditions: None | Variable | set[Variable] = None,
 ) -> float:
     """Return a simplified view for a simplified regression scenario.
 
@@ -66,16 +72,40 @@ def get_eliater_regression(
     :param data: Observational data corresponding to the ADMG
     :param treatment: The treatment variable
     :param outcome: The outcome variable
+    :param conditions: Conditions to apply to the query
     :param impl: The implementation for getting adjustment sets.
     :returns: The coefficient for the treatment in the linear regression between
         the union of the treatment and (optimal/chosen) adjustment set and the outcome
         as the response
     """
-    adjustment_set_to_variable_to_coefficient = get_regression_coefficients(
+    _adjustment_set, results = _get_regression_result(
+        graph=graph,
+        data=data,
+        treatment=treatment,
+        outcome=outcome,
+        impl=impl,
+        conditions=conditions,
+    )
+    return results.coefficients[treatment]
+
+
+def _get_regression_result(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatment: Variable,
+    outcome: Variable,
+    *,
+    impl: Optional[Impl] = None,
+    conditions: None | Variable | set[Variable] = None,
+) -> tuple[frozenset[Variable], RegressionResult]:
+    """Return the adjustment set, the coefficients, and the intercept."""
+    adjustment_set_to_variable_to_coefficient = get_regression_results(
         graph=graph,
         data=data,
         treatments=treatment,
         outcomes=outcome,
+        conditions=conditions,
+        impl=impl,
     )[outcome]
     if impl == "pgmpy" or impl is None:
         # TODO how else to do this aggregation?
@@ -87,21 +117,24 @@ def get_eliater_regression(
         adjustment_set = list(adjustment_set_to_variable_to_coefficient)[0]
     else:
         raise TypeError(f"Invalid implementation: {impl}")
-    return adjustment_set_to_variable_to_coefficient[adjustment_set][treatment]
+    return adjustment_set, adjustment_set_to_variable_to_coefficient[adjustment_set]
 
 
-def get_regression_coefficients(
+def get_regression_results(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcomes: Variable | set[Variable],
     *,
     conditions: None | Variable | set[Variable] = None,
-) -> dict[Variable, dict[frozenset[Variable], dict[Variable, float]]]:
+    impl: Optional[Impl] = None,
+) -> dict[Variable, dict[frozenset[Variable], RegressionResult]]:
     """Get the regression coefficients for potentially multiple adjustment sets w.r.t. the treatments and outcomes.
 
     :returns:
-        A three level dictionary from outcome -> adjustment set -> variable -> coefficient
+        A two-level dictionary from outcome -> adjustment set -> regression result where
+        the regression result contains a dictionary of variables to coefficient values and
+        the regression's intercept value
     """
     rv = {}
     for outcome in _ensure_set(outcomes):
@@ -111,9 +144,10 @@ def get_regression_coefficients(
             treatments=treatments,
             outcome=outcome,
             conditions=conditions,
+            impl=impl,
         )
         rv[outcomes] = {
-            adjustment_set: dict(zip(variables, model.coef_))
+            adjustment_set: RegressionResult(dict(zip(variables, model.coef_)), model.intercept_)
             for adjustment_set, variables, model in regressions
         }
     return rv
@@ -229,8 +263,9 @@ def fit_regression(
     treatments: Variable | set[Variable],
     outcome: Variable,
     conditions: None | Variable | set[Variable] = None,
-) -> Tuple[dict[Variable, float], float]:
+) -> RegressionResult:
     """Fit a regression model to the adjustment set over the treatments and a given outcome."""
+    # TODO this is duplicating existing functionality, can delete this entire function
     if conditions is not None:
         raise NotImplementedError
     treatments = _ensure_set(treatments)
@@ -239,7 +274,7 @@ def fit_regression(
     variables = sorted(variable_set, key=attrgetter("name"))
     model = LinearRegression()
     model.fit(data[[v.name for v in variables]], data[outcome.name])
-    return dict(zip(variables, model.coef_)), model.intercept_
+    return RegressionResult(dict(zip(variables, model.coef_)), model.intercept_)
 
 
 def estimate_query(
@@ -248,32 +283,50 @@ def estimate_query(
     treatments: Variable | set[Variable],
     outcome: Variable,
     *,
-    query_type: str = "ate",
+    query_type: Literal["ate", "expected_value", "probability"] = "ate",
     conditions: None | Variable | set[Variable] = None,
     interventions: Dict[Variable, float] | None = None,
-):
+) -> float | list[float]:
     """Estimate treatment effects using Linear Regression."""
     treatments = _ensure_set(treatments)
     if len(treatments) > 1:
         raise NotImplementedError
-    treatments = list(treatments)
-    coefficients, intercept = fit_regression(graph, data, treatments, outcome, conditions)
+    treatment = list(treatments)[0]
+
     if query_type == "ate":
-        return coefficients[treatments[0]]
-    if treatments[0] not in interventions:
+        return estimate_ate(
+            graph=graph,
+            data=data,
+            treatment=treatment,
+            outcome=outcome,
+            conditions=conditions,
+        )
+
+    # TODO reuse existing function
+    # _, (coefficients, intercept) = _get_regression_result(graph, data, treatment, outcome)
+    coefficients, intercept = fit_regression(graph, data, treatment, outcome, conditions)
+    if interventions is None:
+        raise ValueError(f"interventions must be given for query type: {query_type}")
+    if treatment not in interventions:
         raise Exception
-    y = []
-    x = interventions[treatments[0]]
-    for row in data:
-        value = intercept + coefficients[treatments[0]] * x
-        for variable in set(coefficients.keys()).difference(treatments):
-            value += coefficients[variable] * row[variable]
-        y.append(value)
+    x = interventions[treatment]
+    y = [
+        (
+            intercept
+            + coefficients[treatment] * x
+            + sum(
+                coefficients[variable] * row[variable]
+                for variable in coefficients
+                if variable != treatment
+            )
+        )
+        for row in data
+    ]
     if query_type == "expected_value":
         return sum(y) / len(y)
     if query_type == "probability":
         return y
-    raise NotImplementedError
+    raise TypeError(f"Unhandled query type: {query_type}")
 
 
 def _demo():
@@ -284,7 +337,7 @@ def _demo():
     data = frontdoor_backdoor_example.generate_data(1000)
     treatments = {X}
     outcome = Y
-    coefficients = get_regression_coefficients(
+    coefficients = get_regression_results(
         graph=graph, data=data, treatments=treatments, outcomes=outcome
     )
     print(coefficients)  # noqa:T201
