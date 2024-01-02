@@ -20,6 +20,7 @@ is the direct effect X -> Y.
     with X will no longer represent the direct effect
 """
 
+import statistics
 from operator import attrgetter
 from typing import Dict, Literal, NamedTuple, Optional, Sequence, Tuple
 
@@ -113,7 +114,8 @@ def _get_regression_result(
         #  Average them?
         adjustment_set = min(adjustment_set_to_variable_to_coefficient, key=len)
     elif impl == "optimaladj":
-        assert len(adjustment_set_to_variable_to_coefficient) == 1
+        if 1 != len(adjustment_set_to_variable_to_coefficient):
+            raise RuntimeError  # this shouldn't be possible
         adjustment_set = list(adjustment_set_to_variable_to_coefficient)[0]
     else:
         raise TypeError(f"Invalid implementation: {impl}")
@@ -131,6 +133,12 @@ def get_regression_results(
 ) -> dict[Variable, dict[frozenset[Variable], RegressionResult]]:
     """Get the regression coefficients for potentially multiple adjustment sets w.r.t. the treatments and outcomes.
 
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param data: Observational data corresponding to the ADMG
+    :param treatments: The treatment variable(s)
+    :param outcomes: The outcome variable(s)
+    :param conditions: Conditions to apply to the query
+    :param impl: The implementation for getting adjustment sets.
     :returns:
         A two-level dictionary from outcome -> adjustment set -> regression result where
         the regression result contains a dictionary of variables to coefficient values and
@@ -302,31 +310,53 @@ def estimate_query(
             conditions=conditions,
         )
 
+    elif query_type in {"expected_value", "probability"}:
+        if interventions is None:
+            raise ValueError(f"interventions must be given for query type: {query_type}")
+        y = estimate_probabilities(
+            graph=graph,
+            data=data,
+            treatment=treatment,
+            outcome=outcome,
+            conditions=conditions,
+            interventions=interventions,
+        )
+        if query_type == "probability":
+            return y
+        return statistics.fmean(y)
+
+    else:
+        raise TypeError(f"Unknown query type {query_type}")
+
+
+def estimate_probabilities(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatment: Variable | set[Variable],
+    outcome: Variable,
+    interventions: Dict[Variable, float],
+    *,
+    conditions: None | Variable | set[Variable] = None,
+) -> list[float]:
+    if treatment not in interventions:
+        raise KeyError
+
     # TODO reuse existing function
     # _, (coefficients, intercept) = _get_regression_result(graph, data, treatment, outcome)
     coefficients, intercept = fit_regression(graph, data, treatment, outcome, conditions)
-    if interventions is None:
-        raise ValueError(f"interventions must be given for query type: {query_type}")
-    if treatment not in interventions:
-        raise Exception
-    x = interventions[treatment]
+
     y = [
         (
             intercept
-            + coefficients[treatment] * x
             + sum(
-                coefficients[variable] * row[variable]
+                coefficients[variable]
+                * (interventions[variable] if variable == treatment else row[variable])
                 for variable in coefficients
-                if variable != treatment
             )
         )
         for row in data
     ]
-    if query_type == "expected_value":
-        return sum(y) / len(y)
-    if query_type == "probability":
-        return y
-    raise TypeError(f"Unhandled query type: {query_type}")
+    return y
 
 
 def _demo():
