@@ -21,8 +21,9 @@ is the direct effect X -> Y.
 """
 
 from operator import attrgetter
-from typing import TYPE_CHECKING, Literal, Optional, Sequence
+from typing import Dict, Literal, Optional, Sequence, Tuple
 
+import networkx.exception
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
@@ -34,6 +35,9 @@ __all__ = [
     "get_eliater_regression",
     "get_regression_coefficients",
     "get_adjustment_sets",
+    "fit_regressions",
+    "get_adjustment_set",
+    "fit_regression",
 ]
 
 
@@ -172,6 +176,104 @@ def get_adjustment_sets(
         return {frozenset(Variable(v) for v in adjustment_set)}
     else:
         raise TypeError(f"Unknown implementation: {impl}")
+
+
+def get_adjustment_set(
+    graph: NxMixedGraph, treatments: Variable | set[Variable], outcome: Variable
+) -> Tuple[frozenset[Variable], str]:
+    """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
+    import optimaladj.CausalGraph
+
+    treatments = list(_ensure_set(treatments))
+    if len(treatments) > 1:
+        raise NotImplementedError
+
+    causal_graph = to_causal_graph(graph)
+    observable_nodes = graph.to_admg().vertices
+
+    try:
+        adjustment_set = causal_graph.optimal_adj_set(
+            treatment=treatments[0].name, outcome=outcome.name, L=[], N=observable_nodes
+        )
+        adjustment_set_type = "Optimal Adjustment Set"
+    except (
+        networkx.exception.NetworkXError,
+        optimaladj.CausalGraph.NoAdjException,
+        optimaladj.CausalGraph.ConditionException,
+    ):
+        try:
+            adjustment_set = causal_graph.optimal_minimal_adj_set(
+                treatment=treatments[0].name, outcome=outcome.name, L=[], N=observable_nodes
+            )
+            adjustment_set_type = "Optimal Minimal Adjustment Set"
+        except (
+            networkx.exception.NetworkXError,
+            optimaladj.CausalGraph.NoAdjException,
+            optimaladj.CausalGraph.ConditionException,
+        ):
+            from pgmpy.inference.CausalInference import CausalInference
+
+            model = to_bayesian_network(graph)
+            inference = CausalInference(model)
+            adjustment_sets = inference.get_all_backdoor_adjustment_sets(
+                treatments[0].name, outcome.name
+            )
+            adjustment_set = min(adjustment_sets, key=len)
+            adjustment_set_type = "Minimal Adjustment Set"
+    return frozenset(Variable(v) for v in adjustment_set), adjustment_set_type
+
+
+def fit_regression(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatments: Variable | set[Variable],
+    outcome: Variable,
+    conditions: None | Variable | set[Variable] = None,
+) -> Tuple[dict[Variable, float], float]:
+    """Fit a regression model to the adjustment set over the treatments and a given outcome."""
+    if conditions is not None:
+        raise NotImplementedError
+    treatments = _ensure_set(treatments)
+    adjustment_set = get_adjustment_set(graph=graph, treatments=treatments, outcome=outcome)[0]
+    variable_set = adjustment_set.union(treatments).difference({outcome})
+    variables = sorted(variable_set, key=attrgetter("name"))
+    model = LinearRegression()
+    model.fit(data[[v.name for v in variables]], data[outcome.name])
+    return dict(zip(variables, model.coef_)), model.intercept_
+
+
+def estimate_query(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatments: Variable | set[Variable],
+    outcome: Variable,
+    *,
+    query_type: str = "ate",
+    conditions: None | Variable | set[Variable] = None,
+    interventions: Dict[Variable, float] | None = None,
+):
+    """Estimate treatment effects using Linear Regression."""
+    treatments = _ensure_set(treatments)
+    if len(treatments) > 1:
+        raise NotImplementedError
+    treatments = list(treatments)
+    coefficients, intercept = fit_regression(graph, data, treatments, outcome, conditions)
+    if query_type == "ate":
+        return coefficients[treatments[0]]
+    if treatments[0] not in interventions:
+        raise Exception
+    y = []
+    x = interventions[treatments[0]]
+    for row in data:
+        value = intercept + coefficients[treatments[0]] * x
+        for variable in set(coefficients.keys()).difference(treatments):
+            value += coefficients[variable] * row[variable]
+        y.append(value)
+    if query_type == "expected_value":
+        return sum(y) / len(y)
+    if query_type == "probability":
+        return y
+    raise NotImplementedError
 
 
 def _demo():
