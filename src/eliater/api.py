@@ -15,7 +15,7 @@ import pandas as pd
 from eliater.discover_latent_nodes import remove_nuisance_variables
 from eliater.examples import examples
 from eliater.network_validation import add_ci_undirected_edges
-from eliater.regression import get_eliater_regression
+from eliater.regression import estimate_ate
 from y0.algorithm.estimation import estimate_ace
 from y0.algorithm.identify import identify_outcomes
 from y0.dsl import Expression, Variable
@@ -103,7 +103,7 @@ def workflow(
         )
 
     def _get_direct_effect(_graph: NxMixedGraph) -> float:
-        return get_eliater_regression(
+        return estimate_ate(
             graph, treatment=list(treatments)[0], outcome=list(outcomes)[0], data=data
         )
 

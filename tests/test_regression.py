@@ -9,8 +9,8 @@ from pgmpy.models import BayesianNetwork
 
 from eliater.examples import sars_cov_2_example, t_cell_signaling_example
 from eliater.frontdoor_backdoor import (
+    example_2,
     frontdoor_backdoor_example,
-    multiple_mediators_confounders_example,
     multiple_mediators_single_confounder_example,
 )
 from eliater.regression import (
@@ -38,7 +38,7 @@ class TestRegression(unittest.TestCase):
         expected_x_coefficient: float = ...  # TODO
         expected_coefficients: set[Variable] = ...  # TODO
 
-        name_to_coefficient = get_regression_coefficients(
+        name_to_coefficient = get_regression_results(
             graph=graph, data=data, treatments=treatments, outcomes=outcome
         )
         self.assertEqual(
