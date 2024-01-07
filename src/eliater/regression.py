@@ -18,6 +18,19 @@ is the direct effect X -> Y.
     But be careful! If you include extra variables in the regression that open a
     backdoor path between X and Y, then the Beta regression coefficient associated
     with X will no longer represent the direct effect
+
+.. todo:: Questions to answer in documentation:
+
+    1. How does estimation with linear regression work? Rework the text above from JZ. Remember the point
+       is to explain to someone who doesn't really care about the math but wants to decide if they should
+       use it for their situation
+    2. What's the difference between estimation with this module and what's available in Ananke?
+    3. What are the limitations of estimation with this methodology?
+    4. What does it look like to actually use this code? Give a self-contained example of doing estimation
+       with this module and include an explanation on how users should interpret the results.
+
+    PLEASE DO NOT DELETE THIS LIST. Leave it at the bottom of the module level docstring so we
+    can more easily check if all of the points have been addressed.
 """
 
 import statistics
