@@ -7,8 +7,8 @@ import pandas as pd
 
 from eliater.examples import sars_cov_2_example, t_cell_signaling_example
 from eliater.frontdoor_backdoor import (
+    example_2,
     frontdoor_backdoor_example,
-    multiple_mediators_confounders_example,
     multiple_mediators_single_confounder_example,
 )
 from eliater.regression import estimate_query, fit_regression, get_adjustment_set
@@ -132,7 +132,7 @@ class TestAdjustmentSet(unittest.TestCase):
 
     def test_example3(self):
         """Test getting adjustment set for multiple-mediators-multiple-confounders graph."""
-        graph = multiple_mediators_confounders_example.graph
+        graph = example_2.graph
         expected = frozenset([Z3]), "Optimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)
         self.assertTrue(self._compare(actual, expected))
