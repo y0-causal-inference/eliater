@@ -103,9 +103,7 @@ def workflow(
         )
 
     def _get_direct_effect(_graph: NxMixedGraph) -> float:
-        return estimate_ate(
-            graph, treatment=list(treatments)[0], outcome=list(outcomes)[0], data=data
-        )
+        return estimate_ate(graph, treatments=treatments, outcome=list(outcomes)[0], data=data)
 
     input_estimand = _identify(graph)
     if input_estimand is None:

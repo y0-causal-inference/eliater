@@ -23,8 +23,8 @@ class TestRegression(unittest.TestCase):
         """Test regression result for the frontdoor-backdoor graph."""
         graph: NxMixedGraph = frontdoor_backdoor_example.graph
         data: pd.DataFrame = frontdoor_backdoor_example.generate_data(1000, seed=100)
-        treatments: set[Variable] = {X}
-        outcome: Variable = Y
+        treatments = {X}
+        outcome = Y
         expected_coefficients: Dict[Variable, float] = {X: 0.163, Z: 0.469}
         expected_intercept: float = -1.239
         actual_coefficients, actual_intercept = fit_regression(
@@ -43,20 +43,20 @@ class TestEstimateQuery(unittest.TestCase):
 
     def test_frondoor_backdoor_ate(self):
         """Test getting average treatment effect for the frontdoor-backdoor graph."""
-        graph: NxMixedGraph = frontdoor_backdoor_example.graph
-        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(10, seed=100)
-        treatments: set[Variable] = {X}
-        outcome: Variable = Y
+        graph = frontdoor_backdoor_example.graph
+        data = frontdoor_backdoor_example.generate_data(10, seed=100)
+        treatments = {X}
+        outcome = Y
         expected_ate: float = 0.676
         actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
         self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
 
     def test_frondoor_backdoor_expected_value(self):
         """Test getting expected value for the frontdoor-backdoor graph."""
-        graph: NxMixedGraph = frontdoor_backdoor_example.graph
-        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(10, seed=100)
-        treatments: set[Variable] = {X}
-        outcome: Variable = Y
+        graph = frontdoor_backdoor_example.graph
+        data = frontdoor_backdoor_example.generate_data(10, seed=100)
+        treatments = {X}
+        outcome = Y
         expected_value: float = -2.272
         interventions = {X: 0}
         actual_value = estimate_query(
@@ -71,10 +71,10 @@ class TestEstimateQuery(unittest.TestCase):
 
     def test_frontdoor_backdoor_probabilities(self):
         """Test getting probabilities for the frontdoor-backdoor graph."""
-        graph: NxMixedGraph = frontdoor_backdoor_example.graph
-        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(10, seed=100)
-        treatments: set[Variable] = {X}
-        outcome: Variable = Y
+        graph = frontdoor_backdoor_example.graph
+        data = frontdoor_backdoor_example.generate_data(10, seed=100)
+        treatments = {X}
+        outcome = Y
         expected_probabilities: List[float] = [
             -0.74,
             -2.18,
@@ -120,8 +120,6 @@ class TestAdjustmentSet(unittest.TestCase):
 
     def test_example1(self):
         """Test getting adjustment set for the frontdoor-backdoor graph."""
-        from y0.dsl import Z
-
         graph = frontdoor_backdoor_example.graph
         expected = frozenset([Z]), "Optimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)

@@ -22,7 +22,7 @@ is the direct effect X -> Y.
 
 import statistics
 from operator import attrgetter
-from typing import Dict, Literal, NamedTuple, Optional, Sequence, Tuple
+from typing import Dict, Literal, NamedTuple, Tuple
 
 import networkx.exception
 import optimaladj
@@ -36,17 +36,12 @@ from y0.graph import NxMixedGraph, _ensure_set
 __all__ = [
     # High-level functions
     "estimate_query",
-    # "estimate_ate",
+    "estimate_ate",
     "estimate_probabilities",
-    # Helper functions
-    "get_regression_results",
-    "get_adjustment_sets",
-    "get_adjustment_set",
-    "fit_regressions",
+    # Classes
+    "RegressionResult",
+    "MultipleTreatmentsNotImplementedError",
 ]
-
-
-Impl = Literal["pgmpy", "optimaladj"]
 
 
 class RegressionResult(NamedTuple):
@@ -56,173 +51,8 @@ class RegressionResult(NamedTuple):
     intercept: float
 
 
-def estimate_ate(
-    graph: NxMixedGraph,
-    data: pd.DataFrame,
-    treatment: Variable,
-    outcome: Variable,
-    *,
-    impl: Optional[Impl] = None,
-    conditions: None | Variable | set[Variable] = None,
-) -> float:
-    """Return a simplified view for a simplified regression scenario.
-
-    1. Gets all adjustment sets returned by the implementation. If using :mod:`pgmpy`, then
-       returns multiple. The shortest is non-deterministically chosen. If using  :mod:`optimaladj`,
-       then a single optimal set is chosen (though might error if not possible)
-    2. Fits a linear regression between the union of the treatment and variables in the adjustment
-       set against the outcome
-    3. Returns the coefficient for the treatment in the linear regression, which represents the direct
-       effect of the treatment on the outcome
-
-    :param graph: An acyclic directed mixed graph (ADMG)
-    :param data: Observational data corresponding to the ADMG
-    :param treatment: The treatment variable
-    :param outcome: The outcome variable
-    :param conditions: Conditions to apply to the query
-    :param impl: The implementation for getting adjustment sets.
-    :returns: The coefficient for the treatment in the linear regression between
-        the union of the treatment and (optimal/chosen) adjustment set and the outcome
-        as the response
-    """
-    _adjustment_set, results = _get_regression_result(
-        graph=graph,
-        data=data,
-        treatments=treatment,
-        outcome=outcome,
-        impl=impl,
-        conditions=conditions,
-    )
-    # TODO how would you aggregate the coefficients on multiple treatments?
-    return results.coefficients[treatment]
-
-
-def _get_regression_result(
-    graph: NxMixedGraph,
-    data: pd.DataFrame,
-    treatments: Variable | set[Variable],
-    outcome: Variable,
-    *,
-    impl: Optional[Impl] = None,
-    conditions: None | Variable | set[Variable] = None,
-) -> tuple[frozenset[Variable], RegressionResult]:
-    """Return the adjustment set, the coefficients, and the intercept."""
-    adjustment_set_to_variable_to_coefficient = get_regression_results(
-        graph=graph,
-        data=data,
-        treatments=treatments,
-        outcomes=outcome,
-        conditions=conditions,
-        impl=impl,
-    )[outcome]
-    if impl == "pgmpy" or impl is None:
-        # TODO how else to do this aggregation over multiple adjustment sets?
-        #  Return a distribution of coefficients for each treatment?
-        #  Average them?
-        adjustment_set = min(adjustment_set_to_variable_to_coefficient, key=len)
-    elif impl == "optimaladj":
-        if 1 != len(adjustment_set_to_variable_to_coefficient):
-            raise RuntimeError  # this shouldn't be possible
-        adjustment_set = list(adjustment_set_to_variable_to_coefficient)[0]
-    else:
-        raise TypeError(f"Invalid implementation: {impl}")
-    return adjustment_set, adjustment_set_to_variable_to_coefficient[adjustment_set]
-
-
-def get_regression_results(
-    graph: NxMixedGraph,
-    data: pd.DataFrame,
-    treatments: Variable | set[Variable],
-    outcomes: Variable | set[Variable],
-    *,
-    conditions: None | Variable | set[Variable] = None,
-    impl: Optional[Impl] = None,
-) -> dict[Variable, dict[frozenset[Variable], RegressionResult]]:
-    """Get the regression coefficients for potentially multiple adjustment sets w.r.t. the treatments and outcomes.
-
-    :param graph: An acyclic directed mixed graph (ADMG)
-    :param data: Observational data corresponding to the ADMG
-    :param treatments: The treatment variable(s)
-    :param outcomes: The outcome variable(s)
-    :param conditions: Conditions to apply to the query
-    :param impl: The implementation for getting adjustment sets.
-    :returns:
-        A two-level dictionary from outcome -> adjustment set -> regression result where
-        the regression result contains a dictionary of variables to coefficient values and
-        the regression's intercept value
-    """
-    rv = {}
-    for outcome in _ensure_set(outcomes):
-        regressions = fit_regressions(
-            graph=graph,
-            data=data,
-            treatments=treatments,
-            outcome=outcome,
-            conditions=conditions,
-            impl=impl,
-        )
-        rv[outcomes] = {
-            adjustment_set: RegressionResult(dict(zip(variables, model.coef_)), model.intercept_)
-            for adjustment_set, variables, model in regressions
-        }
-    return rv
-
-
-def fit_regressions(
-    graph: NxMixedGraph,
-    data: pd.DataFrame,
-    treatments: Variable | set[Variable],
-    outcome: Variable,
-    *,
-    conditions: None | Variable | set[Variable] = None,
-    impl: Optional[Impl] = None,
-) -> Sequence[tuple[frozenset[Variable], Sequence[Variable], LinearRegression]]:
-    """Fit a regression model to each adjustment set over the treatments and a given outcome."""
-    if conditions is not None:
-        raise NotImplementedError
-    treatments = _ensure_set(treatments)
-    rv = []
-    adjustment_sets = get_adjustment_sets(graph=graph, treatments=treatments, outcome=outcome)
-    for adjustment_set in adjustment_sets:
-        variable_set = adjustment_set.union(treatments).difference({outcome})
-        variables = sorted(variable_set, key=attrgetter("name"))
-        model = LinearRegression()
-        model.fit(data[[v.name for v in variables]], data[outcome.name])
-        rv.append((adjustment_set, variables, model))
-    return rv
-
-
-def get_adjustment_sets(
-    graph: NxMixedGraph,
-    treatments: Variable | set[Variable],
-    outcome: Variable,
-    *,
-    impl: Optional[Impl] = None,
-) -> set[frozenset[Variable]]:
-    """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
-    treatments = list(_ensure_set(treatments))
-    if len(treatments) > 1:
-        raise NotImplementedError
-    if impl is None or impl == "pgmpy":
-        from pgmpy.inference.CausalInference import CausalInference
-
-        model = to_bayesian_network(graph)
-        inference = CausalInference(model)
-        adjustment_sets = inference.get_all_backdoor_adjustment_sets(
-            treatments[0].name, outcome.name
-        )
-        return {
-            frozenset(Variable(v) for v in adjustment_set) for adjustment_set in adjustment_sets
-        }
-    elif impl == "optimaladj":
-        causal_graph = to_causal_graph(graph)
-        non_latent_nodes = graph.to_admg().vertices
-        adjustment_set = causal_graph.optimal_minimum_adj_set(
-            treatment=treatments[0].name, outcome=outcome.name, L=[], N=non_latent_nodes
-        )
-        return {frozenset(Variable(v) for v in adjustment_set)}
-    else:
-        raise TypeError(f"Unknown implementation: {impl}")
+class MultipleTreatmentsNotImplementedError(NotImplementedError):
+    """Raised when multiple treatments aren't yet allowed."""
 
 
 def get_adjustment_set(
@@ -234,13 +64,13 @@ def get_adjustment_set(
     :param treatments: The treatment variable(s)
     :param outcome: The outcome variable
 
-    :raises NotImplementedError: when there are multiple treatments in the input
+    :raises MultipleTreatmentsNotImplementedError: when there are multiple treatments in the input
 
     :returns: the optimal adjustment set
     """
     treatments = list(_ensure_set(treatments))
     if len(treatments) > 1:
-        raise NotImplementedError
+        raise MultipleTreatmentsNotImplementedError
 
     causal_graph = to_causal_graph(graph)
     observable_nodes = graph.to_admg().vertices
@@ -282,7 +112,6 @@ def fit_regression(
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcome: Variable,
-    conditions: None | Variable | set[Variable] = None,
 ) -> RegressionResult:
     """Fit a regression model to the adjustment set over the treatments and a given outcome.
 
@@ -290,19 +119,17 @@ def fit_regression(
     :param data: Observational data corresponding to the ADMG
     :param treatments: The treatment variable(s)
     :param outcome: The outcome variable
-    :param conditions: Conditions to apply to the query
 
-    :raises NotImplementedError: when there are multiple treatments in the input
+    :raises MultipleTreatmentsNotImplementedError: when there are multiple treatments in the input
 
     :returns:
         regression result where the regression result contains a dictionary of variables
         to coefficient values and the regression's intercept value
     """
-    # TODO this is duplicating existing functionality, can delete this entire function
     treatments = _ensure_set(treatments)
-    if conditions is not None or len(treatments) > 1:
-        raise NotImplementedError
-    adjustment_set = get_adjustment_set(graph=graph, treatments=treatments, outcome=outcome)[0]
+    if len(treatments) > 1:
+        raise MultipleTreatmentsNotImplementedError
+    adjustment_set, _ = get_adjustment_set(graph=graph, treatments=treatments, outcome=outcome)
     variable_set = adjustment_set.union(treatments).difference({outcome})
     variables = sorted(variable_set, key=attrgetter("name"))
     model = LinearRegression()
@@ -317,7 +144,6 @@ def estimate_query(
     outcome: Variable,
     *,
     query_type: Literal["ate", "expected_value", "probability"] = "ate",
-    conditions: None | Variable | set[Variable] = None,
     interventions: Dict[Variable, float] | None = None,
 ) -> float | list[float]:
     """Estimate treatment effects using Linear Regression.
@@ -327,10 +153,8 @@ def estimate_query(
     :param treatments: The treatment variable(s)
     :param outcome: The outcome variable
     :param query_type: The operation to perform
-    :param conditions: Conditions to apply to the query
     :param interventions: The interventions for the given query
 
-    :raises NotImplementedError: when there are multiple treatments in the input
     :raises TypeError: when the query type is unknown
     :raises ValueError: when the interventions are missing
 
@@ -338,22 +162,13 @@ def estimate_query(
         the average treatment effect or the outcome probabilities or the expected value
         based on the given query type.
     """
-    treatments = list(_ensure_set(treatments))
-
     if query_type == "ate":
-        if len(treatments) > 1:
-            raise NotImplementedError
-        # return estimate_ate(
-        #     graph=graph,
-        #     data=data,
-        #     treatment=treatment,
-        #     outcome=outcome,
-        #     conditions=conditions,
-        # )
-        coefficients, intercept = fit_regression(
-            graph, data, treatments=treatments, outcome=outcome, conditions=conditions
+        return estimate_ate(
+            graph=graph,
+            data=data,
+            treatments=treatments,
+            outcome=outcome,
         )
-        return coefficients[treatments[0]]
 
     elif query_type in {"expected_value", "probability"}:
         if interventions is None:
@@ -363,7 +178,6 @@ def estimate_query(
             data=data,
             treatments=treatments,
             outcome=outcome,
-            conditions=conditions,
             interventions=interventions,
         )
         if query_type == "probability":
@@ -374,14 +188,37 @@ def estimate_query(
         raise TypeError(f"Unknown query type {query_type}")
 
 
+def estimate_ate(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatments: Variable | set[Variable],
+    outcome: Variable,
+) -> float:
+    """Estimate the average treatment effect (ATE) using Linear Regression.
+
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param data: Observational data corresponding to the ADMG
+    :param treatments: The treatment variable(s)
+    :param outcome: The outcome variable
+
+    :raises MultipleTreatmentsNotImplementedError: if multiple treatments are given
+
+    :returns:
+        the outcome probabilities
+    """
+    treatments = _ensure_set(treatments)
+    if len(treatments) > 1:
+        raise MultipleTreatmentsNotImplementedError
+    coefficients, _intercept = fit_regression(graph, data, treatments=treatments, outcome=outcome)
+    return coefficients[list(treatments)[0]]
+
+
 def estimate_probabilities(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcome: Variable,
     interventions: Dict[Variable, float],
-    *,
-    conditions: None | Variable | set[Variable] = None,
 ) -> list[float]:
     """Estimate the outcome probabilities using Linear Regression.
 
@@ -389,7 +226,6 @@ def estimate_probabilities(
     :param data: Observational data corresponding to the ADMG
     :param treatments: The treatment variable(s)
     :param outcome: The outcome variable
-    :param conditions: Conditions to apply to the query
     :param interventions: The interventions for the given query
 
     :raises ValueError: when certain treatments are missing in the interventions
@@ -401,15 +237,7 @@ def estimate_probabilities(
     missing = set(interventions).difference(treatments)
     if missing:
         raise ValueError(f"Missing treatments: {missing}")
-
-    # TODO reuse existing function
-    # _, (coefficients, intercept) = _get_regression_result(
-    #     graph, data, treatments=treatments, outcome=outcome, conditions=conditions
-    # )
-    coefficients, intercept = fit_regression(
-        graph, data, treatments=treatments, outcome=outcome, conditions=conditions
-    )
-
+    coefficients, intercept = fit_regression(graph, data, treatments=treatments, outcome=outcome)
     y = [
         intercept
         + sum(
@@ -420,21 +248,3 @@ def estimate_probabilities(
         for row in data.to_dict(orient="records")
     ]
     return y
-
-
-# def _demo():
-#     from eliater.frontdoor_backdoor import frontdoor_backdoor_example
-#     from y0.dsl import X, Y
-#
-#     graph = frontdoor_backdoor_example.graph
-#     data = frontdoor_backdoor_example.generate_data(1000)
-#     treatments = {X}
-#     outcome = Y
-#     coefficients = get_regression_results(
-#         graph=graph, data=data, treatments=treatments, outcomes=outcome
-#     )
-#     print(coefficients)  # noqa:T201
-#
-#
-# if __name__ == "__main__":
-#     _demo()
