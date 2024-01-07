@@ -1,53 +1,106 @@
 """Test the regression module."""
 
 import unittest
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
-from optimaladj.CausalGraph import CausalGraph
-from pgmpy.models import BayesianNetwork
 
 from eliater.examples import sars_cov_2_example, t_cell_signaling_example
 from eliater.frontdoor_backdoor import (
-    example_2,
     frontdoor_backdoor_example,
+    multiple_mediators_confounders_example,
     multiple_mediators_single_confounder_example,
 )
-from eliater.regression import (
-    get_adjustment_set,
-    get_regression_coefficients,
-    to_bayesian_network,
-    to_causal_graph,
-)
-from y0.dsl import Z1, Z2, Z3, Variable, X, Y
+from eliater.regression import estimate_query, fit_regression, get_adjustment_set
+from y0.dsl import Z1, Z2, Z3, Variable, X, Y, Z
 from y0.graph import NxMixedGraph
 
 
 class TestRegression(unittest.TestCase):
-    """Test the regression module."""
-
-    # TODO create other unit tests that rely on small, well-defined graphs where
-    #  you can create a ground truth
+    """Test the regression method."""
 
     def test_frondoor_backdoor_regression(self):
-        """Test getting regression coefficients for the frontdoor-backdoor graph."""
+        """Test regression result for the frontdoor-backdoor graph."""
         graph: NxMixedGraph = frontdoor_backdoor_example.graph
-        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(1000)
+        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(1000, seed=100)
         treatments: set[Variable] = {X}
         outcome: Variable = Y
-        expected_x_coefficient: float = ...  # TODO
-        expected_coefficients: set[Variable] = ...  # TODO
+        expected_coefficients: Dict[Variable, float] = {X: 0.163, Z: 0.469}
+        expected_intercept: float = -1.239
+        actual_coefficients, actual_intercept = fit_regression(
+            graph=graph, data=data, treatments=treatments, outcome=outcome
+        )
+        self.assertEqual(set(expected_coefficients.keys()), set(actual_coefficients.keys()))
+        for variable in expected_coefficients:
+            self.assertAlmostEqual(
+                actual_coefficients[variable], expected_coefficients[variable], delta=0.01
+            )
+        self.assertAlmostEqual(expected_intercept, actual_intercept, delta=0.01)
 
-        name_to_coefficient = get_regression_results(
-            graph=graph, data=data, treatments=treatments, outcomes=outcome
+
+class TestEstimateQuery(unittest.TestCase):
+    """Test the estimate_query method."""
+
+    def test_frondoor_backdoor_ate(self):
+        """Test getting average treatment effect for the frontdoor-backdoor graph."""
+        graph: NxMixedGraph = frontdoor_backdoor_example.graph
+        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(10, seed=100)
+        treatments: set[Variable] = {X}
+        outcome: Variable = Y
+        expected_ate: float = 0.676
+        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
+        self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
+
+    def test_frondoor_backdoor_expected_value(self):
+        """Test getting expected value for the frontdoor-backdoor graph."""
+        graph: NxMixedGraph = frontdoor_backdoor_example.graph
+        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(10, seed=100)
+        treatments: set[Variable] = {X}
+        outcome: Variable = Y
+        expected_value: float = -2.272
+        interventions = {X: 0}
+        actual_value = estimate_query(
+            graph=graph,
+            data=data,
+            treatments=treatments,
+            outcome=outcome,
+            query_type="expected_value",
+            interventions=interventions,
         )
-        self.assertEqual(
-            {c.name for c in expected_coefficients},
-            set(name_to_coefficient),
-            msg="Coefficients were calculated for the wrong variables",
+        self.assertAlmostEqual(expected_value, actual_value, delta=0.01)
+
+    def test_frontdoor_backdoor_probabilities(self):
+        """Test getting probabilities for the frontdoor-backdoor graph."""
+        graph: NxMixedGraph = frontdoor_backdoor_example.graph
+        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(10, seed=100)
+        treatments: set[Variable] = {X}
+        outcome: Variable = Y
+        expected_probabilities: List[float] = [
+            -0.74,
+            -2.18,
+            -2.66,
+            -2.43,
+            -0.93,
+            -2.95,
+            -2.59,
+            -2.59,
+            -2.63,
+            -2.99,
+        ]
+        interventions = {X: 0}
+        actual_probabilities = estimate_query(
+            graph=graph,
+            data=data,
+            treatments=treatments,
+            outcome=outcome,
+            query_type="probability",
+            interventions=interventions,
         )
-        # TODO since there's some random aspect, set the appropriate delta
-        self.assertAlmostEqual(expected_x_coefficient, name_to_coefficient[X.name])
+        self.assertEqual(len(expected_probabilities), len(actual_probabilities))
+        for index in range(0, len(expected_probabilities)):
+            self.assertAlmostEqual(
+                expected_probabilities[index], actual_probabilities[index], delta=0.01
+            )
 
 
 class TestAdjustmentSet(unittest.TestCase):
@@ -154,69 +207,3 @@ class TestAdjustmentSet(unittest.TestCase):
         )
         actual = get_adjustment_set(graph, Variable("EGFR"), Variable("cytok"))
         self.assertTrue(self._compare(actual, expected))
-
-
-class TestToBayesianNetwork(unittest.TestCase):
-    """Tests converting a mixed graph to an equivalent :class:`pgmpy.BayesianNetwork`."""
-
-    @staticmethod
-    def _compare_bayesian_networks(
-        bayesian_network_1: BayesianNetwork, bayesian_network_2: BayesianNetwork
-    ) -> bool:
-        """Compare two instances of :class:`pgmpy.BayesianNetwork`."""
-        return (
-            set(bayesian_network_1.edges) == set(bayesian_network_2.edges)
-            and bayesian_network_1.latents == bayesian_network_2.latents
-        )
-
-    def test_graph_with_latents(self):
-        """Tests converting a mixed graph with latents to an equivalent :class:`pgmpy.BayesianNetwork`."""
-        graph = NxMixedGraph.from_str_adj(directed={"X": "Y"}, undirected={"X": "Y"})
-        expected = BayesianNetwork(
-            ebunch=[("X", "Y"), ("U_X_Y", "X"), ("U_X_Y", "Y")], latents=["U_X_Y"]
-        )
-        actual = to_bayesian_network(graph)
-        self.assertTrue(self._compare_bayesian_networks(expected, actual))
-
-    def test_graph_without_latents(self):
-        """Tests converting a mixed graph without latents to an equivalent :class:`pgmpy.BayesianNetwork`."""
-        graph = NxMixedGraph.from_str_adj(directed={"X": "Y"})
-        expected = BayesianNetwork(ebunch=[("X", "Y")])
-        actual = to_bayesian_network(graph)
-        self.assertTrue(self._compare_bayesian_networks(expected, actual))
-
-
-class TestToCausalGraph(unittest.TestCase):
-    """Tests converting a mixed graph to an equivalent :class:`optimaladj.CausalGraph.CausalGraph`."""
-
-    @staticmethod
-    def _compare_causal_graphs(causal_graph_1: CausalGraph, causal_graph_2: CausalGraph) -> bool:
-        """Compare two instances of :class:`optimaladj.CausalGraph.CausalGraph`."""
-        return causal_graph_1.edges == causal_graph_2.edges
-
-    def test_graph_with_latents(self):
-        """Tests converting a mixed graph with latents to an equivalent :class:`optimaladj.CausalGraph.CausalGraph`."""
-        graph = NxMixedGraph.from_str_adj(directed={"X": "Y"}, undirected={"X": "Y"})
-        expected = CausalGraph()
-        expected.add_edges_from([("X", "Y"), ("U_1", "X"), ("U_1", "Y")])
-        actual = to_causal_graph(graph)
-        self.assertTrue(self._compare_causal_graphs(expected, actual))
-
-    def test_graph_without_latents(self):
-        """Test converting a mixed graph to an equivalent :class:`optimaladj.CausalGraph.CausalGraph`."""
-        graph = NxMixedGraph.from_str_adj(directed={"X": "Y"})
-        expected = CausalGraph()
-        expected.add_edges_from([("X", "Y")])
-        actual = to_causal_graph(graph)
-        self.assertTrue(self._compare_causal_graphs(expected, actual))
-
-
-# class TestFitRegression(unittest.TestCase):
-#
-#     def test_ecoli(self):
-#         graph = ecoli_transcription_example.graph
-#         import pandas as pd
-#         data = pd.read_csv("C:\\Users\\pnava\\PycharmProjects\\eliater\\src\\data\\EColi_obs_data.csv")
-#         co_eff = fit_regression(graph=graph, data=data, treatments=Variable("fur"), outcome=Variable("dpiA"))
-#         print(co_eff)
-#         self.assertEqual(True, False)

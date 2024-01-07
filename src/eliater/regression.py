@@ -25,6 +25,7 @@ from operator import attrgetter
 from typing import Dict, Literal, NamedTuple, Optional, Sequence, Tuple
 
 import networkx.exception
+import optimaladj
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
@@ -40,6 +41,7 @@ __all__ = [
     # Helper functions
     "get_regression_results",
     "get_adjustment_sets",
+    "get_adjustment_set",
     "fit_regressions",
 ]
 
@@ -275,9 +277,9 @@ def fit_regression(
 ) -> RegressionResult:
     """Fit a regression model to the adjustment set over the treatments and a given outcome."""
     # TODO this is duplicating existing functionality, can delete this entire function
-    if conditions is not None:
-        raise NotImplementedError
     treatments = _ensure_set(treatments)
+    if conditions is not None or len(treatments) > 1:
+        raise NotImplementedError
     adjustment_set = get_adjustment_set(graph=graph, treatments=treatments, outcome=outcome)[0]
     variable_set = adjustment_set.union(treatments).difference({outcome})
     variables = sorted(variable_set, key=attrgetter("name"))
@@ -297,19 +299,22 @@ def estimate_query(
     interventions: Dict[Variable, float] | None = None,
 ) -> float | list[float]:
     """Estimate treatment effects using Linear Regression."""
-    treatments = _ensure_set(treatments)
+    treatments = list(_ensure_set(treatments))
 
     if query_type == "ate":
         if len(treatments) > 1:
             raise NotImplementedError
-        treatment = list(treatments)[0]
-        return estimate_ate(
-            graph=graph,
-            data=data,
-            treatment=treatment,
-            outcome=outcome,
-            conditions=conditions,
+        # return estimate_ate(
+        #     graph=graph,
+        #     data=data,
+        #     treatment=treatment,
+        #     outcome=outcome,
+        #     conditions=conditions,
+        # )
+        coefficients, intercept = fit_regression(
+            graph, data, treatments=treatments, outcome=outcome, conditions=conditions
         )
+        return coefficients[treatments[0]]
 
     elif query_type in {"expected_value", "probability"}:
         if interventions is None:
@@ -339,6 +344,7 @@ def estimate_probabilities(
     *,
     conditions: None | Variable | set[Variable] = None,
 ) -> list[float]:
+    """Estimate the outcome probabilities using Linear Regression."""
     treatments = _ensure_set(treatments)
     missing = set(interventions).difference(treatments)
     if missing:
@@ -356,10 +362,10 @@ def estimate_probabilities(
         intercept
         + sum(
             coefficients[variable]
-            * (interventions[variable] if variable in treatments else row[variable])
+            * (interventions[variable] if variable in treatments else row[variable.name])
             for variable in coefficients
         )
-        for row in data
+        for row in data.to_dict(orient="records")
     ]
     return y
 
