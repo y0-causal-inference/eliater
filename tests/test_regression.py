@@ -106,36 +106,34 @@ class TestEstimateQuery(unittest.TestCase):
 class TestAdjustmentSet(unittest.TestCase):
     """Tests for deriving adjustment sets with :mod:`pgmpy` and :mod:`optimaladj`."""
 
-    @staticmethod
     def _compare(
-        actual: Tuple[frozenset[Variable], str], expected: Tuple[frozenset[Variable], str]
-    ) -> bool:
+        self, actual: Tuple[frozenset[Variable], str], expected: Tuple[frozenset[Variable], str]
+    ) -> None:
         """Compare the expected and actual adjustment sets."""
         expected_adjustment_set, expected_adjustment_set_type = expected
         actual_adjustment_set, actual_adjustment_set_type = actual
-        return (
-            expected_adjustment_set == actual_adjustment_set
-            and expected_adjustment_set_type == actual_adjustment_set_type
-        )
+        self.assertEqual(expected_adjustment_set, actual_adjustment_set)
+        self.assertEqual(expected_adjustment_set_type, actual_adjustment_set_type)
 
     def test_example1(self):
         """Test getting adjustment set for the frontdoor-backdoor graph."""
         graph = frontdoor_backdoor_example.graph
         expected = frozenset([Z]), "Optimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)
-        self.assertTrue(self._compare(actual, expected))
+        self._compare(actual, expected)
 
     def test_example2(self):
         """Test getting adjustment set for the multiple-mediators-single-confounder graph."""
         graph = multiple_mediators_single_confounder_example.graph
-        self.assertRaises(ValueError, get_adjustment_set, graph, X, Y)
+        with self.assertRaises(ValueError):
+            get_adjustment_set(graph, X, Y)
 
     def test_example3(self):
         """Test getting adjustment set for multiple-mediators-multiple-confounders graph."""
         graph = example_2.graph
         expected = frozenset([Z3]), "Optimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)
-        self.assertTrue(self._compare(actual, expected))
+        self._compare(actual, expected)
 
     def test_example4(self):
         """Test getting adjustment set for a sample graph."""
@@ -144,7 +142,7 @@ class TestAdjustmentSet(unittest.TestCase):
         )
         expected = frozenset([Variable(v) for v in ("V2", "V3")]), "Optimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)
-        self.assertTrue(self._compare(actual, expected))
+        self._compare(actual, expected)
 
     def test_example5(self):
         """Test getting adjustment set for a sample graph."""
@@ -153,7 +151,7 @@ class TestAdjustmentSet(unittest.TestCase):
         )
         expected = frozenset({Variable("C")}), "Optimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)
-        self.assertTrue(self._compare(actual, expected))
+        self._compare(actual, expected)
 
     def test_example6(self):
         """Test getting adjustment set for a sample graph."""
@@ -172,10 +170,8 @@ class TestAdjustmentSet(unittest.TestCase):
         expected_adjustment_sets = {frozenset([Z3]), frozenset([Z1]), frozenset([Z2])}
         expected_adjustment_set_type = "Minimal Adjustment Set"
         actual_adjustment_set, actual_adjustment_set_type = get_adjustment_set(graph, X, Y)
-        self.assertTrue(
-            actual_adjustment_set in expected_adjustment_sets
-            and actual_adjustment_set_type == expected_adjustment_set_type
-        )
+        self.assertIn(actual_adjustment_set, expected_adjustment_sets)
+        self.assertEqual(actual_adjustment_set_type, expected_adjustment_set_type)
 
     def test_example7(self):
         """Test getting adjustment set for a sample graph."""
@@ -184,7 +180,7 @@ class TestAdjustmentSet(unittest.TestCase):
         )
         expected = frozenset([Variable("C")]), "Optimal Minimal Adjustment Set"
         actual = get_adjustment_set(graph, X, Y)
-        self.assertTrue(self._compare(actual, expected))
+        self._compare(actual, expected)
 
     def test_t_cell_signaling_example(self):
         """Test getting adjustment set for the t_cell_signaling graph."""
@@ -194,7 +190,7 @@ class TestAdjustmentSet(unittest.TestCase):
             "Optimal Minimal Adjustment Set",
         )
         actual = get_adjustment_set(graph, Variable("Raf"), Variable("Erk"))
-        self.assertTrue(self._compare(actual, expected))
+        self._compare(actual, expected)
 
     def test_sars_cov_2_example(self):
         """Test getting adjustment set for the sars_cov_2 graph."""
@@ -204,4 +200,4 @@ class TestAdjustmentSet(unittest.TestCase):
             "Optimal Adjustment Set",
         )
         actual = get_adjustment_set(graph, Variable("EGFR"), Variable("cytok"))
-        self.assertTrue(self._compare(actual, expected))
+        self._compare(actual, expected)
