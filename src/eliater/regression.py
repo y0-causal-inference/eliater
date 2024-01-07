@@ -36,7 +36,7 @@ from y0.graph import NxMixedGraph, _ensure_set
 __all__ = [
     # High-level functions
     "estimate_query",
-    "estimate_ate",
+    # "estimate_ate",
     "estimate_probabilities",
     # Helper functions
     "get_regression_results",
@@ -228,7 +228,16 @@ def get_adjustment_sets(
 def get_adjustment_set(
     graph: NxMixedGraph, treatments: Variable | set[Variable], outcome: Variable
 ) -> Tuple[frozenset[Variable], str]:
-    """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome."""
+    """Get the optimal adjustment set for estimating the direct effect of treatments on a given outcome.
+
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param treatments: The treatment variable(s)
+    :param outcome: The outcome variable
+
+    :raises NotImplementedError: when there are multiple treatments in the input
+
+    :returns: the optimal adjustment set
+    """
     treatments = list(_ensure_set(treatments))
     if len(treatments) > 1:
         raise NotImplementedError
@@ -275,7 +284,20 @@ def fit_regression(
     outcome: Variable,
     conditions: None | Variable | set[Variable] = None,
 ) -> RegressionResult:
-    """Fit a regression model to the adjustment set over the treatments and a given outcome."""
+    """Fit a regression model to the adjustment set over the treatments and a given outcome.
+
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param data: Observational data corresponding to the ADMG
+    :param treatments: The treatment variable(s)
+    :param outcome: The outcome variable
+    :param conditions: Conditions to apply to the query
+
+    :raises NotImplementedError: when there are multiple treatments in the input
+
+    :returns:
+        regression result where the regression result contains a dictionary of variables
+        to coefficient values and the regression's intercept value
+    """
     # TODO this is duplicating existing functionality, can delete this entire function
     treatments = _ensure_set(treatments)
     if conditions is not None or len(treatments) > 1:
@@ -298,7 +320,24 @@ def estimate_query(
     conditions: None | Variable | set[Variable] = None,
     interventions: Dict[Variable, float] | None = None,
 ) -> float | list[float]:
-    """Estimate treatment effects using Linear Regression."""
+    """Estimate treatment effects using Linear Regression.
+
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param data: Observational data corresponding to the ADMG
+    :param treatments: The treatment variable(s)
+    :param outcome: The outcome variable
+    :param query_type: The operation to perform
+    :param conditions: Conditions to apply to the query
+    :param interventions: The interventions for the given query
+
+    :raises NotImplementedError: when there are multiple treatments in the input
+    :raises TypeError: when the query type is unknown
+    :raises ValueError: when the interventions are missing
+
+    :returns:
+        the average treatment effect or the outcome probabilities or the expected value
+        based on the given query type.
+    """
     treatments = list(_ensure_set(treatments))
 
     if query_type == "ate":
@@ -344,7 +383,20 @@ def estimate_probabilities(
     *,
     conditions: None | Variable | set[Variable] = None,
 ) -> list[float]:
-    """Estimate the outcome probabilities using Linear Regression."""
+    """Estimate the outcome probabilities using Linear Regression.
+
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param data: Observational data corresponding to the ADMG
+    :param treatments: The treatment variable(s)
+    :param outcome: The outcome variable
+    :param conditions: Conditions to apply to the query
+    :param interventions: The interventions for the given query
+
+    :raises ValueError: when certain treatments are missing in the interventions
+
+    :returns:
+        the outcome probabilities
+    """
     treatments = _ensure_set(treatments)
     missing = set(interventions).difference(treatments)
     if missing:
@@ -370,19 +422,19 @@ def estimate_probabilities(
     return y
 
 
-def _demo():
-    from eliater.frontdoor_backdoor import frontdoor_backdoor_example
-    from y0.dsl import X, Y
-
-    graph = frontdoor_backdoor_example.graph
-    data = frontdoor_backdoor_example.generate_data(1000)
-    treatments = {X}
-    outcome = Y
-    coefficients = get_regression_results(
-        graph=graph, data=data, treatments=treatments, outcomes=outcome
-    )
-    print(coefficients)  # noqa:T201
-
-
-if __name__ == "__main__":
-    _demo()
+# def _demo():
+#     from eliater.frontdoor_backdoor import frontdoor_backdoor_example
+#     from y0.dsl import X, Y
+#
+#     graph = frontdoor_backdoor_example.graph
+#     data = frontdoor_backdoor_example.generate_data(1000)
+#     treatments = {X}
+#     outcome = Y
+#     coefficients = get_regression_results(
+#         graph=graph, data=data, treatments=treatments, outcomes=outcome
+#     )
+#     print(coefficients)  # noqa:T201
+#
+#
+# if __name__ == "__main__":
+#     _demo()
