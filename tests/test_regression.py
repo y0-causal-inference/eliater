@@ -12,7 +12,14 @@ from eliater.frontdoor_backdoor import (
     multiple_mediators_confounders_nuisance_vars_example,
     multiple_mediators_single_confounder_example,
 )
-from eliater.regression import RegressionResult, estimate_query, fit_regression, get_adjustment_set
+from eliater.regression import (
+    RegressionResult,
+    SummaryStatistics,
+    estimate_query,
+    estimated_probabilities_summary_statistics,
+    fit_regression,
+    get_adjustment_set,
+)
 from y0.dsl import Z1, Z2, Z3, Variable, X, Y, Z
 from y0.graph import NxMixedGraph
 
@@ -200,7 +207,7 @@ class TestEstimateQuery(unittest.TestCase):
         treatments = {Variable("EGFR")}
         outcome = Variable("cytok")
         expected_value: float = 64.987
-        interventions = {X: 0}
+        interventions = {Variable("EGFR"): 0}
         actual_value = estimate_query(
             graph=graph,
             data=data,
@@ -343,3 +350,21 @@ class TestAdjustmentSet(unittest.TestCase):
         )
         actual = get_adjustment_set(graph, Variable("EGFR"), Variable("cytok"))
         self._compare(actual, expected)
+
+
+class TestSummaryStatistics(unittest.TestCase):
+    """Test getting summary statistics of the estimated outcome probabilities."""
+
+    def test_frondoor_backdoor_summary_stats(self):
+        """Test getting summary statistics of the estimated outcome probabilities for the frontdoor-backdoor graph."""
+        graph: NxMixedGraph = frontdoor_backdoor_example.graph
+        data: pd.DataFrame = frontdoor_backdoor_example.generate_data(1000, seed=100)
+        treatments = {X}
+        outcome = Y
+        interventions = {X: 0}
+        expected_stats = SummaryStatistics(1000, 3.476, 0.473, 2.107, 3.145, 3.478, 3.802, 5.064)
+        actual_stats = estimated_probabilities_summary_statistics(
+            graph, data, treatments, outcome, interventions
+        )
+        for value1, value2 in zip(expected_stats, actual_stats):
+            self.assertAlmostEqual(value1, value2, delta=0.01)

@@ -51,6 +51,7 @@ __all__ = [
     "estimate_query",
     "estimate_ate",
     "estimate_probabilities",
+    "estimated_probabilities_summary_statistics",
     # Classes
     "RegressionResult",
     "MultipleTreatmentsNotImplementedError",
@@ -62,6 +63,19 @@ class RegressionResult(NamedTuple):
 
     coefficients: dict[Variable, float]
     intercept: float
+
+
+class SummaryStatistics(NamedTuple):
+    """Represents the summary statistics of a distribution."""
+
+    size: float
+    mean: float
+    std: float
+    min: float
+    first_quartile: float
+    second_quartile: float
+    third_quartile: float
+    max: float
 
 
 class MultipleTreatmentsNotImplementedError(NotImplementedError):
@@ -261,3 +275,35 @@ def estimate_probabilities(
         for row in data.to_dict(orient="records")
     ]
     return y
+
+
+def estimated_probabilities_summary_statistics(
+    graph: NxMixedGraph,
+    data: pd.DataFrame,
+    treatments: Variable | set[Variable],
+    outcome: Variable,
+    interventions: Dict[Variable, float],
+) -> SummaryStatistics:
+    """Get the summary statistics of the estimated outcome probabilities.
+
+    :param graph: An acyclic directed mixed graph (ADMG)
+    :param data: Observational data corresponding to the ADMG
+    :param treatments: The treatment variable(s)
+    :param outcome: The outcome variable
+    :param interventions: The interventions for the given query
+
+    :returns:
+        the summary statistics of the estimated outcome probabilities
+    """
+    y = pd.Series(estimate_probabilities(graph, data, treatments, outcome, interventions))
+    summary_stats = y.describe()
+    return SummaryStatistics(
+        summary_stats["count"],
+        summary_stats["mean"],
+        summary_stats["std"],
+        summary_stats["min"],
+        summary_stats["25%"],
+        summary_stats["50%"],
+        summary_stats["75%"],
+        summary_stats["max"],
+    )
