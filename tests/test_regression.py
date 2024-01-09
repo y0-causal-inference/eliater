@@ -9,15 +9,27 @@ from eliater.examples import sars_cov_2_example, t_cell_signaling_example
 from eliater.frontdoor_backdoor import (
     example_2,
     frontdoor_backdoor_example,
+    multiple_mediators_confounders_nuisance_vars_example,
     multiple_mediators_single_confounder_example,
 )
-from eliater.regression import estimate_query, fit_regression, get_adjustment_set
+from eliater.regression import RegressionResult, estimate_query, fit_regression, get_adjustment_set
 from y0.dsl import Z1, Z2, Z3, Variable, X, Y, Z
 from y0.graph import NxMixedGraph
 
 
 class TestRegression(unittest.TestCase):
     """Test the regression method."""
+
+    def _compare_regression_result(self, result1: RegressionResult, result2: RegressionResult):
+        """Compare two instances of :class:`eliater.regression.RegressionResult`."""
+        expected_coefficients, expected_intercept = result1
+        actual_coefficients, actual_intercept = result2
+        self.assertEqual(set(expected_coefficients.keys()), set(actual_coefficients.keys()))
+        for variable in expected_coefficients:
+            self.assertAlmostEqual(
+                actual_coefficients[variable], expected_coefficients[variable], delta=0.01
+            )
+        self.assertAlmostEqual(expected_intercept, actual_intercept, delta=0.01)
 
     def test_frondoor_backdoor_regression(self):
         """Test regression result for the frontdoor-backdoor graph."""
@@ -27,15 +39,61 @@ class TestRegression(unittest.TestCase):
         outcome = Y
         expected_coefficients: Dict[Variable, float] = {X: 0.163, Z: 0.469}
         expected_intercept: float = -1.239
-        actual_coefficients, actual_intercept = fit_regression(
+        expected_result = RegressionResult(expected_coefficients, expected_intercept)
+        actual_result = fit_regression(
             graph=graph, data=data, treatments=treatments, outcome=outcome
         )
-        self.assertEqual(set(expected_coefficients.keys()), set(actual_coefficients.keys()))
-        for variable in expected_coefficients:
-            self.assertAlmostEqual(
-                actual_coefficients[variable], expected_coefficients[variable], delta=0.01
-            )
-        self.assertAlmostEqual(expected_intercept, actual_intercept, delta=0.01)
+        self._compare_regression_result(expected_result, actual_result)
+
+    def test_multiple_mediators_multiple_confounders_regression(self):
+        """Test regression result for the multiple-mediators-multiple-confounders graph."""
+        graph: NxMixedGraph = example_2.graph
+        data: pd.DataFrame = example_2.generate_data(1000, seed=100)
+        treatments = {X}
+        outcome = Y
+        expected_coefficients: Dict[Variable, float] = {X: 0.165, Z3: 1.311}
+        expected_intercept: float = 21.06
+        expected_result = RegressionResult(expected_coefficients, expected_intercept)
+        actual_result = fit_regression(
+            graph=graph, data=data, treatments=treatments, outcome=outcome
+        )
+        self._compare_regression_result(expected_result, actual_result)
+
+    def test_multiple_mediators_confounders_nuisance_vars_regression(self):
+        """Test regression result for the multiple-mediators-confounders-nuisance-vars graph."""
+        graph: NxMixedGraph = multiple_mediators_confounders_nuisance_vars_example.graph
+        data: pd.DataFrame = multiple_mediators_confounders_nuisance_vars_example.generate_data(
+            1000, seed=100
+        )
+        treatments = {X}
+        outcome = Y
+        expected_coefficients: Dict[Variable, float] = {X: 0.274, Z3: 0.578}
+        expected_intercept: float = 5.578
+        expected_result = RegressionResult(expected_coefficients, expected_intercept)
+        actual_result = fit_regression(
+            graph=graph, data=data, treatments=treatments, outcome=outcome
+        )
+        self._compare_regression_result(expected_result, actual_result)
+
+    def test_sars_regression(self):
+        """Test regression result for the sars_cov2 graph."""
+        graph: NxMixedGraph = sars_cov_2_example.graph
+        data: pd.DataFrame = pd.read_csv("tests/data/SARS_COV2_obs_data.csv")
+        treatments = {Variable("EGFR")}
+        outcome = Variable("cytok")
+        expected_coefficients: Dict[Variable, float] = {
+            Variable("EGFR"): 0.538,
+            Variable("IL6STAT3"): 0.897,
+            Variable("PRR"): -0.436,
+            Variable("SARS_COV2"): 0.267,
+            Variable("TNF"): 0.407,
+        }
+        expected_intercept: float = 17.602
+        expected_result = RegressionResult(expected_coefficients, expected_intercept)
+        actual_result = fit_regression(
+            graph=graph, data=data, treatments=treatments, outcome=outcome
+        )
+        self._compare_regression_result(expected_result, actual_result)
 
 
 class TestEstimateQuery(unittest.TestCase):
@@ -44,20 +102,104 @@ class TestEstimateQuery(unittest.TestCase):
     def test_frondoor_backdoor_ate(self):
         """Test getting average treatment effect for the frontdoor-backdoor graph."""
         graph = frontdoor_backdoor_example.graph
-        data = frontdoor_backdoor_example.generate_data(10, seed=100)
+        data = frontdoor_backdoor_example.generate_data(1000, seed=100)
         treatments = {X}
         outcome = Y
-        expected_ate: float = 0.676
+        expected_ate: float = 0.163
         actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
         self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
 
     def test_frondoor_backdoor_expected_value(self):
         """Test getting expected value for the frontdoor-backdoor graph."""
         graph = frontdoor_backdoor_example.graph
-        data = frontdoor_backdoor_example.generate_data(10, seed=100)
+        data = frontdoor_backdoor_example.generate_data(1000, seed=100)
         treatments = {X}
         outcome = Y
-        expected_value: float = -2.272
+        expected_value: float = 3.476
+        interventions = {X: 0}
+        actual_value = estimate_query(
+            graph=graph,
+            data=data,
+            treatments=treatments,
+            outcome=outcome,
+            query_type="expected_value",
+            interventions=interventions,
+        )
+        self.assertAlmostEqual(expected_value, actual_value, delta=0.01)
+
+    def test_multiple_mediators_multiple_confounders_ate(self):
+        """Test getting average treatment effect for the multiple-mediators-multiple-confounders graph."""
+        graph = example_2.graph
+        data = example_2.generate_data(1000, seed=100)
+        treatments = {X}
+        outcome = Y
+        expected_ate: float = 0.165
+        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
+        self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
+
+    def test_multiple_mediators_multiple_confounders_expected_value(self):
+        """Test getting expected value for the multiple-mediators-multiple-confounders graph."""
+        graph = example_2.graph
+        data = example_2.generate_data(1000, seed=100)
+        treatments = {X}
+        outcome = Y
+        expected_value: float = 68.448
+        interventions = {X: 0}
+        actual_value = estimate_query(
+            graph=graph,
+            data=data,
+            treatments=treatments,
+            outcome=outcome,
+            query_type="expected_value",
+            interventions=interventions,
+        )
+        self.assertAlmostEqual(expected_value, actual_value, delta=0.01)
+
+    def test_multiple_mediators_confounders_nuisance_vars_ate(self):
+        """Test getting average treatment effect for the multiple-mediators-confounders-nuisance-vars graph."""
+        graph = multiple_mediators_confounders_nuisance_vars_example.graph
+        data = multiple_mediators_confounders_nuisance_vars_example.generate_data(1000, seed=100)
+        treatments = {X}
+        outcome = Y
+        expected_ate: float = 0.274
+        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
+        self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
+
+    def test_multiple_mediators_confounders_nuisance_vars_expected_value(self):
+        """Test getting expected value for the multiple-mediators-confounders-nuisance-vars graph."""
+        graph = multiple_mediators_confounders_nuisance_vars_example.graph
+        data = multiple_mediators_confounders_nuisance_vars_example.generate_data(1000, seed=100)
+        treatments = {X}
+        outcome = Y
+        expected_value: float = 14.209
+        interventions = {X: 0}
+        actual_value = estimate_query(
+            graph=graph,
+            data=data,
+            treatments=treatments,
+            outcome=outcome,
+            query_type="expected_value",
+            interventions=interventions,
+        )
+        self.assertAlmostEqual(expected_value, actual_value, delta=0.01)
+
+    def test_sars_ate(self):
+        """Test getting average treatment effect for the sars_cov2 graph."""
+        graph = sars_cov_2_example.graph
+        data = pd.read_csv("tests/data/SARS_COV2_obs_data.csv")
+        treatments = {Variable("EGFR")}
+        outcome = Variable("cytok")
+        expected_ate: float = 0.538
+        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
+        self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
+
+    def test_sars_expected_value(self):
+        """Test getting expected value for the sars_cov2 graph."""
+        graph = sars_cov_2_example.graph
+        data = pd.read_csv("tests/data/SARS_COV2_obs_data.csv")
+        treatments = {Variable("EGFR")}
+        outcome = Variable("cytok")
+        expected_value: float = 64.987
         interventions = {X: 0}
         actual_value = estimate_query(
             graph=graph,
