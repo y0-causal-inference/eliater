@@ -13,3 +13,9 @@ Remove Nuisance Variables
 .. automodapi:: eliater.discover_latent_nodes
     :no-heading:
     :include-all-objects:
+
+Estimation with Linear Regression
+---------------------------------
+.. automodapi:: eliater.regression
+    :no-heading:
+    :include-all-objects:
