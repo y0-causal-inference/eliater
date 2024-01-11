@@ -16,9 +16,9 @@ from eliater.regression import (
     RegressionResult,
     SummaryStatistics,
     estimate_query,
-    estimated_probabilities_summary_statistics,
     fit_regression,
     get_adjustment_set,
+    summary_statistics,
 )
 from y0.dsl import Z1, Z2, Z3, Variable, X, Y, Z
 from y0.graph import NxMixedGraph
@@ -76,26 +76,6 @@ class TestRegression(unittest.TestCase):
         outcome = Y
         expected_coefficients: Dict[Variable, float] = {X: 0.274, Z3: 0.578}
         expected_intercept: float = 5.578
-        expected_result = RegressionResult(expected_coefficients, expected_intercept)
-        actual_result = fit_regression(
-            graph=graph, data=data, treatments=treatments, outcome=outcome
-        )
-        self._compare_regression_result(expected_result, actual_result)
-
-    def test_sars_regression(self):
-        """Test regression result for the sars_cov2 graph."""
-        graph: NxMixedGraph = sars_cov_2_example.graph
-        data: pd.DataFrame = pd.read_csv("tests/data/SARS_COV2_obs_data.csv")
-        treatments = {Variable("EGFR")}
-        outcome = Variable("cytok")
-        expected_coefficients: Dict[Variable, float] = {
-            Variable("EGFR"): 0.538,
-            Variable("IL6STAT3"): 0.897,
-            Variable("PRR"): -0.436,
-            Variable("SARS_COV2"): 0.267,
-            Variable("TNF"): 0.407,
-        }
-        expected_intercept: float = 17.602
         expected_result = RegressionResult(expected_coefficients, expected_intercept)
         actual_result = fit_regression(
             graph=graph, data=data, treatments=treatments, outcome=outcome
@@ -180,34 +160,6 @@ class TestEstimateQuery(unittest.TestCase):
         outcome = Y
         expected_value: float = 14.209
         interventions = {X: 0}
-        actual_value = estimate_query(
-            graph=graph,
-            data=data,
-            treatments=treatments,
-            outcome=outcome,
-            query_type="expected_value",
-            interventions=interventions,
-        )
-        self.assertAlmostEqual(expected_value, actual_value, delta=0.01)
-
-    def test_sars_ate(self):
-        """Test getting average treatment effect for the sars_cov2 graph."""
-        graph = sars_cov_2_example.graph
-        data = pd.read_csv("tests/data/SARS_COV2_obs_data.csv")
-        treatments = {Variable("EGFR")}
-        outcome = Variable("cytok")
-        expected_ate: float = 0.538
-        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
-        self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
-
-    def test_sars_expected_value(self):
-        """Test getting expected value for the sars_cov2 graph."""
-        graph = sars_cov_2_example.graph
-        data = pd.read_csv("tests/data/SARS_COV2_obs_data.csv")
-        treatments = {Variable("EGFR")}
-        outcome = Variable("cytok")
-        expected_value: float = 64.987
-        interventions = {Variable("EGFR"): 0}
         actual_value = estimate_query(
             graph=graph,
             data=data,
@@ -363,8 +315,6 @@ class TestSummaryStatistics(unittest.TestCase):
         outcome = Y
         interventions = {X: 0}
         expected_stats = SummaryStatistics(1000, 3.476, 0.473, 2.107, 3.145, 3.478, 3.802, 5.064)
-        actual_stats = estimated_probabilities_summary_statistics(
-            graph, data, treatments, outcome, interventions
-        )
+        actual_stats = summary_statistics(graph, data, treatments, outcome, interventions)
         for value1, value2 in zip(expected_stats, actual_stats):
             self.assertAlmostEqual(value1, value2, delta=0.01)

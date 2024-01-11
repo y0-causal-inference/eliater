@@ -51,7 +51,7 @@ __all__ = [
     "estimate_query",
     "estimate_ate",
     "estimate_probabilities",
-    "estimated_probabilities_summary_statistics",
+    "summary_statistics",
     # Classes
     "RegressionResult",
     "MultipleTreatmentsNotImplementedError",
@@ -277,7 +277,7 @@ def estimate_probabilities(
     return y
 
 
-def estimated_probabilities_summary_statistics(
+def summary_statistics(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
