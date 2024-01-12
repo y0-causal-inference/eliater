@@ -1,14 +1,47 @@
 """
-The goal is to determine the parameters of a structural causal model.
+The goal is to estimate causal effects using regression on the exposure (treatment) variable.
 
-With linear SCMs, each edge has its own parameter.  How can you learn the
-value of the parameter of the edge between X and Y?  If you naively regress X on Y,
-then the coefficient Beta describes the total association between X and Y. This
-includes not only the direct effect X -> Y, but also the association from all
-backdoor paths between X and Y. This can be seen by generating data from a graph where
-the edge between X and Y has been cut. The difference between Beta in the original
-dataset and the coefficient Beta' you get from regressing Y on X in this new dataset
-is the direct effect X -> Y.
+In this module we want to estimate the causal effect of a hypothesized treatment or intervention
+of the exposure variable (X) on the outcome variable (Y) using linear regression. The causal effect
+types that this module support is in the following forms:
+
+1. Probability distribution over the outcome variable given an intervention on the exposure (P(Y|do(X=x))
+where X can take discrete or continuous values.
+
+2. Expected value of the outcome given an intervention on the exposure (E(Y|do(X=x)), where X can take
+discrete or continuous values.
+
+3. Average Treatment Effect (ATE), which is defined as E(Y|do(X=x+1)) - E(Y|do(X=x)) where X can take
+discrete or continuous values. In the case of a binary exposure, where X only takes 1 (meaning that the
+treatment has been received) or 0 (meaning that treatment has not been received), the ATE is defined as
+E(Y|do(X=1)) - E(Y|do(X=0)).
+
+In order to have an intuition for how to use linear regression on the treatment variable, we can create a
+Gaussian linear Structural Causal model (SCM). With Gaussian linear SCMs, each variable is defined as a
+linear combination of its parents. For example, in this graph, a Gaussian linear SCM is defined as below:
+
+$Z = U_Z; U_Z \sim \mathcal{N}(0, \sigma^2_Z)$
+
+$X = \lambda_{zx} Z + U_X; U_X \sim \mathcal{N}(0, \sigma^2_X)$
+
+$Y = \lambda_{xy} X + \lambda_{zy} Z + U_Y; U_Z \sim \mathcal{N}(0, \sigma^2_Y)$
+
+Hence the ATE = E(Y|do(X=x+1)) - E(Y|do(X=x)) = $\lambda_{xy}$. However, if one naively regress X on Y,
+then the regression coefficient of Y on X, denoted by $\gamma_{yx}$ is computed as follows:
+
+$\gamma_{yx} = \frac{Cov(Y,X)}{Var(X)} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$
+
+The estimated $\gamma_{yx} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$ differs from the actual value of
+ATE which amounts to $\lambda_{xy}$. Hence, the estimate of ATE is biased. This happens because the observed
+association of X and Y mixes both the causal association (the path X → Y ), and the non-causal association due
+to the confounder Z (the path X ← Z → Y ). We call such confounding paths, that start with an arrow pointing to X,
+“back-door paths.” Note, however, that the regression coefficient of Y on X adjusting for Z (denoted by $\gamma_{yx.z}$)
+evaluates to (after some algebra),
+
+$\gamma_{yx.z} = \lambda_{xy}$
+
+That is, controlling for Z in this model effectively blocks the back-door path, and recovers the ACE. The set of
+variables blocking the backdoor paths are called adjustment sets.
 
 .. warning::
 
@@ -31,6 +64,7 @@ is the direct effect X -> Y.
 
     PLEASE DO NOT DELETE THIS LIST. Leave it at the bottom of the module level docstring so we
     can more easily check if all of the points have been addressed.
+
 """
 
 import statistics
