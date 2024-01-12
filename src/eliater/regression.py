@@ -26,10 +26,20 @@ $X = \lambda_{zx} Z + U_X; U_X \sim \mathcal{N}(0, \sigma^2_X)$
 
 $Y = \lambda_{xy} X + \lambda_{zy} Z + U_Y; U_Z \sim \mathcal{N}(0, \sigma^2_Y)$
 
-Hence the ATE = E(Y|do(X=x+1)) - E(Y|do(X=x)) = $\lambda_{xy}$. However, if one naively regress X on Y,
-then the regression coefficient of Y on X, denoted by $\gamma_{yx}$ is computed as follows:
+Hence the probability distribution over the outcome variable given an intervention on the exposure
+can be estimated as follows:
 
-$\gamma_{yx} = \frac{Cov(Y,X)}{Var(X)} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$
+$P(Y|do(X=x) = \lambda_{xy} x + \lambda_{zy} P(Z) + P(U_Y)$
+
+In addition, the expected value of the outcome given an intervention on the exposure (E(Y|do(X=x)) can
+be estimated by taking an average over the Y values in the above equation. Finally, the ATE amounts to,
+
+ATE = E(Y|do(X=x+1)) - E(Y|do(X=x)) = $\lambda_{xy}$.
+
+However, if one naively regress X on Y, then the regression coefficient of Y on X, denoted by $\gamma_{yx}$
+is computed as follows:
+
+$\gamma_{yx} = {Cov(Y,X)}/{Var(X)} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$
 
 The estimated $\gamma_{yx} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$ differs from the actual value of
 ATE which amounts to $\lambda_{xy}$. Hence, the estimate of ATE is biased. This happens because the observed
@@ -40,17 +50,17 @@ evaluates to (after some algebra),
 
 $\gamma_{yx.z} = \lambda_{xy}$
 
-That is, controlling for Z in this model effectively blocks the back-door path, and recovers the ACE. The set of
+That is, controlling for Z in this model effectively blocks the back-door path, and recovers the ATE. The set of
 variables blocking the backdoor paths are called adjustment sets.
 
-.. warning::
+This module finds the optimal adjustment set, i.e., the adjustment set that leads to an estimate of ATE with least
+assymptotic variance, if it exist. If the optimal adjustment set does not exist, this module tries to find the
+optimal minimal adjustment set, i.e., the adjustment set with minimal cadinality that provides the least assymptotic
+variance in the estimation of ATE. If the optimal adjustment set, or the optimal minimal adjustment set does not
+exist, this module finds a random adjustment set among the existing minimal adjustment sets.
 
-    But there is an easier way to do it!  If you include a set of variables
-    that block all backdoor paths between X and Y in the original regression,
-    then the Beta coefficient associated with X will be the direct effect.
-    But be careful! If you include extra variables in the regression that open a
-    backdoor path between X and Y, then the Beta regression coefficient associated
-    with X will no longer represent the direct effect
+Once the adjustment set is selected, this module use it to regress X and the adjustment set on Y to find an unbiased
+estimate of the P(Y|do(X=x) or E(Y|do(X=x) or ATE.
 
 .. todo:: Questions to answer in documentation:
 
