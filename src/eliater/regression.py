@@ -1,23 +1,21 @@
-"""
+r"""
 The goal is to estimate causal effects using regression on the exposure (treatment) variable.
 
 In this module we want to estimate the causal effect of a hypothesized treatment or intervention
-of the exposure variable (X) on the outcome variable (Y) using linear regression. The causal effect
+of the exposure variable ($X$) on the outcome variable ($Y$) using linear regression. The causal effect
 types that this module support is in the following forms:
 
-1. Probability distribution over the outcome variable given an intervention on the exposure (P(Y|do(X=x))
-where X can take discrete or continuous values.
-
-2. Expected value of the outcome given an intervention on the exposure (E(Y|do(X=x)), where X can take
-discrete or continuous values.
-
-3. Average Treatment Effect (ATE), which is defined as E(Y|do(X=x+1)) - E(Y|do(X=x)) where X can take
-discrete or continuous values. In the case of a binary exposure, where X only takes 1 (meaning that the
-treatment has been received) or 0 (meaning that treatment has not been received), the ATE is defined as
-E(Y|do(X=1)) - E(Y|do(X=0)).
+1. Probability distribution over the outcome variable given an intervention on the exposure ($P(Y \mid do(X=x)$)
+   where $X$ can take discrete or continuous values.
+2. Expected value of the outcome given an intervention on the exposure (\mathbb{E}[Y \mid do(X=x)], where $X$ can take
+   discrete or continuous values.
+3. Average Treatment Effect (ATE), which is defined as $\mathbb{E}[Y \mid do(X=x+1)] - \mathbb{E}[Y \mid do(X=x)]$
+   where $X$ can take discrete or continuous values. In the case of a binary exposure, where X only takes 1 (meaning
+   that the treatment has been received) or 0 (meaning that treatment has not been received), the ATE is defined as
+   $\mathbb{E}[Y \mid do(X=1)] - \mathbb{E}[Y \mid do(X=0)]$.
 
 In order to have an intuition for how to use linear regression on the treatment variable, we can create a
-Gaussian linear Structural Causal model (SCM). With Gaussian linear SCMs, each variable is defined as a
+Gaussian linear structural causal model (SCM). With Gaussian linear SCMs, each variable is defined as a
 linear combination of its parents. For example, in this graph, a Gaussian linear SCM is defined as below:
 
 $Z = U_Z; U_Z \sim \mathcal{N}(0, \sigma^2_Z)$
@@ -29,38 +27,38 @@ $Y = \lambda_{xy} X + \lambda_{zy} Z + U_Y; U_Z \sim \mathcal{N}(0, \sigma^2_Y)$
 Hence the probability distribution over the outcome variable given an intervention on the exposure
 can be estimated as follows:
 
-$P(Y|do(X=x) = \lambda_{xy} x + \lambda_{zy} P(Z) + P(U_Y)$
+$P(Y \mid do(X=x) = \lambda_{xy} x + \lambda_{zy} P(Z) + P(U_Y)$
 
-In addition, the expected value of the outcome given an intervention on the exposure (E(Y|do(X=x)) can
+In addition, the expected value of the outcome given an intervention on the exposure ($\mathbb{E}[Y \mid do(X=x]$) can
 be estimated by taking an average over the Y values in the above equation. Finally, the ATE amounts to,
 
-ATE = E(Y|do(X=x+1)) - E(Y|do(X=x)) = $\lambda_{xy}$.
+$\text{ATE} = \mathbb{E}[Y \mid do(X=x+1)] - \mathbb{E}[Y \mid do(X=x)] = \lambda_{xy}$.
 
 However, if one naively regress X on Y, then the regression coefficient of Y on X, denoted by $\gamma_{yx}$
 is computed as follows:
 
-$\gamma_{yx} = {Cov(Y,X)}/{Var(X)} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$
+$\gamma_{yx} = \frac{Cov(Y,X)}{Var(X)} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$
 
 The estimated $\gamma_{yx} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$ differs from the actual value of
 ATE which amounts to $\lambda_{xy}$. Hence, the estimate of ATE is biased. This happens because the observed
 association of X and Y mixes both the causal association (the path X → Y ), and the non-causal association due
 to the confounder Z (the path X ← Z → Y ). We call such confounding paths, that start with an arrow pointing to X,
-“back-door paths.” Note, however, that the regression coefficient of Y on X adjusting for Z (denoted by $\gamma_{yx.z}$)
-evaluates to (after some algebra),
+“back-door paths.” Note, however, that the regression coefficient of $Y$ on $X$ adjusting for $Z$
+(denoted by $\gamma_{yx.z}$) evaluates to (after some algebra),
 
 $\gamma_{yx.z} = \lambda_{xy}$
 
-That is, controlling for Z in this model effectively blocks the back-door path, and recovers the ATE. The set of
+That is, controlling for $Z$ in this model effectively blocks the back-door path, and recovers the ATE. The set of
 variables blocking the backdoor paths are called adjustment sets.
 
 This module finds the optimal adjustment set, i.e., the adjustment set that leads to an estimate of ATE with least
-assymptotic variance, if it exist. If the optimal adjustment set does not exist, this module tries to find the
-optimal minimal adjustment set, i.e., the adjustment set with minimal cadinality that provides the least assymptotic
+asymptotic variance, if it exist. If the optimal adjustment set does not exist, this module tries to find the
+optimal minimal adjustment set, i.e., the adjustment set with minimal cardinality that provides the least asymptotic
 variance in the estimation of ATE. If the optimal adjustment set, or the optimal minimal adjustment set does not
 exist, this module finds a random adjustment set among the existing minimal adjustment sets.
 
-Once the adjustment set is selected, this module use it to regress X and the adjustment set on Y to find an unbiased
-estimate of the P(Y|do(X=x) or E(Y|do(X=x) or ATE.
+Once the adjustment set is selected, this module use it to regress X and the adjustment set on $Y$ to find an unbiased
+estimate of the $P(Y \mid do(X=x))$ or $\mathbb{E}[Y \mid do(X=x]$ or ATE.
 
 .. todo:: Questions to answer in documentation:
 
