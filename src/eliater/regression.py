@@ -16,7 +16,27 @@ types that this module support is in the following forms:
 
 In order to have an intuition for how to use linear regression on the treatment variable, we can create a
 Gaussian linear structural causal model (SCM). With Gaussian linear SCMs, each variable is defined as a
-linear combination of its parents. For example, in this graph, a Gaussian linear SCM is defined as below:
+linear combination of its parents. For example, consider this graph:
+
+.. code-block:: python
+
+    from y0.dsl import Variable, Z, X, Y
+    from y0.graph import NxMixedGraph
+
+    graph = NxMixedGraph.from_edges(
+        directed=[
+            (X, Y),
+            (Z, Y),
+            (Z, X),
+        ],
+        undirected=[],
+    )
+    graph.draw()
+
+.. figure:: img/regression.png
+   :scale: 70%
+
+The goal is to find the causal effect of X on Y. In this graph a Gaussian linear SCM can be defined as below:
 
 $Z = U_Z; U_Z \sim \mathcal{N}(0, \sigma^2_Z)$
 
@@ -25,40 +45,79 @@ $X = \lambda_{zx} Z + U_X; U_X \sim \mathcal{N}(0, \sigma^2_X)$
 $Y = \lambda_{xy} X + \lambda_{zy} Z + U_Y; U_Z \sim \mathcal{N}(0, \sigma^2_Y)$
 
 Hence the probability distribution over the outcome variable given an intervention on the exposure
-can be estimated as follows:
+(P(Y|do(X=x))) involves substituting estimated values of $\lambda_{xy}$ and $\lambda_{zy}$, fixing
+the value of $X$ to $x$, and obtaining estimated values over $Y$. Averaging across different $Y$
+values will lead to an estimate for the query in the form of E[Y|do(X=x)]. The ATE amounts to,
 
-$P(Y \mid do(X=x) = \lambda_{xy} x + \lambda_{zy} P(Z) + P(U_Y)$
-
-In addition, the expected value of the outcome given an intervention on the exposure ($\mathbb{E}[Y \mid do(X=x]$) can
-be estimated by taking an average over the Y values in the above equation. Finally, the ATE amounts to,
-
-$\text{ATE} = \mathbb{E}[Y \mid do(X=x+1)] - \mathbb{E}[Y \mid do(X=x)] = \lambda_{xy}$.
+ATE = E(Y|do(X=x+1)) - E(Y|do(X=x)) = $\lambda_{xy}$.
 
 However, if one naively regress X on Y, then the regression coefficient of Y on X, denoted by $\gamma_{yx}$
 is computed as follows:
 
 $\gamma_{yx} = \frac{Cov(Y,X)}{Var(X)} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$
 
-The estimated $\gamma_{yx} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$ differs from the actual value of
-ATE which amounts to $\lambda_{xy}$. Hence, the estimate of ATE is biased. This happens because the observed
-association of X and Y mixes both the causal association (the path X → Y ), and the non-causal association due
-to the confounder Z (the path X ← Z → Y ). We call such confounding paths, that start with an arrow pointing to X,
-“back-door paths.” Note, however, that the regression coefficient of $Y$ on $X$ adjusting for $Z$
-(denoted by $\gamma_{yx.z}$) evaluates to (after some algebra),
+he estimated $\gamma_{yx} = \lambda_{xy} + \lambda_{zx} \lambda_{zy}$ differs from the true value of
+ATE which amounts to $\lambda_{xy}$. Hence, the estimation of ATE is biased. This discrepancy arises because the
+observed association of X and Y encapsulates both the causal relationship, indicated by the path X → Y, and the
+non-causal relationship due
+to the confounder Z, indicated by the path X ← Z → Y . Such confounding paths initiating with an arrow directed
+towards XX are termed "back-door paths." Nevertheless, it's noteworthy that the regression coefficient of Y on X
+when adjusted for ZZ (denoted by $\gamma_{yx.z}$) simplifies to,
 
 $\gamma_{yx.z} = \lambda_{xy}$
 
-That is, controlling for $Z$ in this model effectively blocks the back-door path, and recovers the ATE. The set of
+That is, adjusting for ZZ effectively obstructs the back-door path, thereby restoring the ATE. The set of
 variables blocking the backdoor paths are called adjustment sets.
 
 This module finds the optimal adjustment set, i.e., the adjustment set that leads to an estimate of ATE with least
-asymptotic variance, if it exist. If the optimal adjustment set does not exist, this module tries to find the
-optimal minimal adjustment set, i.e., the adjustment set with minimal cardinality that provides the least asymptotic
+assymptotic variance, if it exist. If the optimal adjustment set does not exist, this module tries to find the
+optimal minimal adjustment set, i.e., the adjustment set with minimal cadinality that provides the least assymptotic
 variance in the estimation of ATE. If the optimal adjustment set, or the optimal minimal adjustment set does not
 exist, this module finds a random adjustment set among the existing minimal adjustment sets.
 
-Once the adjustment set is selected, this module use it to regress X and the adjustment set on $Y$ to find an unbiased
-estimate of the $P(Y \mid do(X=x))$ or $\mathbb{E}[Y \mid do(X=x]$ or ATE.
+Once the adjustment set is selected, this module use it to regress X and the adjustment set on Y to find an unbiased
+estimate of the P(Y|do(X=x)) or E(Y|do(X=x)) or ATE.
+
+Linear regression is known for its simplicity, speed, and high interpretability.
+However, linear regression is most appropriate when the variables exhibit linear relationships. In addition, it only
+uses the variables from the back-door adjustment set and does not utilize useful variables such as mediators.
+
+Example
+-------
+We'll work with the following example where $X$ is the treatment, $Y$ is the outcome. We will explore estimating
+causal effects in the forms of P(Y|do(X=x)), E(Y|do(X=x)) and ATE.
+
+.. code-block:: python
+
+    from y0.dsl import Variable, Z, X, Y
+    from y0.graph import NxMixedGraph
+    from eliater.frontdoor_backdoor import example_2
+
+    graph = example_2.graph
+    data = example_2.generate_data(100, seed=100)
+    estimate_query(
+        graph=graph,
+        data=data,
+        treatments={X},
+        outcome=Y,
+        query_type="expected_value",
+        interventions={X: 0},
+    )
+    estimate_query(
+        graph=graph,
+        data=data,
+        treatments={X},
+        outcome=Y,
+        query_type="probability",
+        interventions={X: 0},
+    )
+    estimate_query(
+        graph=graph,
+        data=data,
+        treatments={X},
+        outcome=Y,
+        query_type="ate"
+    )
 
 .. todo:: Questions to answer in documentation:
 
