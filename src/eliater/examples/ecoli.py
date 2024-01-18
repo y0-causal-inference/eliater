@@ -11,6 +11,7 @@ regulatory relationships.
 # FIXME What kinds of experiments did they come from?
 # FIXME What was the method that these experiments got into the database?
 # FIXME How was the network extracted manually? What was the thought process?
+# FIXME why do the explanations in the module docstring and the example not match?
 
 from y0.algorithm.identify import Query
 from y0.examples import Example
