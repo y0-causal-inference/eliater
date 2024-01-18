@@ -4,17 +4,13 @@ The E. Coli regulatory network was extracted manually (by hand) from the EcoCyc
 database [Keseler2021]_ . The nodes represent genes, and the edges represent
 regulatory relationships.
 
-.. [Keseler2021] Keseler, I. M., Gama-Castro, S., Mackie, A., Billington, R.,
-Bonavides-Mart ́ınez, C., Caspi, R., Kothari, A., Krummenacker, M., Midford, P. E.,
-Mu  ̃niz-Rascado, L., et al. (2021). 'The EcoCyc database in 2021'. Frontiers in
-Microbiology, page 2098.
+.. [Keseler2021] `The EcoCyc database in 2021 <https://doi.org/10.3389/fmicb.2021.711077>`_
 """
 
-# FIXME add the following documentation. DO NOT remove this fixme without review and confirmation.
-#  1. Where did this network come from? What physical experimentation was used to create it?
-#     What database was it in and how was the database accessed (via code? by hand?)
-#  2. What is the biological phenomena described here? More detail needed.
-#  3. Is there associated data to go with this graph? Commit in the examples repository
+# FIXME what kind of regulatory relationships?
+# FIXME What kinds of experiments did they come from?
+# FIXME What was the method that these experiments got into the database?
+# FIXME How was the network extracted manually? What was the thought process?
 
 from y0.algorithm.identify import Query
 from y0.examples import Example
