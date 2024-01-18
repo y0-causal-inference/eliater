@@ -8,6 +8,8 @@ from y0.dsl import Variable
 from y0.examples import Example
 from y0.graph import NxMixedGraph
 
+from .sars import graph
+
 __all__ = [
     "sars_large_example",
 ]
@@ -43,9 +45,7 @@ def generate(
 
     beta0_u_sars_ang_to_sars_cov2 = -1.8
     beta_u_sars_ang = 0.05  # positive
-    loc_sars_cov2 = np.array(
-        _r_exp(-beta0_u_sars_ang_to_sars_cov2 - u_sars_ang * beta_u_sars_ang)
-    )
+    loc_sars_cov2 = np.array(_r_exp(-beta0_u_sars_ang_to_sars_cov2 - u_sars_ang * beta_u_sars_ang))
     sars_cov2 = generator.binomial(n=1, p=loc_sars_cov2, size=num_samples)
 
     beta0_sars_cov2_to_ace2 = 1.5
@@ -68,10 +68,10 @@ def generate(
     beta_agtr1_to_adam17 = 0.04
     beta_u_adam17_sil6r_to_adam17 = 0.04
     loc_adam17 = _r_exp(
-            -beta0_adam17
-            - agtr1 * beta_agtr1_to_adam17
-            - u_adam17_sil6_ra * beta_u_adam17_sil6r_to_adam17
-        )
+        -beta0_adam17
+        - agtr1 * beta_agtr1_to_adam17
+        - u_adam17_sil6_ra * beta_u_adam17_sil6r_to_adam17
+    )
     adam17 = generator.binomial(n=1, p=loc_adam17, size=num_samples)
 
     beta0_sil6r = -1.9
@@ -79,11 +79,11 @@ def generate(
     beta_u_to_sil6r = 0.05
     beta_toci_to_sil6r = -0.04  # negative
     loc_sil6r = _r_exp(
-            -beta0_sil6r
-            - adam17 * beta_adam17_to_sil6r
-            - u_adam17_sil6_ra * beta_u_to_sil6r
-            - toci * beta_toci_to_sil6r
-        )
+        -beta0_sil6r
+        - adam17 * beta_adam17_to_sil6r
+        - u_adam17_sil6_ra * beta_u_to_sil6r
+        - toci * beta_toci_to_sil6r
+    )
     sil6r = generator.binomial(n=1, p=loc_sil6r, size=num_samples)
 
     beta0_egf = -1.6
@@ -129,30 +129,28 @@ def generate(
     beta_egfr_to_nfkb = 0.7
     beta_tnf_to_nfkb = 0.01
     loc_nfkb = _r_exp(
-            -beta0_nfkb
-            - prr * beta_prr_to_nfkb
-            - u_prr_nfkb * beta_u_to_nfkb
-            - egfr * beta_egfr_to_nfkb
-            - tnf * beta_tnf_to_nfkb
-        )
+        -beta0_nfkb
+        - prr * beta_prr_to_nfkb
+        - u_prr_nfkb * beta_u_to_nfkb
+        - egfr * beta_egfr_to_nfkb
+        - tnf * beta_tnf_to_nfkb
+    )
     nfkb = generator.binomial(n=1, p=loc_nfkb, size=num_samples)
 
     beta0_il6_stat3 = -1.6
     beta_u_to_il6_stat3 = -0.05
     beta_sil6r_to_il6_stat3 = 0.04
     loc_il6_stat3 = _r_exp(
-            -beta0_il6_stat3
-            - u_il6_stat_egfr * beta_u_to_il6_stat3
-            - sil6r * beta_sil6r_to_il6_stat3
-        )
+        -beta0_il6_stat3 - u_il6_stat_egfr * beta_u_to_il6_stat3 - sil6r * beta_sil6r_to_il6_stat3
+    )
     il6_stat3 = generator.binomial(n=1, p=loc_il6_stat3, size=num_samples)
 
     beta0_il6_amp = -1.1
     beta_nfkb_to_il6_amp = -5
     beta_il6_stat3_to_il6_amp = 0.03
     loc_il6_amp = _r_exp(
-            -beta0_il6_amp - nfkb * beta_nfkb_to_il6_amp - il6_stat3 * beta_il6_stat3_to_il6_amp
-        )
+        -beta0_il6_amp - nfkb * beta_nfkb_to_il6_amp - il6_stat3 * beta_il6_stat3_to_il6_amp
+    )
     il6_amp = generator.binomial(n=1, p=loc_il6_amp, size=num_samples)
 
     beta0_cytok = -1.1
@@ -188,55 +186,8 @@ sars_large_example = Example(
     "Do-calculus enables estimation of causal effects in partially observed biomolecular pathways."
     "- Bioinformatics, 38 (Supplement_1),i350-i358.",
     description="In this example EGFR is generated as a binary value. Hence, if you want to intervene on it, please"
-                "choose either o or 1",
-    graph=NxMixedGraph.from_str_edges(
-        nodes=[
-            "SARS_COV2",
-            "ACE2",
-            "Ang",
-            "AGTR1",
-            "ADAM17",
-            "Toci",
-            "Sil6r",
-            "EGF",
-            "TNF",
-            "EGFR",
-            "PRR",
-            "NFKB",
-            "IL6STAT3",
-            "IL6AMP",
-            "cytok",
-            "Gefi",
-        ],
-        directed=[
-            ("SARS_COV2", "ACE2"),
-            ("ACE2", "Ang"),
-            ("Ang", "AGTR1"),
-            ("AGTR1", "ADAM17"),
-            ("ADAM17", "EGF"),
-            ("ADAM17", "TNF"),
-            ("ADAM17", "Sil6r"),
-            ("SARS_COV2", "PRR"),
-            ("PRR", "NFKB"),
-            ("EGFR", "NFKB"),
-            ("TNF", "NFKB"),
-            ("Sil6r", "IL6STAT3"),
-            ("Toci", "Sil6r"),
-            ("NFKB", "IL6AMP"),
-            ("IL6AMP", "cytok"),
-            ("IL6STAT3", "IL6AMP"),
-            ("EGF", "EGFR"),
-            ("Gefi", "EGFR"),
-        ],
-        undirected=[
-            ("SARS_COV2", "Ang"),
-            ("ADAM17", "Sil6r"),
-            ("PRR", "NFKB"),
-            ("EGF", "EGFR"),
-            ("EGFR", "TNF"),
-            ("EGFR", "IL6STAT3"),
-        ],
-    ),
+    "choose either o or 1",
+    graph=graph,
     example_queries=[
         Query.from_str(treatments="EGFR", outcomes="cytok"),
     ],
@@ -244,7 +195,7 @@ sars_large_example = Example(
 
 
 # obs_data = generate(num_samples=260, seed=1)
-#obs_data.to_csv("~/Github/Causal_workflow_in_R/Covid_case_study/covid_data_discrete.csv")
-#intv_data_1 = generate(num_samples=40, seed=1, treatments = {Variable('EGFR'): 1})
-#intv_data_0 = generate(num_samples=40, seed=1, treatments = {Variable('EGFR'): 0})
-#print(np.mean(intv_data_1['cytok']) - np.mean(intv_data_0['cytok'])) #ATE
+# obs_data.to_csv("~/Github/Causal_workflow_in_R/Covid_case_study/covid_data_discrete.csv")
+# intv_data_1 = generate(num_samples=40, seed=1, treatments = {Variable('EGFR'): 1})
+# intv_data_0 = generate(num_samples=40, seed=1, treatments = {Variable('EGFR'): 0})
+# print(np.mean(intv_data_1['cytok']) - np.mean(intv_data_0['cytok'])) #ATE
