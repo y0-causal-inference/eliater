@@ -1,10 +1,17 @@
-"""Examples for transcriptional Escherichia coli K-12 regulatory network."""
+"""Examples for transcriptional Escherichia coli K-12 regulatory network.
 
-# FIXME add the following documentation. DO NOT remove this fixme without review and confirmation.
-#  1. Where did this network come from? What physical experimentation was used to create it?
-#     What database was it in and how was the database accessed (via code? by hand?)
-#  2. What is the biological phenomena described here? More detail needed.
-#  3. Is there associated data to go with this graph? Commit in the examples repository
+The E. Coli regulatory network was extracted manually (by hand) from the EcoCyc
+database [Keseler2021]_ . The nodes represent genes, and the edges represent
+regulatory relationships.
+
+.. [Keseler2021] `The EcoCyc database in 2021 <https://doi.org/10.3389/fmicb.2021.711077>`_
+"""
+
+# FIXME what kind of regulatory relationships?
+# FIXME What kinds of experiments did they come from?
+# FIXME What was the method that these experiments got into the database?
+# FIXME How was the network extracted manually? What was the thought process?
+# FIXME why do the explanations in the module docstring and the example not match?
 
 from y0.algorithm.identify import Query
 from y0.examples import Example
@@ -118,8 +125,11 @@ ecoli_transcription_example = Example(
     " ... & Vitek, O. (2023). Optimal adjustment sets for causal query estimation in partially"
     " observed biomolecular networks. Bioinformatics, 39(Supplement_1), i494-i503.",
     graph=graph,
-    description="This is the transcriptional E. Coli regulatory network"
-    " obtained from EcoCyc database ",
+    description="This is the transcriptional E. Coli regulatory network obtained from EcoCyc database. "
+    "The experimental data were 260 RNA-seq normalized expression profiles of E. coli K-12"
+    " MG1655 and BW25113 across 154 unique experimental conditions, extracted from the PRECISE"
+    " database by (Sastry et al., 2019) from this paper: 'The Escherichia coli transcriptome mostly"
+    " consists of independently regulated modules' ",
     example_queries=[Query.from_str(treatments="fur", outcomes="dpiA")],
 )
 
