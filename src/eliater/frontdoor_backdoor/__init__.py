@@ -8,14 +8,12 @@ from .multiple_mediators_with_multiple_confounders import multiple_mediators_con
 from .multiple_mediators_with_multiple_confounders_nuisances import (
     multi_mediators_confounders_nuisance_vars_example,
 )
-from .sars_cov2 import sars_large_example
 
 __all__ = [
     "base_example",
     "multiple_mediators_single_confounder_example",
     "multiple_mediators_confounders_example",
     "multi_mediators_confounders_nuisance_vars_example",
-    "sars_large_example"
 ]
 
 for x in __all__:

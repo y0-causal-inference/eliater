@@ -18,7 +18,7 @@ def _r_exp(x):
     return 1 / (1 + np.exp(x))
 
 
-def generate(
+def generate_continuous(
     num_samples: int, treatments: dict[Variable, float] | None = None, *, seed: int | None = None
 ) -> pd.DataFrame:
     """Generate testing data for the SARS-CoV-2 large graph.
