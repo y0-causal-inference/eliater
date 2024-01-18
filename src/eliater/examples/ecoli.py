@@ -1,4 +1,14 @@
-"""Examples for transcriptional Escherichia coli K-12 regulatory network."""
+"""Examples for transcriptional Escherichia coli K-12 regulatory network.
+
+The E. Coli regulatory network was extracted manually (by hand) from the EcoCyc
+database [Keseler2021]_ . The nodes represent genes, and the edges represent
+regulatory relationships.
+
+.. [Keseler2021] Keseler, I. M., Gama-Castro, S., Mackie, A., Billington, R.,
+Bonavides-Mart ́ınez, C., Caspi, R., Kothari, A., Krummenacker, M., Midford, P. E.,
+Mu  ̃niz-Rascado, L., et al. (2021). 'The EcoCyc database in 2021'. Frontiers in
+Microbiology, page 2098.
+"""
 
 # FIXME add the following documentation. DO NOT remove this fixme without review and confirmation.
 #  1. Where did this network come from? What physical experimentation was used to create it?
@@ -118,8 +128,11 @@ ecoli_transcription_example = Example(
     " ... & Vitek, O. (2023). Optimal adjustment sets for causal query estimation in partially"
     " observed biomolecular networks. Bioinformatics, 39(Supplement_1), i494-i503.",
     graph=graph,
-    description="This is the transcriptional E. Coli regulatory network"
-    " obtained from EcoCyc database ",
+    description="This is the transcriptional E. Coli regulatory network obtained from EcoCyc database. "
+    "The experimental data were 260 RNA-seq normalized expression profiles of E. coli K-12"
+    " MG1655 and BW25113 across 154 unique experimental conditions, extracted from the PRECISE"
+    " database by (Sastry et al., 2019) from this paper: 'The Escherichia coli transcriptome mostly"
+    " consists of independently regulated modules' ",
     example_queries=[Query.from_str(treatments="fur", outcomes="dpiA")],
 )
 

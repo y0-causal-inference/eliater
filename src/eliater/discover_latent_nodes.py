@@ -1,19 +1,19 @@
 r"""This module contains methods to discover nuisance nodes in a network.
 
 Given an acyclic directed mixed graph (ADMG), along with the treatment and the outcome
-of interest, certain observable variables can be regarded as nuisances. This
-classification arises because they do not have any impact on the outcome and should not
-be involved in the estimation of the treatment's effect on the outcome. These specific
-variables are descendants of the variables on all causal paths that are not ancestors of
-the outcome. A causal path, in this context, refers to a directed path that starts from the
-treatment and leads to the outcome such that all the arrows on the path have the same direction.
-This module is designed to identify these variables.
+of interest, certain observable variables do not have any impact on the outcome and should not
+be involved in the estimation of the treatment's effect on the outcome. We call such variables
+nuisance variables. These specific variables are descendants of the variables on all causal paths
+that are not ancestors of the outcome. A causal path, in this context, refers to a directed path
+that starts from the treatment and leads to the outcome such that all the arrows on the path have
+the same direction. This module is designed to identify these variables.
 
-This process enables us to concentrate on the fundamental variables needed to estimate the
-treatment's impact on the outcome. This focus results in more precise estimates with reduced
+This process enables us to concentrate on the fundamental and necessary variables needed to estimate the
+treatment's impact on the outcome. This focus results in more precise causal query estimates with reduced
 variance and bias. In addition, if this process is combined with the simplification function
-:func:`y0.algorithm.simplify_latent.simplify_latent_dag` it can help to remove the nuisance variables
-from the graph which leads to simpler, more interpretable, and visually more appealing result.
+:func:`y0.algorithm.simplify_latent.simplify_latent_dag` it can help to  create a new graph that does not
+contain nuisance variables. This simplification leads to simpler, more interpretable, and visually more
+appealing result.
 
 Example
 -------
@@ -140,8 +140,6 @@ $Z_1$ is removed as it is a latent node with a single child.
 The edges in the resultant graph are [($X$, $Y$), ($Z_1$, $Y$), ($Z_1$, $Z_2$), ($Z_1$, $Z_3$)].
 $Z_4$ is removed as its children are a subset of $Z_1$'s children.
 """
-
-# FIXME @sara the explanation section is not easy to follow. please revise it.
 
 import itertools
 from typing import Iterable, Optional, Set, Union

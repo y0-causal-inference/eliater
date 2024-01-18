@@ -42,7 +42,12 @@ t_cell_signaling_example = Example(
     graph=graph,
     description="This is an example of a protein signaling network of the T cell signaling pathway"
     "It models the molecular mechanisms and regulatory processes of human cells involved"
-    "in T cell activation, proliferation, and function.",
+    "in T cell activation, proliferation, and function. The observational data consisted of quantitative"
+    " multivariate flow cytometry measureents of phosphorylated proteins derived from thousands of individual"
+    " primary immune system cells. The cells were subjected to general stimuli meant to activate the desired "
+    "paths. The distributions of measurements of individual proeins were skewed, and pairs of proteins exhibited"
+    " nonlinear relationships. To account for that, the data were binned into two levels corresponding to low, and"
+    " high concentrations to preserve the dependence structure of the original data.",
     example_queries=[Query.from_str(treatments="Raf", outcomes="Erk")],
 )
 
