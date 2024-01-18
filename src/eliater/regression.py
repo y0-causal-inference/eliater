@@ -235,7 +235,7 @@ import optimaladj
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
-from eliater.io import to_bayesian_network, to_causal_graph
+from eliater.io import to_causal_graph
 from y0.dsl import Variable
 from y0.graph import NxMixedGraph, _ensure_set
 
@@ -315,10 +315,7 @@ def get_adjustment_set(
             optimaladj.CausalGraph.NoAdjException,
             optimaladj.CausalGraph.ConditionException,
         ):
-            from pgmpy.inference.CausalInference import CausalInference
-
-            model = to_bayesian_network(graph)
-            inference = CausalInference(model)
+            inference = graph.to_pgmpy_causal_inference()
             adjustment_sets = inference.get_all_backdoor_adjustment_sets(
                 treatments[0].name, outcome.name
             )
