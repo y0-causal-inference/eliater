@@ -6,7 +6,6 @@ import pandas as pd
 from y0.algorithm.identify import Query
 from y0.dsl import Variable
 from y0.examples import Example
-from y0.graph import NxMixedGraph
 
 from .sars import graph
 
