@@ -9,7 +9,7 @@ from y0.examples import Example
 from y0.graph import NxMixedGraph
 
 __all__ = [
-    "sars_cov_2_example",
+    "sars_cov_2_example_continuous",
 ]
 
 graph = NxMixedGraph.from_str_edges(
@@ -209,7 +209,7 @@ def generate_discrete(
     return df
 
 
-sars_cov_2_example = Example(
+sars_cov_2_example_continuous = Example(
     name="SARS-CoV-2 Graph",
     reference="Mohammad-Taheri, S., Zucker, J., Hoyt, C. T., Sachs, K., Tewari, V., Ness, R., & Vitek,"
     " O. (2022). Do-calculus enables estimation of causal effects in partially observed"
@@ -230,4 +230,4 @@ sars_cov_2_example = Example(
     ],
 )
 
-sars_cov_2_example.__doc__ = sars_cov_2_example.description
+sars_cov_2_example_continuous.__doc__ = sars_cov_2_example_continuous.description

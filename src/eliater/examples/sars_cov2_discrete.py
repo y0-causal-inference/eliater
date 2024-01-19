@@ -11,7 +11,7 @@ from y0.graph import NxMixedGraph
 from .sars import graph
 
 __all__ = [
-    "sars_large_example",
+    "sars_cov_2_example_discrete",
 ]
 
 
@@ -165,7 +165,7 @@ def generate(
         "AGTR1": agtr1,
         "ADAM17": adam17,
         "Toci": toci,
-        "Sil6R": sil6r,
+        "Sil6r": sil6r,
         "EGF": egf,
         "TNF": tnf,
         "Gefi": gefi,
@@ -180,7 +180,7 @@ def generate(
     return df
 
 
-sars_large_example = Example(
+sars_cov_2_example_discrete = Example(
     name="SARS-CoV-2 large Graph",
     reference="Mohammad-Taheri, S., Zucker, J., Hoyt, C. T., Sachs, K., Tewari, V., Ness, R., & Vitek, O. 2022."
     "Do-calculus enables estimation of causal effects in partially observed biomolecular pathways."
@@ -188,6 +188,7 @@ sars_large_example = Example(
     description="In this example EGFR is generated as a binary value. Hence, if you want to intervene on it, please"
     "choose either o or 1",
     graph=graph,
+    generate_data=generate,
     example_queries=[
         Query.from_str(treatments="EGFR", outcomes="cytok"),
     ],

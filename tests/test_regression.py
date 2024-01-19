@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from eliater.examples import sars_cov_2_example, t_cell_signaling_example
+from eliater.examples import sars_cov_2_example_continuous, t_cell_signaling_example
 from eliater.frontdoor_backdoor import (
     example_2,
     frontdoor_backdoor_example,
@@ -295,7 +295,7 @@ class TestAdjustmentSet(unittest.TestCase):
 
     def test_sars_cov_2_example(self):
         """Test getting adjustment set for the sars_cov_2 graph."""
-        graph = sars_cov_2_example.graph
+        graph = sars_cov_2_example_continuous.graph
         expected = (
             frozenset([Variable(v) for v in ("IL6STAT3", "TNF", "SARS_COV2", "PRR")]),
             "Optimal Adjustment Set",

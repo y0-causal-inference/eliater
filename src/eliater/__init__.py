@@ -16,9 +16,11 @@ __all__ = [
 
 
 def version_df():
-    import y0.version
     import datetime
+
     import pandas
+
+    import y0.version
 
     rows = [
         ("eliater", get_version(with_git_hash=True)),
