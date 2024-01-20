@@ -214,6 +214,7 @@ sars_large_example = Example(
     description="In this example EGFR is generated as a binary value. Hence, if you want to intervene on it, please"
     "choose either o or 1",
     graph=graph,
+    generate_data=generate_continuous,
     example_queries=[
         Query.from_str(treatments="EGFR", outcomes="cytok"),
     ],
