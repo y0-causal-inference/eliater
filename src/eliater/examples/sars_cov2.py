@@ -191,7 +191,7 @@ def generate_continuous(
         "AGTR1": agtr1,
         "ADAM17": adam17,
         "Toci": toci,
-        "Sil6R": sil6r,
+        "Sil6r": sil6r,
         "EGF": egf,
         "TNF": tnf,
         "Gefi": gefi,
