@@ -117,11 +117,11 @@ the output.
 
     from y0.dsl import Variable, X, Y
     from eliater.frontdoor_backdoor import example_2
-    from eliater.regression import estimate_query
+    from eliater.regression import estimate_query_by_linear_regression
 
     graph = example_2.graph
     data = example_2.generate_data(100, seed=100)
-    estimate_query(
+    estimate_query_by_linear_regression(
         graph=graph,
         data=data,
         treatments={X},
@@ -157,12 +157,12 @@ in this example $Z_3$ is selected and used.
 
     from y0.dsl import Variable, X, Y
     from eliater.frontdoor_backdoor import example_2
-    from eliater.regression import estimate_query
+    from eliater.regression import estimate_query_by_linear_regression
 
     graph = example_2.graph
     data = example_2.generate_data(100, seed=100)
 
-    estimate_query(
+    estimate_query_by_linear_regression(
         graph=graph,
         data=data,
         treatments={X},
@@ -177,12 +177,12 @@ on $X$) amounts to 0.123. Finally, we estimate the query in the form of "probabi
 
     from y0.dsl import Variable, Z, X, Y
     from eliater.frontdoor_backdoor import example_2
-    from eliater.regression import estimate_query
+    from eliater.regression import estimate_query_by_linear_regression
 
     graph = example_2.graph
     data = example_2.generate_data(100, seed=100)
 
-    estimate_query(
+    estimate_query_by_linear_regression(
         graph=graph,
         data=data,
         treatments={X},
@@ -200,7 +200,7 @@ For example, we can get a summary statistics over $Y$ as follows:
 
     from y0.dsl import Variable, Z, X, Y
     from eliater.frontdoor_backdoor import example_2
-    from eliater.regression import estimate_query
+    from eliater.regression import estimate_query_by_linear_regression
 
     graph = example_2.graph
     data = example_2.generate_data(100, seed=100)
@@ -241,7 +241,7 @@ from y0.graph import NxMixedGraph, _ensure_set
 
 __all__ = [
     # High-level functions
-    "estimate_query",
+    "estimate_query_by_linear_regression",
     "estimate_ate",
     "estimate_probabilities",
     "summary_statistics",
@@ -354,7 +354,7 @@ def fit_regression(
     return RegressionResult(dict(zip(variables, model.coef_)), model.intercept_)
 
 
-def estimate_query(
+def estimate_query_by_linear_regression(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
