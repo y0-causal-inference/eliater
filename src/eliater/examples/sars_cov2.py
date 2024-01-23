@@ -116,7 +116,7 @@ def generate_continuous(
     beta_u1_to_egfr = 0.05
     beta_u2_to_egfr = 0.02
     beta_u3_to_egfr = 0.04
-    beta_gefi_to_egfr = -0.08  # negative
+    beta_gefi_to_egfr = -0.8  # negative
     if Variable("EGFR") in treatments:
         egfr = np.full(num_samples, treatments[Variable("EGFR")])
     else:
