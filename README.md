@@ -50,14 +50,12 @@ A high level, end-to-end causal inference workflow.
 
 ## 🚀 Installation
 
-<!-- Uncomment this section after your first ``tox -e finish``
 The most recent release can be installed from
 [PyPI](https://pypi.org/project/eliater/) with:
 
 ```shell
 $ pip install eliater
 ```
--->
 
 The most recent code and data can be installed directly from GitHub with:
 
