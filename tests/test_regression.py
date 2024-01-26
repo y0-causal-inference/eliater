@@ -15,7 +15,7 @@ from eliater.frontdoor_backdoor import (
 from eliater.regression import (
     RegressionResult,
     SummaryStatistics,
-    estimate_query,
+    estimate_query_by_linear_regression,
     fit_regression,
     get_adjustment_set,
     summary_statistics,
@@ -84,7 +84,7 @@ class TestRegression(unittest.TestCase):
 
 
 class TestEstimateQuery(unittest.TestCase):
-    """Test the estimate_query method."""
+    """Test the estimate_query_by_linear_regression method."""
 
     def test_frondoor_backdoor_ate(self):
         """Test getting average treatment effect for the frontdoor-backdoor graph."""
@@ -93,7 +93,9 @@ class TestEstimateQuery(unittest.TestCase):
         treatments = {X}
         outcome = Y
         expected_ate: float = 0.163
-        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
+        actual_ate = estimate_query_by_linear_regression(
+            graph=graph, data=data, treatments=treatments, outcome=outcome
+        )
         self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
 
     def test_frondoor_backdoor_expected_value(self):
@@ -104,7 +106,7 @@ class TestEstimateQuery(unittest.TestCase):
         outcome = Y
         expected_value: float = 3.476
         interventions = {X: 0}
-        actual_value = estimate_query(
+        actual_value = estimate_query_by_linear_regression(
             graph=graph,
             data=data,
             treatments=treatments,
@@ -121,7 +123,9 @@ class TestEstimateQuery(unittest.TestCase):
         treatments = {X}
         outcome = Y
         expected_ate: float = 0.165
-        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
+        actual_ate = estimate_query_by_linear_regression(
+            graph=graph, data=data, treatments=treatments, outcome=outcome
+        )
         self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
 
     def test_multiple_mediators_multiple_confounders_expected_value(self):
@@ -132,7 +136,7 @@ class TestEstimateQuery(unittest.TestCase):
         outcome = Y
         expected_value: float = 68.448
         interventions = {X: 0}
-        actual_value = estimate_query(
+        actual_value = estimate_query_by_linear_regression(
             graph=graph,
             data=data,
             treatments=treatments,
@@ -149,7 +153,9 @@ class TestEstimateQuery(unittest.TestCase):
         treatments = {X}
         outcome = Y
         expected_ate: float = 0.274
-        actual_ate = estimate_query(graph=graph, data=data, treatments=treatments, outcome=outcome)
+        actual_ate = estimate_query_by_linear_regression(
+            graph=graph, data=data, treatments=treatments, outcome=outcome
+        )
         self.assertAlmostEqual(expected_ate, actual_ate, delta=0.01)
 
     def test_multiple_mediators_confounders_nuisance_vars_expected_value(self):
@@ -160,7 +166,7 @@ class TestEstimateQuery(unittest.TestCase):
         outcome = Y
         expected_value: float = 14.209
         interventions = {X: 0}
-        actual_value = estimate_query(
+        actual_value = estimate_query_by_linear_regression(
             graph=graph,
             data=data,
             treatments=treatments,
@@ -189,7 +195,7 @@ class TestEstimateQuery(unittest.TestCase):
             -2.99,
         ]
         interventions = {X: 0}
-        actual_probabilities = estimate_query(
+        actual_probabilities = estimate_query_by_linear_regression(
             graph=graph,
             data=data,
             treatments=treatments,
