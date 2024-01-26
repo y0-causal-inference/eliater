@@ -7,7 +7,7 @@ __all__ = [
     "load_ecoli_obs",
     "load_sachs_test1",
     "load_sachs_test2",
-    "load_sachs_continuous"
+    "load_sachs_continuous",
 ]
 
 HERE = Path(__file__).parent.resolve()

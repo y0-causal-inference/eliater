@@ -39,8 +39,10 @@ graph = NxMixedGraph.from_edges(
     ],
 )
 
+
 def _r_exp(x):
     return 1 / (1 + np.exp(x))
+
 
 def generate(
     num_samples: int = 1000,
@@ -101,8 +103,7 @@ def generate(
         x = np.full(num_samples, treatments[X])
     else:
         loc_x = _r_exp(-beta0_x - z1 * beta_z1_to_x)  # + u1 * beta_u1_to_x
-        x = generator.binomial(n=1, p =loc_x, size=num_samples)
-
+        x = generator.binomial(n=1, p=loc_x, size=num_samples)
 
     beta0_m1 = 2
     beta_x_to_m1 = 0.7
@@ -115,7 +116,6 @@ def generate(
 
     beta0_m2 = 2
     beta_m1_to_m2 = 0.7
-
 
     beta0_y = 1.8
     beta_z3_to_y = 0.5

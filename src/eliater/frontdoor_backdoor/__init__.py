@@ -32,7 +32,7 @@ __all__ = [
     "multiple_mediators_single_confounder_example",
     "example_2",
     "multiple_mediators_confounders_nuisance_vars_example",
-    "single_mediator_confounders_nuisance_vars_example"
+    "single_mediator_confounders_nuisance_vars_example",
 ]
 
 for x in __all__:
