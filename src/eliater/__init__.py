@@ -16,6 +16,7 @@ __all__ = [
 
 
 def version_df():
+    """Get provenance information for how the code was run."""
     import datetime
 
     import pandas

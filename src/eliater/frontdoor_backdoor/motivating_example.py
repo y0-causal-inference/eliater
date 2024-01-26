@@ -114,8 +114,8 @@ def generate(
         loc_m1 = beta0_m1 + x * beta_x_to_m1
         m1 = generator.normal(loc=loc_m1, scale=4.0, size=num_samples)
 
-    beta0_m2 = 2
-    beta_m1_to_m2 = 0.7
+    # beta0_m2 = 2
+    # beta_m1_to_m2 = 0.7
 
     beta0_y = 1.8
     beta_z3_to_y = 0.5
