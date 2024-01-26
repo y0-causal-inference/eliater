@@ -25,12 +25,14 @@ from .base import frontdoor_backdoor_example
 from .example1 import multiple_mediators_single_confounder_example
 from .example2 import example_2
 from .example3 import multiple_mediators_confounders_nuisance_vars_example
+from .motivating_example import single_mediator_confounders_nuisance_vars_example
 
 __all__ = [
     "frontdoor_backdoor_example",
     "multiple_mediators_single_confounder_example",
     "example_2",
     "multiple_mediators_confounders_nuisance_vars_example",
+    "single_mediator_confounders_nuisance_vars_example",
 ]
 
 for x in __all__:

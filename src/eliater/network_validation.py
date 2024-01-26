@@ -157,6 +157,7 @@ chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
    Inf. Syst. Res. 24.4 (2013): 906-917.
 """
 
+import time
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -225,7 +226,9 @@ def print_graph_falsifications(
     significance_level: Optional[float] = None,
     verbose: Optional[bool] = False,
     tablefmt: str = "rst",
-) -> None:
+    acceptable_percentage: float = 0.3,
+    show_progress: bool = False,
+):
     """Print the summary of conditional independency test results.
 
     Prints the summary to the console, which includes the total number of conditional independence tests,
@@ -242,27 +245,72 @@ def print_graph_falsifications(
         the tested variables. If none, defaults to 0.01.
     :param verbose: If `False`, only print the details of failed tests.
         If 'True', print the details of all the conditional independency results. Defaults to `False`
-    :param tablefmt: The format for the table that gets printed. By default, uses RST so it can be
+    :param tablefmt: The format for the table that gets printed. By default, uses RST, so it can be
         directly copy/pasted into Python documentation
+    :param acceptable_percentage: The percentage of tests that need to fail to output an interpretation
+        that additional edges should be added. Should be between 0 and 1.
+    :param show_progress: If true, shows a progress bar for calculating d-separations
+    :returns: If in Jupyter notebook, returns a dataframe. Otherwise, prints the dataframe.
     """
     if significance_level is None:
         significance_level = DEFAULT_SIGNIFICANCE
+    start_time = time.time()
     evidence_df = get_graph_falsifications(
         graph=graph,
         df=data,
         method=method,
         significance_level=significance_level,
         max_given=max_given,
+        verbose=show_progress,
     ).evidence
+    end_time = time.time() - start_time
+    time_text = f"Finished in {end_time:.2f} seconds."
     n_total = len(evidence_df)
     n_failed = evidence_df["p_adj_significant"].sum()
-    print(f"Failed tests: {n_failed}/{n_total} ({n_failed / n_total:.2%})")  # noqa:T201
-    print(f"Reject null hypothesis when p<{significance_level}")  # noqa:T201
+    percent_failed = n_failed / n_total
+    if n_failed == 0:
+        print(  # noqa:T201
+            f"All {n_total} d-separations implied by the network's structure are consistent with the data, meaning "
+            f"that none of the data-driven conditional independency tests' null hypotheses were rejected "
+            f"at p<{significance_level}.\n\n{time_text}\n"
+        )
+    elif percent_failed < acceptable_percentage:
+        print(  # noqa:T201
+            f"Of the {n_total} d-separations implied by the network's structure, only {n_failed}"
+            f"({percent_failed:.2%}) rejected the null hypothesis at p<{significance_level}.\n\nSince this is less "
+            f"than {acceptable_percentage:.0%}, Eliater considers this minor and leaves the network unmodified.]"
+            f"\n\n{time_text}\n"
+        )
+    else:
+        print(  # noqa:T201
+            f"Of the {n_total} d-separations implied by the network's structure, {n_failed} ({percent_failed:.2%}) "
+            f"rejected the null hypothesis at p<{significance_level}.\n\nSince this is more than "
+            f"{acceptable_percentage:.0%}, Eliater considers this a major inconsistency and therefore suggests adding "
+            f"appropriate bidirected edges using the eliater.add_ci_undirected_edges() function.\n\n{time_text}\n"
+        )
     if verbose:
         dd = evidence_df
     else:
         dd = evidence_df[evidence_df["p_adj_significant"]]
-    print(tabulate(dd, headers=list(dd.columns), tablefmt=tablefmt, showindex=False))  # noqa:T201
+    if _is_notebook():
+        return dd.reset_index(drop=True)
+    else:
+        print(  # noqa:T201
+            tabulate(dd, headers=list(dd.columns), tablefmt=tablefmt, showindex=False)
+        )
+
+
+def _is_notebook() -> bool:
+    try:
+        shell = get_ipython().__class__.__name__  # type:ignore
+        if shell == "ZMQInteractiveShell":
+            return True  # Jupyter notebook or qtconsole
+        elif shell == "TerminalInteractiveShell":
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False  # Probably standard Python interpreter
 
 
 def p_value_of_bootstrap_data(

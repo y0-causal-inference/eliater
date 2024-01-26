@@ -4,7 +4,8 @@ from .ecoli import ecoli_transcription_example
 from .frontdoor_backdoor_discrete import (
     single_mediator_with_multiple_confounders_nuisances_discrete_example as example_4,
 )
-from .sars import sars_cov_2_example
+from .sars import sars_cov_2_example_continuous
+from .sars_cov2_discrete import sars_cov_2_example_discrete
 from .t_cell_signaling_pathway import t_cell_signaling_example
 from ..frontdoor_backdoor.base import frontdoor_backdoor_example
 from ..frontdoor_backdoor.example1 import multiple_mediators_single_confounder_example as example_1
@@ -17,7 +18,8 @@ __all__ = [
     "examples",
     # actual examples
     "ecoli_transcription_example",
-    "sars_cov_2_example",
+    "sars_cov_2_example_continuous",
+    "sars_cov_2_example_discrete",
     "t_cell_signaling_example",
     "frontdoor_backdoor_example",
     "example_1",
@@ -28,7 +30,7 @@ __all__ = [
 
 examples = [
     ecoli_transcription_example,
-    sars_cov_2_example,
+    sars_cov_2_example_continuous,
     t_cell_signaling_example,
     frontdoor_backdoor_example,
     example_1,
