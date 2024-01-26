@@ -7,7 +7,7 @@ __all__ = [
     "load_ecoli_obs",
     "load_sachs_test1",
     "load_sachs_test2",
-    "load_sachs_continous"
+    "load_sachs_continuous"
 ]
 
 HERE = Path(__file__).parent.resolve()
@@ -34,5 +34,5 @@ def load_ecoli_obs() -> pd.DataFrame:
     return pd.read_csv(ECOLI_OBS_PATH, index_col=0)
 
 
-def load_sachs_continous() -> pd.DataFrame:
+def load_sachs_continuous() -> pd.DataFrame:
     return pd.read_csv(SACHS_CONTINUOUS, index_col=0)
