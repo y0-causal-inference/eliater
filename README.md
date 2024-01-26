@@ -36,6 +36,9 @@
     <a href="https://github.com/y0-causal-inference/eliater/blob/main/.github/CODE_OF_CONDUCT.md">
         <img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"/>
     </a>
+    <a href="https://zenodo.org/doi/10.5281/zenodo.10570986">
+        <img src="https://zenodo.org/badge/672581159.svg" alt="DOI">
+    </a>
 </p>
 
 <img src="docs/source/img/overview.png" />
