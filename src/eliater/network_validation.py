@@ -158,6 +158,7 @@ chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 """
 
 import time
+import warnings
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -168,7 +169,8 @@ from numpy import mean, quantile
 from tabulate import tabulate
 from tqdm.auto import trange
 
-from y0.algorithm.conditional_independencies import get_conditional_independencies
+import y0.algorithm.conditional_independencies
+from y0.algorithm.conditional_independencies import DEFAULT_SIGNIFICANCE
 from y0.algorithm.falsification import get_graph_falsifications
 from y0.graph import NxMixedGraph
 from y0.struct import CITest, _ensure_method, get_conditional_independence_tests
@@ -182,7 +184,6 @@ __all__ = [
 ]
 
 TESTS = get_conditional_independence_tests()
-DEFAULT_SIGNIFICANCE = 0.01
 
 
 def add_ci_undirected_edges(
@@ -204,18 +205,14 @@ def add_ci_undirected_edges(
         the tested variables. If none, defaults to 0.05.
     :returns: A copy of the input graph potentially with new undirected edges added
     """
-    rv = NxMixedGraph(
-        directed=graph.directed.copy(),
-        undirected=graph.undirected.copy(),
+    warnings.warn(
+        "This method has been replaced by a refactored implementation in "
+        "y0.algorithm.conditional_independencies.add_ci_undirected_edges",
+        DeprecationWarning,
     )
-    if significance_level is None:
-        significance_level = DEFAULT_SIGNIFICANCE
-    for judgement in get_conditional_independencies(rv):
-        if not judgement.test(
-            data, boolean=True, method=method, significance_level=significance_level
-        ):
-            rv.add_undirected_edge(judgement.left, judgement.right)
-    return rv
+    return y0.algorithm.conditional_independencies.add_ci_undirected_edges(
+        graph=graph, data=data, method=method, significance_level=significance_level
+    )
 
 
 def print_graph_falsifications(
