@@ -4,8 +4,14 @@
 
 from .api import workflow
 from .discover_latent_nodes import remove_nuisance_variables
-from .network_validation import add_ci_undirected_edges, plot_ci_size_dependence
+from .network_validation import (
+    add_ci_undirected_edges,
+    plot_ci_size_dependence,
+    discretize_binary,
+    plot_treatment_and_outcome,
+)
 from .version import get_version
+from .notebook_utils import step_2_notebook, step_3_notebook, step_5_notebook_synthetic, step_1_notebook
 
 __all__ = [
     "workflow",
