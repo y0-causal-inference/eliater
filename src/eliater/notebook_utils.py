@@ -23,20 +23,6 @@ from y0.struct import DEFAULT_SIGNIFICANCE, CITest, _ensure_method
 from scipy.stats import ttest_1samp
 
 
-def is_notebook() -> bool:
-    """Check if currently in a notebook."""
-    try:
-        shell = get_ipython().__class__.__name__  # type:ignore
-        if shell == "ZMQInteractiveShell":
-            return True  # Jupyter notebook or qtconsole
-        elif shell == "TerminalInteractiveShell":
-            return False  # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False  # Probably standard Python interpreter
-
-
 def display_markdown(s: str) -> None:
     IPython.display.display(IPython.display.Markdown(dedent(s)))
 
@@ -110,20 +96,20 @@ def step_1_notebook(
     percent_failed = n_failed / n_total
     if n_failed == 0:
         display_markdown(
-            f"All {n_total} d-separations implied by the network's structure are consistent with the data, meaning "
+            f"All {n_total} d-separations implied by the ADMG's structure are consistent with the data, meaning "
             f"that none of the data-driven conditional independency tests' null hypotheses with the {method} test "
             f"were rejected at p<{significance_level}. {time_text}\n"
         )
     elif percent_failed < acceptable_percentage:
         display_markdown(  # noqa:T201
-            f"Of the {n_total} d-separations implied by the network's structure, only {n_failed} "
+            f"Of the {n_total} d-separations implied by the ADMG's structure, only {n_failed} "
             f"({percent_failed:.2%}) rejected the null hypothesis for the {method} test at p<{significance_level}."
             f"\n\nSince this is less than {acceptable_percentage:.0%}, Eliater considers this minor and leaves the "
-            f"network unmodified. {time_text}\n"
+            f"ADMG unmodified. {time_text}\n"
         )
     else:
         display_markdown(
-            f"Of the {n_total} d-separations implied by the network's structure, {n_failed} ({percent_failed:.2%}) "
+            f"Of the {n_total} d-separations implied by the ADMG's structure, {n_failed} ({percent_failed:.2%}) "
             f"rejected the null hypothesis with the {method} test at p<{significance_level}.\n\nSince this is more "
             f"than {acceptable_percentage:.0%}, Eliater considers this a major inconsistency and therefore suggests "
             f"adding appropriate bidirected edges using the eliater.add_ci_undirected_edges() function. {time_text}\n"
@@ -229,6 +215,7 @@ def step_5_notebook_synthetic(
     n_subsamples: int = 500,
     subsample_size: int = 1_000,
     eps: float = 1e-10,
+    threshold: float = 0.01,
 ):
     tlatex = treatment.to_latex()
     olatex = outcome.to_latex()
@@ -272,9 +259,6 @@ def step_5_notebook_synthetic(
     1. If the ATE is positive, it suggests that the treatment ${tlatex}$ has a negative effect on the outcome ${olatex}$
     2. If the ATE is negative, it suggests that the treatment ${tlatex}$ has a positive effect on the outcome ${olatex}$
 
-    **Caveat**: Eliater does not yet implement a notion of confidence for the ATE. For example, it's not clear
-    where the cutoff for _significance_ is, and whether that is dataset- or ADMG-dependent.
-    
     ### Estimating the Average Treatment Effect (ATE)
     
     In practice, we are often unable to get the appropriate interventional data, and therefore want to estimate
@@ -363,8 +347,19 @@ def step_5_notebook_synthetic(
 
     # Check that the p-values are significantly different from zero to say
     # if the ATE is significant (then after you can use the sign)
-    _, ananke_ace_reference_p_value = ttest_1samp(ananke_ace_reference, 0, alternative="two-sided")
-    _, linreg_ace_reference_p_value = ttest_1samp(linreg_ace_reference, 0, alternative="two-sided")
+    _, ananke_ace_significance_p_value = ttest_1samp(
+        ananke_ace_reference, 0, alternative="two-sided"
+    )
+    _, linreg_ace_significance_p_value = ttest_1samp(
+        linreg_ace_reference, 0, alternative="two-sided"
+    )
+
+    _, ananke_ace_correctness_p_value = ttest_1samp(
+        ananke_ace_reference, ate, alternative="two-sided"
+    )
+    _, linreg_ace_correctness_p_value = ttest_1samp(
+        linreg_ace_reference, ate, alternative="two-sided"
+    )
 
     if reduced_graph is not None:
         ananke_ace_reduced_var = np.var(ananke_ace_reduced)
@@ -380,7 +375,7 @@ def step_5_notebook_synthetic(
 
         sns.histplot(ananke_ace_reference, ax=axes[0][0])
         axes[0][0].set_title(
-            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_reference_p_value:.2e}$"
+            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_significance_p_value:.2e}$"
         )
         axes[0][0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
         axes[0][0].axvline(ate, color="red")
@@ -396,7 +391,7 @@ def step_5_notebook_synthetic(
 
         sns.histplot(linreg_ace_reference, ax=axes[1][0])
         axes[1][0].set_title(
-            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_reference_p_value:.2e}$"
+            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_significance_p_value:.2e}$"
         )
         axes[1][0].set_xlabel("ATE from eliater.estimate_query")
         axes[1][0].axvline(ate, color="red")
@@ -415,7 +410,7 @@ def step_5_notebook_synthetic(
 
         sns.histplot(ananke_ace_reference, ax=axes[0])
         axes[0].set_title(
-            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_reference_p_value:.2e}$"
+            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_significance_p_value:.2e}$"
         )
         axes[0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
         axes[0].axvline(ate, color="red")
@@ -423,7 +418,7 @@ def step_5_notebook_synthetic(
 
         sns.histplot(linreg_ace_reference, ax=axes[1])
         axes[1].set_title(
-            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_reference_p_value:.2e}$"
+            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_significance_p_value:.2e}$"
         )
         axes[1].set_xlabel("ATE from eliater.estimate_query")
         axes[1].axvline(ate, color="red")
@@ -434,30 +429,48 @@ def step_5_notebook_synthetic(
 
     display_markdown(
         f"""\
-    Interpretations:
+    Notes on this plot:
     
     1. We show the _true_ ATE as a red vertical line
     2. We show both this process done with the original ADMG and the reduced ADMG. This shows that the reduction
        on the ADMG does not affect estimation. However, reduction is still valuable for simplifying visual exploration.
-    """
-    )
-
-    threshold = 0.01
-    _interpret_p(
-        p_value=ananke_ace_reference_p_value,
+    
+    #### Interpreting $Y_0$/Ananke Estimation of ACE
+    
+    {_interpret_nonzero_test(
+        p_value=ananke_ace_significance_p_value,
         threshold=threshold,
         treatment=treatment,
         outcome=outcome,
         distribution=ananke_ace_reference,
         label="ananke/y0 estimation of the ACE",
-    )
-    _interpret_p(
-        p_value=linreg_ace_reference_p_value,
+    )}
+    
+    {_interpret_same_ate_test(
+        p_value=ananke_ace_correctness_p_value,
+        threshold=threshold,
+        reference=ate,
+        label="ananke/y0 estimation of the ACE",
+    )}
+
+    #### Interpreting Linear Regression Estimation of ACE
+
+    {_interpret_nonzero_test(
+        p_value=linreg_ace_significance_p_value,
         threshold=threshold,
         treatment=treatment,
         outcome=outcome,
         distribution=linreg_ace_reference,
         label="Eliater linear regression estimation of the ACE",
+    )}
+    
+    {_interpret_same_ate_test(
+        p_value=linreg_ace_correctness_p_value,
+        threshold=threshold,
+        reference=ate,
+        label="Eliater linear regression estimation of the ACE",
+    )}
+    """
     )
 
     display_markdown(
@@ -508,29 +521,63 @@ def step_5_notebook_synthetic(
     )
 
 
-def _interpret_p(p_value, threshold, treatment, outcome, distribution, label):
+def _interpret_nonzero_test(p_value, threshold, treatment, outcome, distribution, label):
     if p_value < threshold:
         # note that the interpretation is opposite of the sign
         direction = "negative" if np.mean(distribution) > 0 else "positive"
-        display_markdown(
+        return dedent(
             f"""\
-            The p-value for the {label} is {p_value:.2e},
-            which is below the significance threshold of {threshold}. Therefore, we reject the
+            The p-value for testing if {label} is non-zero is {p_value:.2e}, which is below
+            the the significance threshold of {threshold}. Therefore, we reject the
             null hypothesis of the 1 Sample T-test and conclude that the distribution is significantly
-            different from zero. This means that the treatment ${treatment.to_latex()}$ has 
+            different from zero. This means that the treatment ${treatment.to_latex()}$ has
             *a {direction} effect* on the outcome ${outcome.to_latex()}$.
         """
-        )
+        ).replace("\n", " ")
     else:
-        display_markdown(
+        return dedent(
             f"""\
-            The p-value for the {label} is {p_value:.2e},
-            which is *not( the significance threshold of {threshold}. Therefore, we do not reject the
-            null hypothesis of the 1 Sample T-test and conclude that the distribution is not significantly
-            different from zero. This means that the treatment ${treatment.to_latex()}$ has *no significant effect*
+            The p-value for testing if {label} is non-zero is is {p_value:.2e}, \
+            which is not below the significance threshold of {threshold}. Therefore, we do not reject the \
+            null hypothesis of the 1 Sample T-test and conclude that the distribution is not significantly \
+            different from zero. This means that the treatment ${treatment.to_latex()}$ has *no significant effect* \
             on the outcome ${outcome.to_latex()}$.
+        """
+        ).replace("\n", " ")
+
+
+"""
+p_value=linreg_ace_correctness_p_value,
+        threshold=threshold,
+        treatment=treatment,
+        outcome=outcome,
+        reference=ate,
+        label="Eliater linear regression estimation of the ACE",
+
+"""
+
+
+def _interpret_same_ate_test(p_value, threshold, label, reference):
+    if p_value < threshold:
+        return dedent(
+            f"""\
+            The p-value for testing if {label} is different from the reference ATE
+            is {p_value:.2e}, which is below the the significance threshold of {threshold}.
+            Therefore, we reject the null hypothesis of the 1-Sample T-test and conclude that
+            the distribution is significantly different from the ground truth calculated
+            by synthetic generation of interventional data (ATE={reference:.2e}).
+        """
+        ).replace("\n", " ")
+    else:
+        return dedent(
+            f"""\
+            The p-value for testing if {label} is different from the reference ATE
+            is {p_value:.2e}, which is not below the the significance threshold of {threshold}.
+            Therefore, we do not reject the null hypothesis of the 1-Sample T-test and conclude that
+            the distribution is not significantly different from the ground truth calculated
+            by synthetic generation of interventional data (ATE={reference:.2e}).
             """
-        )
+        ).replace("\n", " ")
 
 
 def _diff_subtitle(diffs, eps):
