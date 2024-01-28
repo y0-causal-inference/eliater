@@ -227,6 +227,7 @@ Unanswered Questions for Later
 """
 
 import statistics
+import warnings
 from operator import attrgetter
 from typing import Dict, Literal, NamedTuple, Tuple
 
@@ -242,6 +243,7 @@ from y0.graph import NxMixedGraph, _ensure_set
 __all__ = [
     # High-level functions
     "estimate_query_by_linear_regression",
+    "estimate_query",  # deprecated
     "estimate_ate",
     "estimate_probabilities",
     "summary_statistics",
@@ -403,6 +405,12 @@ def estimate_query_by_linear_regression(
 
     else:
         raise TypeError(f"Unknown query type {query_type}")
+
+
+def estimate_query(*args, **kwargs):
+    """Fit a regression model to the adjustment set over the treatments and a given outcome."""
+    warnings.warn("This function was renamed", DeprecationWarning, stacklevel=1)
+    return estimate_query_by_linear_regression(*args, **kwargs)
 
 
 def estimate_ate(

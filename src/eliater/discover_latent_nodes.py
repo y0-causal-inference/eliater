@@ -174,7 +174,7 @@ def find_nuisance_variables(
     graph: NxMixedGraph,
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
-) -> Iterable[Variable]:
+) -> Set[Variable]:
     """Find the nuisance variables in the graph.
 
     Nuisance variables are the descendants of nodes in all proper causal paths that are
@@ -205,6 +205,8 @@ def find_all_nodes_in_causal_paths(
 ) -> Set[Variable]:
     """Find all the nodes in proper causal paths from treatments to outcomes."""
     warnings.warn(
-        "This has been replaced with an efficient implementation in y0", DeprecationWarning
+        "This has been replaced with an efficient implementation in y0",
+        DeprecationWarning,
+        stacklevel=1,
     )
     return get_nodes_in_directed_paths(graph, treatments, outcomes)

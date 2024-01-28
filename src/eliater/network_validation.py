@@ -209,6 +209,7 @@ def add_ci_undirected_edges(
         "This method has been replaced by a refactored implementation in "
         "y0.algorithm.conditional_independencies.add_ci_undirected_edges",
         DeprecationWarning,
+        stacklevel=1,
     )
     return y0.algorithm.conditional_independencies.add_ci_undirected_edges(
         graph=graph, data=data, method=method, significance_level=significance_level
@@ -218,6 +219,7 @@ def add_ci_undirected_edges(
 def print_graph_falsifications(
     graph: NxMixedGraph,
     data: pd.DataFrame,
+    *,
     method: Optional[CITest] = None,
     max_given: Optional[int] = 5,
     significance_level: Optional[float] = None,
