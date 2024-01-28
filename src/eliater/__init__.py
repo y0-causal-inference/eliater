@@ -6,12 +6,17 @@ from .api import workflow
 from .discover_latent_nodes import remove_nuisance_variables
 from .network_validation import (
     add_ci_undirected_edges,
-    plot_ci_size_dependence,
     discretize_binary,
+    plot_ci_size_dependence,
     plot_treatment_and_outcome,
 )
+from .notebook_utils import (
+    step_1_notebook,
+    step_2_notebook,
+    step_3_notebook,
+    step_5_notebook_synthetic,
+)
 from .version import get_version
-from .notebook_utils import step_2_notebook, step_3_notebook, step_5_notebook_synthetic, step_1_notebook
 
 __all__ = [
     "workflow",

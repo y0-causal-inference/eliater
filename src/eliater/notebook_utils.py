@@ -4,21 +4,23 @@ from textwrap import dedent
 from typing import Optional
 
 import IPython.display
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from tqdm.auto import trange
 
+from eliater.discover_latent_nodes import find_nuisance_variables, remove_nuisance_variables
+from eliater.network_validation import discretize_binary
+from eliater.regression import estimate_query_by_linear_regression, get_adjustment_set
 from y0.algorithm.estimation import estimate_ace
 from y0.algorithm.falsification import get_graph_falsifications
 from y0.algorithm.identify import identify_outcomes
-from eliater.regression import estimate_query_by_linear_regression
-from eliater.network_validation import discretize_binary
 from y0.dsl import Variable
 from y0.examples import Example
 from y0.graph import NxMixedGraph
-from tqdm.auto import trange
-import matplotlib.pyplot as plt
-import seaborn as sns
-from y0.struct import CITest, DEFAULT_SIGNIFICANCE, _ensure_method
+from y0.struct import DEFAULT_SIGNIFICANCE, CITest, _ensure_method
+from scipy.stats import ttest_1samp
 
 
 def is_notebook() -> bool:
@@ -99,6 +101,7 @@ def step_1_notebook(
         significance_level=significance_level,
         max_given=max_given,
         verbose=show_progress,
+        given_sep=";",
     ).evidence
     end_time = time.time() - start_time
     time_text = f"Finished in {end_time:.2f} seconds."
@@ -169,32 +172,47 @@ def step_2_notebook(*, graph: NxMixedGraph, treatment: Variable, outcome: Variab
     display_markdown(introduction + "\n" + analysis)
 
 
-def step_3_notebook(*, graph: NxMixedGraph, treatment: Variable, outcome: Variable) -> NxMixedGraph:
-    from eliater.discover_latent_nodes import find_nuisance_variables, remove_nuisance_variables
-
+def step_3_notebook(
+    *, graph: NxMixedGraph, treatment: Variable, outcome: Variable
+) -> NxMixedGraph | None:
+    display_markdown("## Step 3/4: Identify Nuisance Variables and Simplify the ADMG")
     nv = find_nuisance_variables(graph, treatments=treatment, outcomes=outcome)
-    nv_text = ", ".join(f"${x.to_latex()}$" for x in sorted(nv, key=attrgetter("name")))
+    if not nv:
+        display_markdown(
+            f"""\
+                No variables were identified as nuisance variables.
+                
+                Nevertheless, the algorithm proposed in [Graphs for margins of Bayesian
+                networks](https://arxiv.org/abs/1408.1809) (Evans, 2016) and implemented in
+                the $Y_0$ Causal Reasoning Engine is applied to the ADMG to attempt to
+                simplify the graph by reasoning over its bidirected edges (if they exist).
+            """
+        )
+    else:
+        nv_text = ", ".join(f"${x.to_latex()}$" for x in sorted(nv, key=attrgetter("name")))
 
-    display_markdown(
-        f"""\
-        ## Step 3/4: Identify Nuisance Variables and Simplify the ADMG
-
-        The following {len(nv)} variables were identified as _nuisance_ variables,
-        meaning that they appear as descendants of nodes appearing in paths between
-        the treatment and outcome, but are not themselves ancestors of the outcome variable:
-
-        {nv_text}
-
-        These variables are marked as "latent" in the ADMG and the simplification rules
-        from [Graphs for margins of Bayesian networks](https://arxiv.org/abs/1408.1809)
-        (Evans, 2016) are applied to reduce the ADMG using the implementation from the
-        $Y_0$ Causal Reasoning Engine. The reduced ADMG, which not only excludes the
-        nuisance variables, but also additionally reasons over bidirected edges,
-        is shown below.
-    """
-    )
+        display_markdown(
+            f"""\
+            The following {len(nv)} variables were identified as _nuisance_ variables,
+            meaning that they appear as descendants of nodes appearing in paths between
+            the treatment and outcome, but are not themselves ancestors of the outcome variable:
+    
+            {nv_text}
+    
+            These variables are marked as "latent", then
+            the algorithm proposed in [Graphs for margins of Bayesian
+            networks](https://arxiv.org/abs/1408.1809) (Evans, 2016) and implemented in
+            the $Y_0$ Causal Reasoning Engine is applied to the ADMG to
+            simplify the graph. This minimally removes the latent variables and makes
+            further simplifications if the latent variables are connected by bidirected
+            edges to other nodes.
+        """
+        )
 
     new_graph = remove_nuisance_variables(graph, treatments=treatment, outcomes=outcome)
+    if new_graph == graph:
+        display_markdown("The simplification did not modify the graph.")
+        return None
     new_graph.draw()
     return new_graph
 
@@ -202,7 +220,7 @@ def step_3_notebook(*, graph: NxMixedGraph, treatment: Variable, outcome: Variab
 def step_5_notebook_synthetic(
     *,
     graph: NxMixedGraph,
-    reduced_graph: NxMixedGraph,
+    reduced_graph: NxMixedGraph | None,
     example: Example,
     treatment: Variable,
     outcome: Variable,
@@ -216,14 +234,14 @@ def step_5_notebook_synthetic(
     olatex = outcome.to_latex()
 
     data_obs = example.generate_data(samples, seed=seed)
-    data_1 = example.generate_data(samples, {treatment.name: 1.0}, seed=seed)
-    data_0 = example.generate_data(samples, {treatment.name: 0.0}, seed=seed)
+    data_1 = example.generate_data(samples, {treatment: 1.0}, seed=seed)
+    data_0 = example.generate_data(samples, {treatment: 0.0}, seed=seed)
 
     ates = []
     for _ in range(n_subsamples):
         idx = np.random.permutation(samples)[:subsample_size]
-        data_1_mean = data_1.loc[idx, outcome.name].mean()
-        data_0_mean = data_0.loc[idx, outcome.name].mean()
+        data_1_mean = data_1.loc[idx][outcome.name].mean()
+        data_0_mean = data_0.loc[idx][outcome.name].mean()
         diff = data_1_mean - data_0_mean
         ates.append(diff)
 
@@ -245,9 +263,9 @@ def step_5_notebook_synthetic(
     
     After generating {samples:,} samples for each distribution, we took {n_subsamples:,} subsamples of size
     of size {subsample_size:,} and calculated the
-    ATE for each. The variance comes to {ate_var}, which shows that the ATE is very stable with respect
+    ATE for each. The variance comes to {ate_var:.1e}, which shows that the ATE is very stable with respect
     to random generation. We therefore calculate the _true_ ATE as the average value from these samplings,
-    which comes to {ate}.
+    which comes to {ate:.1e}.
 
     The ATE can be interpreted in the following way:
 
@@ -276,28 +294,28 @@ def step_5_notebook_synthetic(
     ev_reference = []
     ev_reduced = []
 
+    reference_adjustment_set, _ = get_adjustment_set(
+        graph=graph, treatments=treatment, outcome=outcome
+    )
+    if reduced_graph is not None:
+        reduced_adjustment_set, _ = get_adjustment_set(
+            graph=reduced_graph, treatments=treatment, outcome=outcome
+        )
+
     for _ in trange(n_subsamples, leave=False, desc="Analyzing w/ subsampling", unit="sample"):
         data_obs_sample = data_obs.sample(subsample_size)
         ananke_ace_reference.append(
             estimate_ace(graph, treatments=treatment, outcomes=outcome, data=data_obs_sample)
         )
-        ananke_ace_reduced.append(
-            estimate_ace(
-                reduced_graph, treatments=treatment, outcomes=outcome, data=data_obs_sample
-            )
-        )
+
         linreg_ace_reference.append(
             estimate_query_by_linear_regression(
-                graph, treatments=treatment, outcome=outcome, data=data_obs_sample, query_type="ate"
-            )
-        )
-        linreg_ace_reduced.append(
-            estimate_query_by_linear_regression(
-                reduced_graph,
+                graph,
                 treatments=treatment,
                 outcome=outcome,
                 data=data_obs_sample,
                 query_type="ate",
+                _adjustment_set=reference_adjustment_set,
             )
         )
         ev_reference.append(
@@ -308,60 +326,108 @@ def step_5_notebook_synthetic(
                 outcome=outcome,
                 interventions={treatment: 0},
                 query_type="expected_value",
+                _adjustment_set=reference_adjustment_set,
             )
         )
-        ev_reduced.append(
-            estimate_query_by_linear_regression(
-                reduced_graph,
-                data=data_obs_sample,
-                treatments=treatment,
-                outcome=outcome,
-                interventions={treatment: 0},
-                query_type="expected_value",
+        if reduced_graph is not None:
+            ananke_ace_reduced.append(
+                estimate_ace(
+                    reduced_graph, treatments=treatment, outcomes=outcome, data=data_obs_sample
+                )
             )
-        )
+            linreg_ace_reduced.append(
+                estimate_query_by_linear_regression(
+                    reduced_graph,
+                    treatments=treatment,
+                    outcome=outcome,
+                    data=data_obs_sample,
+                    query_type="ate",
+                    _adjustment_set=reduced_adjustment_set,
+                )
+            )
+            ev_reduced.append(
+                estimate_query_by_linear_regression(
+                    reduced_graph,
+                    data=data_obs_sample,
+                    treatments=treatment,
+                    outcome=outcome,
+                    interventions={treatment: 0},
+                    query_type="expected_value",
+                    _adjustment_set=reduced_adjustment_set,
+                )
+            )
 
     ananke_ace_reference_var = np.var(ananke_ace_reference)
-    ananke_ace_reduced_var = np.var(ananke_ace_reduced)
-    ananke_ace_diffs = [a - b for a, b in zip(ananke_ace_reference, ananke_ace_reduced)]
-
     linreg_ace_reference_var = np.var(linreg_ace_reference)
-    linreg_ace_reduced_var = np.var(linreg_ace_reduced)
-    linreg_ace_diffs = [a - b for a, b in zip(linreg_ace_reference, linreg_ace_reduced)]
-
     ev_reference_var = np.var(ev_reference)
-    ev_reduced_var = np.var(ev_reduced)
-    ev_diffs = [a - b for a, b in zip(ev_reference, ev_reduced)]
 
-    fig, axes = plt.subplots(2, 3, figsize=(14, 6.5))
+    # Check that the p-values are significantly different from zero to say
+    # if the ATE is significant (then after you can use the sign)
+    _, ananke_ace_reference_p_value = ttest_1samp(ananke_ace_reference, 0, alternative="two-sided")
+    _, linreg_ace_reference_p_value = ttest_1samp(linreg_ace_reference, 0, alternative="two-sided")
 
-    sns.histplot(ananke_ace_reference, ax=axes[0][0])
-    axes[0][0].set_title(f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}")
-    axes[0][0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
-    axes[0][0].axvline(ate, color="red")
-    sns.histplot(ananke_ace_reduced, ax=axes[0][1])
-    axes[0][1].set_title(f"ATEs on Reduced ADMG\nVariance: {ananke_ace_reduced_var:.1e}")
-    axes[0][1].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
-    axes[0][1].set_ylabel("")
-    axes[0][1].axvline(ate, color="red")
-    sns.histplot(ananke_ace_diffs, ax=axes[0][2])
-    axes[0][2].set_xlabel("Reduced ADMG - Original ADMG")
-    axes[0][2].set_ylabel("")
-    axes[0][2].set_title(_diff_subtitle(ananke_ace_diffs, eps))
+    if reduced_graph is not None:
+        ananke_ace_reduced_var = np.var(ananke_ace_reduced)
+        ananke_ace_diffs = [a - b for a, b in zip(ananke_ace_reference, ananke_ace_reduced)]
 
-    sns.histplot(linreg_ace_reference, ax=axes[1][0])
-    axes[1][0].set_title(f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}")
-    axes[1][0].set_xlabel("ATE from eliater.estimate_query")
-    axes[1][0].axvline(ate, color="red")
-    sns.histplot(linreg_ace_reduced, ax=axes[1][1])
-    axes[1][1].set_title(f"ATEs on Reduced ADMG\nVariance: {linreg_ace_reduced_var:.1e}")
-    axes[1][1].set_xlabel("ATE from eliater.estimate_query")
-    axes[1][1].set_ylabel("")
-    axes[1][1].axvline(ate, color="red")
-    sns.histplot(linreg_ace_diffs, ax=axes[1][2])
-    axes[1][2].set_xlabel("Reduced ADMG - Original ADMG")
-    axes[1][2].set_ylabel("")
-    axes[1][2].set_title(_diff_subtitle(linreg_ace_diffs, eps))
+        linreg_ace_reduced_var = np.var(linreg_ace_reduced)
+        linreg_ace_diffs = [a - b for a, b in zip(linreg_ace_reference, linreg_ace_reduced)]
+
+        ev_reduced_var = np.var(ev_reduced)
+        ev_diffs = [a - b for a, b in zip(ev_reference, ev_reduced)]
+
+        fig, axes = plt.subplots(2, 3, figsize=(14, 6.5))
+
+        sns.histplot(ananke_ace_reference, ax=axes[0][0])
+        axes[0][0].set_title(
+            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_reference_p_value:.2e}$"
+        )
+        axes[0][0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
+        axes[0][0].axvline(ate, color="red")
+        sns.histplot(ananke_ace_reduced, ax=axes[0][1])
+        axes[0][1].set_title(f"ATEs on Reduced ADMG\nVariance: {ananke_ace_reduced_var:.1e}")
+        axes[0][1].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
+        axes[0][1].set_ylabel("")
+        axes[0][1].axvline(ate, color="red")
+        sns.histplot(ananke_ace_diffs, ax=axes[0][2])
+        axes[0][2].set_xlabel("Reduced ADMG - Original ADMG")
+        axes[0][2].set_ylabel("")
+        axes[0][2].set_title(_diff_subtitle(ananke_ace_diffs, eps))
+
+        sns.histplot(linreg_ace_reference, ax=axes[1][0])
+        axes[1][0].set_title(
+            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_reference_p_value:.2e}$"
+        )
+        axes[1][0].set_xlabel("ATE from eliater.estimate_query")
+        axes[1][0].axvline(ate, color="red")
+        sns.histplot(linreg_ace_reduced, ax=axes[1][1])
+        axes[1][1].set_title(f"ATEs on Reduced ADMG\nVariance: {linreg_ace_reduced_var:.1e}")
+        axes[1][1].set_xlabel("ATE from eliater.estimate_query")
+        axes[1][1].set_ylabel("")
+        axes[1][1].axvline(ate, color="red")
+        sns.histplot(linreg_ace_diffs, ax=axes[1][2])
+        axes[1][2].set_xlabel("Reduced ADMG - Original ADMG")
+        axes[1][2].set_ylabel("")
+        axes[1][2].set_title(_diff_subtitle(linreg_ace_diffs, eps))
+
+    else:
+        fig, axes = plt.subplots(1, 2, figsize=(8, 3))
+
+        sns.histplot(ananke_ace_reference, ax=axes[0])
+        axes[0].set_title(
+            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_reference_p_value:.2e}$"
+        )
+        axes[0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
+        axes[0].axvline(ate, color="red")
+        sns.histplot(ananke_ace_reduced, ax=axes[0])
+
+        sns.histplot(linreg_ace_reference, ax=axes[1])
+        axes[1].set_title(
+            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_reference_p_value:.2e}$"
+        )
+        axes[1].set_xlabel("ATE from eliater.estimate_query")
+        axes[1].axvline(ate, color="red")
+        sns.histplot(linreg_ace_reduced, ax=axes[1])
 
     plt.tight_layout()
     plt.show()
@@ -373,10 +439,29 @@ def step_5_notebook_synthetic(
     1. We show the _true_ ATE as a red vertical line
     2. We show both this process done with the original ADMG and the reduced ADMG. This shows that the reduction
        on the ADMG does not affect estimation. However, reduction is still valuable for simplifying visual exploration.
-    
-    **Caveats** Eliater should implement a statistical test to say if the ATE is meaningfully positive or negative
-    in these case. Further, how does someone without a reference _true_ ATE make an interpretation?
+    """
+    )
 
+    threshold = 0.01
+    _interpret_p(
+        p_value=ananke_ace_reference_p_value,
+        threshold=threshold,
+        treatment=treatment,
+        outcome=outcome,
+        distribution=ananke_ace_reference,
+        label="ananke/y0 estimation of the ACE",
+    )
+    _interpret_p(
+        p_value=linreg_ace_reference_p_value,
+        threshold=threshold,
+        treatment=treatment,
+        outcome=outcome,
+        distribution=linreg_ace_reference,
+        label="Eliater linear regression estimation of the ACE",
+    )
+
+    display_markdown(
+        f"""\
     ### Estimating the Expected Value
 
     We now estimate the query in the form of the expected value:
@@ -385,29 +470,35 @@ def step_5_notebook_synthetic(
     """
     )
 
-    fig, axes = plt.subplots(1, 3, figsize=(14, 3))
+    if reduced_graph is not None:
+        fig, axes = plt.subplots(1, 3, figsize=(14, 3))
 
-    sns.histplot(ev_reference, ax=axes[0])
-    axes[0].set_title(
-        f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Original ADMG\nVariance: {ev_reference_var:.1e}"
-    )
-    axes[0].set_xlabel(
-        f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query"
-    )
-    sns.histplot(ev_reduced, ax=axes[1])
-    axes[1].set_title(
-        f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Reduced ADMG\nVariance: {ev_reduced_var:.1e}"
-    )
-    axes[1].set_xlabel(
-        f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query"
-    )
-    axes[1].set_ylabel("")
-    sns.histplot(ev_diffs, ax=axes[2])
-    axes[2].set_xlabel("Reduced ADMG - Original ADMG")
-    axes[2].set_ylabel("")
-    axes[2].set_title(_diff_subtitle(ev_diffs, eps))
+        sns.histplot(ev_reference, ax=axes[0])
+        axes[0].set_title(
+            f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Original ADMG\nVariance: {ev_reference_var:.1e}"
+        )
+        axes[0].set_xlabel(f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query")
+        sns.histplot(ev_reduced, ax=axes[1])
+        axes[1].set_title(
+            f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Reduced ADMG\nVariance: {ev_reduced_var:.1e}"
+        )
+        axes[1].set_xlabel(f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query")
+        axes[1].set_ylabel("")
+        sns.histplot(ev_diffs, ax=axes[2])
+        axes[2].set_xlabel("Reduced ADMG - Original ADMG")
+        axes[2].set_ylabel("")
+        axes[2].set_title(_diff_subtitle(ev_diffs, eps))
+        plt.tight_layout()
+    else:
+        fig, axis = plt.subplots(1, 1, figsize=(5, 3))
 
-    plt.tight_layout()
+        sns.histplot(ev_reference, ax=axis)
+        axis.set_title(
+            f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Original ADMG\nVariance: {ev_reference_var:.1e}"
+        )
+        axis.set_xlabel(f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query")
+        # plt.tight_layout()
+
     plt.show()
 
     display_markdown(
@@ -415,6 +506,31 @@ def step_5_notebook_synthetic(
         **Caveat**: Eliater does not yet have an automated explanation of what the results of this analysis mean.
     """
     )
+
+
+def _interpret_p(p_value, threshold, treatment, outcome, distribution, label):
+    if p_value < threshold:
+        # note that the interpretation is opposite of the sign
+        direction = "negative" if np.mean(distribution) > 0 else "positive"
+        display_markdown(
+            f"""\
+            The p-value for the {label} is {p_value:.2e},
+            which is below the significance threshold of {threshold}. Therefore, we reject the
+            null hypothesis of the 1 Sample T-test and conclude that the distribution is significantly
+            different from zero. This means that the treatment ${treatment.to_latex()}$ has 
+            *a {direction} effect* on the outcome ${outcome.to_latex()}$.
+        """
+        )
+    else:
+        display_markdown(
+            f"""\
+            The p-value for the {label} is {p_value:.2e},
+            which is *not( the significance threshold of {threshold}. Therefore, we do not reject the
+            null hypothesis of the 1 Sample T-test and conclude that the distribution is not significantly
+            different from zero. This means that the treatment ${treatment.to_latex()}$ has *no significant effect*
+            on the outcome ${outcome.to_latex()}$.
+            """
+        )
 
 
 def _diff_subtitle(diffs, eps):

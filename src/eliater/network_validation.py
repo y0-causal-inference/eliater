@@ -165,12 +165,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from numpy import mean, quantile
+from sklearn.preprocessing import KBinsDiscretizer
 from tqdm.auto import trange
 
 import y0.algorithm.conditional_independencies
 from y0.graph import NxMixedGraph
 from y0.struct import CITest, _ensure_method, get_conditional_independence_tests
-from sklearn.preprocessing import KBinsDiscretizer
 
 __all__ = [
     "discretize_binary",
@@ -195,7 +195,6 @@ def plot_treatment_and_outcome(data, treatment, outcome, figsize=(8, 2.5)) -> No
     rax.axvline(data[outcome.name].mean(), color="red")
     rax.set_ylabel("")
     rax.set_title("Outcome")
-
 
 
 def discretize_binary(data: pd.DataFrame) -> pd.DataFrame:
