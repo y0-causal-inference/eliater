@@ -13,7 +13,7 @@ in T cell activation, proliferation, and function.
 #     does not want to read the reference. Spoon feed the important information
 #  2. Is there associated data to go with this graph? Commit it into the examples folder
 
-
+from eliater.data import load_sachs_df
 from y0.algorithm.identify import Query
 from y0.examples import Example
 from y0.graph import NxMixedGraph
@@ -40,6 +40,7 @@ t_cell_signaling_example = Example(
     reference="K. Sachs, O. Perez, D. Pe’er, D. A. Lauffenburger, and G. P. Nolan. Causal protein-signaling"
     "networks derived from multiparameter single-cell data. Science, 308(5721): 523–529, 2005.",
     graph=graph,
+    data=load_sachs_df(),
     description="This is an example of a protein signaling network of the T cell signaling pathway"
     "It models the molecular mechanisms and regulatory processes of human cells involved"
     "in T cell activation, proliferation, and function. The observational data consisted of quantitative"

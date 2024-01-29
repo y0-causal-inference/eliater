@@ -14,6 +14,7 @@ from .notebook_utils import (
     step_1_notebook,
     step_2_notebook,
     step_3_notebook,
+    step_5_notebook_real,
     step_5_notebook_synthetic,
 )
 from .version import get_version

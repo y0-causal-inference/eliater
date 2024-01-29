@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from tqdm.auto import trange
+from scipy.stats import ttest_1samp
+from tqdm.auto import tqdm, trange
 
 from eliater.discover_latent_nodes import find_nuisance_variables, remove_nuisance_variables
 from eliater.network_validation import discretize_binary
@@ -20,7 +21,6 @@ from y0.dsl import Variable
 from y0.examples import Example
 from y0.graph import NxMixedGraph
 from y0.struct import DEFAULT_SIGNIFICANCE, CITest, _ensure_method
-from scipy.stats import ttest_1samp
 
 
 def display_markdown(s: str) -> None:
@@ -203,6 +203,66 @@ def step_3_notebook(
     return new_graph
 
 
+def step_5_notebook_real(
+    *,
+    graph: NxMixedGraph,
+    example: Example,
+    treatment: Variable,
+    outcome: Variable,
+    n_subsamples: int = 500,
+    subsample_size: int = 1_000,
+    eps: float = 1e-10,
+    threshold: float = 0.01,
+):
+    subsamples = [
+        example.data.sample(subsample_size)
+        for _ in trange(n_subsamples, desc="Subsampling", leave=False)
+    ]
+    adjustment_set, _ = get_adjustment_set(graph=graph, treatments=treatment, outcome=outcome)
+
+    actual_ananke_ace = estimate_ace(
+        graph, treatments=treatment, outcomes=outcome, data=example.data
+    )
+    actual_linreg_ace = estimate_query_by_linear_regression(
+        graph,
+        treatments=treatment,
+        outcome=outcome,
+        data=example.data,
+        query_type="ate",
+        _adjustment_set=adjustment_set,
+    )
+
+    (
+        ananke_ace_reference,
+        ananke_ace_reference_var,
+        ananke_ace_significance_p_value,
+        linreg_ace_reference,
+        linreg_ace_reference_var,
+        linreg_ace_significance_p_value,
+        linreg_ev_reference,
+        linreg_ev_reference_var,
+    ) = _calc_helper(
+        graph=graph,
+        subsamples=subsamples,
+        treatment=treatment,
+        outcome=outcome,
+        adjustment_set=adjustment_set,
+    )
+    _plot_helper(
+        ananke_ace_reference,
+        ananke_ace_reference_var,
+        ananke_ace_significance_p_value,
+        linreg_ace_reference,
+        linreg_ace_reference_var,
+        linreg_ace_significance_p_value,
+        reference=actual_ananke_ace,
+        reference_right=actual_linreg_ace,
+    )
+
+    plt.tight_layout()
+    plt.show()
+
+
 def step_5_notebook_synthetic(
     *,
     graph: NxMixedGraph,
@@ -271,89 +331,30 @@ def step_5_notebook_synthetic(
     """
     )
 
-    ananke_ace_reference = []
-    ananke_ace_reduced = []
-    linreg_ace_reference = []
-    linreg_ace_reduced = []
-    ev_reference = []
-    ev_reduced = []
+    subsamples = [
+        data_obs.sample(subsample_size)
+        for _ in trange(n_subsamples, leave=False, desc="Subsampling", unit="sample")
+    ]
 
     reference_adjustment_set, _ = get_adjustment_set(
         graph=graph, treatments=treatment, outcome=outcome
     )
-    if reduced_graph is not None:
-        reduced_adjustment_set, _ = get_adjustment_set(
-            graph=reduced_graph, treatments=treatment, outcome=outcome
-        )
-
-    for _ in trange(n_subsamples, leave=False, desc="Analyzing w/ subsampling", unit="sample"):
-        data_obs_sample = data_obs.sample(subsample_size)
-        ananke_ace_reference.append(
-            estimate_ace(graph, treatments=treatment, outcomes=outcome, data=data_obs_sample)
-        )
-
-        linreg_ace_reference.append(
-            estimate_query_by_linear_regression(
-                graph,
-                treatments=treatment,
-                outcome=outcome,
-                data=data_obs_sample,
-                query_type="ate",
-                _adjustment_set=reference_adjustment_set,
-            )
-        )
-        ev_reference.append(
-            estimate_query_by_linear_regression(
-                graph,
-                data=data_obs_sample,
-                treatments=treatment,
-                outcome=outcome,
-                interventions={treatment: 0},
-                query_type="expected_value",
-                _adjustment_set=reference_adjustment_set,
-            )
-        )
-        if reduced_graph is not None:
-            ananke_ace_reduced.append(
-                estimate_ace(
-                    reduced_graph, treatments=treatment, outcomes=outcome, data=data_obs_sample
-                )
-            )
-            linreg_ace_reduced.append(
-                estimate_query_by_linear_regression(
-                    reduced_graph,
-                    treatments=treatment,
-                    outcome=outcome,
-                    data=data_obs_sample,
-                    query_type="ate",
-                    _adjustment_set=reduced_adjustment_set,
-                )
-            )
-            ev_reduced.append(
-                estimate_query_by_linear_regression(
-                    reduced_graph,
-                    data=data_obs_sample,
-                    treatments=treatment,
-                    outcome=outcome,
-                    interventions={treatment: 0},
-                    query_type="expected_value",
-                    _adjustment_set=reduced_adjustment_set,
-                )
-            )
-
-    ananke_ace_reference_var = np.var(ananke_ace_reference)
-    linreg_ace_reference_var = np.var(linreg_ace_reference)
-    ev_reference_var = np.var(ev_reference)
-
-    # Check that the p-values are significantly different from zero to say
-    # if the ATE is significant (then after you can use the sign)
-    _, ananke_ace_significance_p_value = ttest_1samp(
-        ananke_ace_reference, 0, alternative="two-sided"
+    (
+        ananke_ace_reference,
+        ananke_ace_reference_var,
+        ananke_ace_significance_p_value,
+        linreg_ace_reference,
+        linreg_ace_reference_var,
+        linreg_ace_significance_p_value,
+        linreg_ev_reference,
+        ev_reference_var,
+    ) = _calc_helper(
+        graph=graph,
+        subsamples=subsamples,
+        treatment=treatment,
+        outcome=outcome,
+        adjustment_set=reference_adjustment_set,
     )
-    _, linreg_ace_significance_p_value = ttest_1samp(
-        linreg_ace_reference, 0, alternative="two-sided"
-    )
-
     _, ananke_ace_correctness_p_value = ttest_1samp(
         ananke_ace_reference, ate, alternative="two-sided"
     )
@@ -362,14 +363,29 @@ def step_5_notebook_synthetic(
     )
 
     if reduced_graph is not None:
-        ananke_ace_reduced_var = np.var(ananke_ace_reduced)
+        reduced_adjustment_set, _ = get_adjustment_set(
+            graph=reduced_graph, treatments=treatment, outcome=outcome
+        )
+        (
+            ananke_ace_reduced,
+            ananke_ace_reduced_var,
+            _ananke_ace_significance_p_value,
+            linreg_ace_reduced,
+            linreg_ace_reduced_var,
+            _linreg_ace_significance_p_value,
+            linreg_ev_reduced,
+            linreg_ev_reduced_var,
+        ) = _calc_helper(
+            graph=reduced_graph,
+            subsamples=subsamples,
+            treatment=treatment,
+            outcome=outcome,
+            adjustment_set=reduced_adjustment_set,
+        )
+
         ananke_ace_diffs = [a - b for a, b in zip(ananke_ace_reference, ananke_ace_reduced)]
-
-        linreg_ace_reduced_var = np.var(linreg_ace_reduced)
         linreg_ace_diffs = [a - b for a, b in zip(linreg_ace_reference, linreg_ace_reduced)]
-
-        ev_reduced_var = np.var(ev_reduced)
-        ev_diffs = [a - b for a, b in zip(ev_reference, ev_reduced)]
+        ev_diffs = [a - b for a, b in zip(linreg_ev_reference, linreg_ev_reduced)]
 
         fig, axes = plt.subplots(2, 3, figsize=(14, 6.5))
 
@@ -406,23 +422,15 @@ def step_5_notebook_synthetic(
         axes[1][2].set_title(_diff_subtitle(linreg_ace_diffs, eps))
 
     else:
-        fig, axes = plt.subplots(1, 2, figsize=(8, 3))
-
-        sns.histplot(ananke_ace_reference, ax=axes[0])
-        axes[0].set_title(
-            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_significance_p_value:.2e}$"
+        _plot_helper(
+            ananke_ace_reference,
+            ananke_ace_reference_var,
+            ananke_ace_significance_p_value,
+            linreg_ace_reference,
+            linreg_ace_reference_var,
+            linreg_ace_significance_p_value,
+            reference=ate,
         )
-        axes[0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
-        axes[0].axvline(ate, color="red")
-        sns.histplot(ananke_ace_reduced, ax=axes[0])
-
-        sns.histplot(linreg_ace_reference, ax=axes[1])
-        axes[1].set_title(
-            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_significance_p_value:.2e}$"
-        )
-        axes[1].set_xlabel("ATE from eliater.estimate_query")
-        axes[1].axvline(ate, color="red")
-        sns.histplot(linreg_ace_reduced, ax=axes[1])
 
     plt.tight_layout()
     plt.show()
@@ -486,12 +494,12 @@ def step_5_notebook_synthetic(
     if reduced_graph is not None:
         fig, axes = plt.subplots(1, 3, figsize=(14, 3))
 
-        sns.histplot(ev_reference, ax=axes[0])
+        sns.histplot(linreg_ev_reference, ax=axes[0])
         axes[0].set_title(
             f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Original ADMG\nVariance: {ev_reference_var:.1e}"
         )
         axes[0].set_xlabel(f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query")
-        sns.histplot(ev_reduced, ax=axes[1])
+        sns.histplot(linreg_ev_reduced, ax=axes[1])
         axes[1].set_title(
             f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Reduced ADMG\nVariance: {ev_reduced_var:.1e}"
         )
@@ -505,7 +513,7 @@ def step_5_notebook_synthetic(
     else:
         fig, axis = plt.subplots(1, 1, figsize=(5, 3))
 
-        sns.histplot(ev_reference, ax=axis)
+        sns.histplot(linreg_ev_reference, ax=axis)
         axis.set_title(
             f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Original ADMG\nVariance: {ev_reference_var:.1e}"
         )
@@ -546,15 +554,87 @@ def _interpret_nonzero_test(p_value, threshold, treatment, outcome, distribution
         ).replace("\n", " ")
 
 
-"""
-p_value=linreg_ace_correctness_p_value,
-        threshold=threshold,
-        treatment=treatment,
-        outcome=outcome,
-        reference=ate,
-        label="Eliater linear regression estimation of the ACE",
+def _plot_helper(
+    ananke_ace_reference,
+    ananke_ace_reference_var,
+    ananke_ace_significance_p_value,
+    linreg_ace_reference,
+    linreg_ace_reference_var,
+    linreg_ace_significance_p_value,
+    *,
+    reference,
+    reference_right=None,
+):
+    if reference_right is None:
+        reference_right = reference
+    fig, axes = plt.subplots(1, 2, figsize=(8, 3))
 
-"""
+    sns.histplot(ananke_ace_reference, ax=axes[0])
+    axes[0].set_title(
+        f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_significance_p_value:.2e}$"
+    )
+    axes[0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
+    axes[0].axvline(reference, color="red")
+    sns.histplot(ananke_ace_reference, ax=axes[0])
+
+    sns.histplot(linreg_ace_reference, ax=axes[1])
+    axes[1].set_title(
+        f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_significance_p_value:.2e}$"
+    )
+    axes[1].set_xlabel("ATE from eliater.estimate_query")
+    axes[1].axvline(reference_right, color="red")
+    sns.histplot(linreg_ace_reference, ax=axes[1])
+
+
+def _calc_helper(*, graph, subsamples, treatment, outcome, adjustment_set):
+    ananke_ace_reference = []
+    linreg_ace_reference = []
+    linreg_ev_reference = []
+    for subsample in tqdm(subsamples, desc="Estimating", leave=False):
+        ananke_ace_reference.append(
+            estimate_ace(graph, treatments=treatment, outcomes=outcome, data=subsample)
+        )
+        linreg_ace_reference.append(
+            estimate_query_by_linear_regression(
+                graph,
+                treatments=treatment,
+                outcome=outcome,
+                data=subsample,
+                query_type="ate",
+                _adjustment_set=adjustment_set,
+            )
+        )
+        linreg_ev_reference.append(
+            estimate_query_by_linear_regression(
+                graph,
+                data=subsample,
+                treatments=treatment,
+                outcome=outcome,
+                interventions={treatment: 0},
+                query_type="expected_value",
+                _adjustment_set=adjustment_set,
+            )
+        )
+
+    # Check that the p-values are significantly different from zero to say
+    # if the ATE is significant (then after you can use the sign)
+    _, ananke_ace_significance_p_value = ttest_1samp(
+        ananke_ace_reference, 0, alternative="two-sided"
+    )
+    _, linreg_ace_significance_p_value = ttest_1samp(
+        linreg_ace_reference, 0, alternative="two-sided"
+    )
+
+    return (
+        ananke_ace_reference,
+        np.var(ananke_ace_reference),
+        ananke_ace_significance_p_value,
+        linreg_ace_reference,
+        np.var(linreg_ace_reference),
+        linreg_ace_significance_p_value,
+        linreg_ev_reference,
+        np.var(linreg_ev_reference),
+    )
 
 
 def _interpret_same_ate_test(p_value, threshold, label, reference):
