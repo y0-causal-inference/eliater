@@ -87,7 +87,7 @@ def step_1_notebook(
         significance_level=significance_level,
         max_given=max_given,
         verbose=show_progress,
-        given_sep=";",
+        sep=";",
     ).evidence
     end_time = time.time() - start_time
     time_text = f"Finished in {end_time:.2f} seconds."
