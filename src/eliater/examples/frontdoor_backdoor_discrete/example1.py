@@ -66,7 +66,7 @@ def generate(
     *,
     seed: int | None = None,
 ) -> pd.DataFrame:
-    """Generate discrete testing data for the multiple_mediators_with_multiple_confounders_nuisances_discrete case study.
+    """Generate discrete test data for the multiple_mediators_with_multiple_confounders_nuisances_discrete case study.
 
     :param num_samples: The number of samples to generate. Try 1000.
     :param treatments: An optional dictionary of the values to fix each variable to.

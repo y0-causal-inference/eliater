@@ -5,7 +5,6 @@ from operator import attrgetter
 from textwrap import dedent
 from typing import Optional
 
-import IPython.display
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -27,11 +26,15 @@ from y0.struct import DEFAULT_SIGNIFICANCE, CITest, _ensure_method
 
 def display_markdown(s: str) -> None:
     """Display a markdown string in Jupyter notebook."""
+    import IPython.display
+
     IPython.display.display(IPython.display.Markdown(dedent(s)))
 
 
 def display_df(df: pd.DataFrame) -> None:
     """Display a Pandas dataframe in Jupyter notebook."""
+    import IPython.display
+
     html = df.reset_index(drop=True).to_html(index=False)
     IPython.display.display(IPython.display.HTML(html))
 
