@@ -142,7 +142,7 @@ $Z_4$ is removed as its children are a subset of $Z_1$'s children.
 """
 
 import warnings
-from typing import Iterable, Set, Union
+from typing import Set, Union
 
 from y0.algorithm.simplify_latent import evans_simplify
 from y0.dsl import Variable

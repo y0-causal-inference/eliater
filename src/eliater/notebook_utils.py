@@ -1,3 +1,5 @@
+"""High-level Eliater workflow for use in Jupyter notebooks."""
+
 import time
 from operator import attrgetter
 from textwrap import dedent
@@ -24,10 +26,12 @@ from y0.struct import DEFAULT_SIGNIFICANCE, CITest, _ensure_method
 
 
 def display_markdown(s: str) -> None:
+    """Display a markdown string in Jupyter notebook."""
     IPython.display.display(IPython.display.Markdown(dedent(s)))
 
 
 def display_df(df: pd.DataFrame) -> None:
+    """Display a Pandas dataframe in Jupyter notebook."""
     html = df.reset_index(drop=True).to_html(index=False)
     IPython.display.display(IPython.display.HTML(html))
 
@@ -52,20 +56,17 @@ def step_1_notebook(
 
     :param graph: an NxMixedGraph
     :param data: observational data corresponding to the graph
+    :param binarize: Should the data be discretized into a two-class problem?
     :param method: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
         and ``chi-square`` for discrete data.
     :param max_given: The maximum set size in the power set of the vertices minus the d-separable pairs
     :param significance_level: The statistical tests employ this value for
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.01.
-    :param verbose: If `False`, only print the details of failed tests.
-        If 'True', print the details of all the conditional independency results. Defaults to `False`
-    :param tablefmt: The format for the table that gets printed. By default, uses RST, so it can be
-        directly copy/pasted into Python documentation
+    :param show_all: If true, shows all p-values from falsification, if false, only shows significant ones
     :param acceptable_percentage: The percentage of tests that need to fail to output an interpretation
         that additional edges should be added. Should be between 0 and 1.
     :param show_progress: If true, shows a progress bar for calculating d-separations
-    :returns: If in Jupyter notebook, returns a dataframe. Otherwise, prints the dataframe.
     """
     display_markdown("## Step 1: Checking the ADMG Structure")
     if significance_level is None:
@@ -123,13 +124,14 @@ def step_1_notebook(
 
 
 def step_2_notebook(*, graph: NxMixedGraph, treatment: Variable, outcome: Variable):
+    """Check query identifiability."""
     tlatex = treatment.to_latex()
     olatex = outcome.to_latex()
     introduction = dedent(
-        f"""       
+        f"""
         ## Step 2: Check Query Identifiability
-    
-        The causal query of interest is the average treatment effect of ${tlatex}$ on ${olatex}$, defined as: 
+
+        The causal query of interest is the average treatment effect of ${tlatex}$ on ${olatex}$, defined as:
         $\\mathbb{{E}}[{olatex} \\mid do({tlatex}=1)] - \\mathbb{{E}}[{olatex} \\mid do({tlatex}=0)]$.
     """
     )
@@ -137,18 +139,18 @@ def step_2_notebook(*, graph: NxMixedGraph, treatment: Variable, outcome: Variab
     estimand = identify_outcomes(graph=graph, treatments=treatment, outcomes=outcome)
     if estimand is None:
         analysis = dedent(
-            f"""\
+            """\
         The query was not identifiable, so we can not proceed to Step 3.
         """
         )
     else:
         analysis = dedent(
             f"""\
-        
+
         Running the ID algorithm defined by [Identification of joint interventional distributions in recursive
         semi-Markovian causal models](https://dl.acm.org/doi/10.5555/1597348.1597382) (Shpitser and Pearl, 2006)
         and implemented in the $Y_0$ Causal Reasoning Engine gives the following estimand:
-        
+
         ${estimand.to_latex()}$
 
         Because the query is identifiable, we can proceed to Step 3.
@@ -160,14 +162,15 @@ def step_2_notebook(*, graph: NxMixedGraph, treatment: Variable, outcome: Variab
 
 def step_3_notebook(
     *, graph: NxMixedGraph, treatment: Variable, outcome: Variable
-) -> NxMixedGraph | None:
+) -> Optional[NxMixedGraph]:
+    """Identify nuisance variables and simplify the ADMG."""
     display_markdown("## Step 3/4: Identify Nuisance Variables and Simplify the ADMG")
     nv = find_nuisance_variables(graph, treatments=treatment, outcomes=outcome)
     if not nv:
         display_markdown(
-            f"""\
+            """\
                 No variables were identified as nuisance variables.
-                
+
                 Nevertheless, the algorithm proposed in [Graphs for margins of Bayesian
                 networks](https://arxiv.org/abs/1408.1809) (Evans, 2016) and implemented in
                 the $Y_0$ Causal Reasoning Engine is applied to the ADMG to attempt to
@@ -182,9 +185,9 @@ def step_3_notebook(
             The following {len(nv)} variables were identified as _nuisance_ variables,
             meaning that they appear as descendants of nodes appearing in paths between
             the treatment and outcome, but are not themselves ancestors of the outcome variable:
-    
+
             {nv_text}
-    
+
             These variables are marked as "latent", then
             the algorithm proposed in [Graphs for margins of Bayesian
             networks](https://arxiv.org/abs/1408.1809) (Evans, 2016) and implemented in
@@ -214,6 +217,7 @@ def step_5_notebook_real(
     eps: float = 1e-10,
     threshold: float = 0.01,
 ):
+    """Calculate the average causal effect and give context on how to interpret it for real data."""
     subsamples = [
         example.data.sample(subsample_size)
         for _ in trange(n_subsamples, desc="Subsampling", leave=False)
@@ -266,7 +270,7 @@ def step_5_notebook_real(
 def step_5_notebook_synthetic(
     *,
     graph: NxMixedGraph,
-    reduced_graph: NxMixedGraph | None,
+    reduced_graph: Optional[NxMixedGraph],
     example: Example,
     treatment: Variable,
     outcome: Variable,
@@ -277,6 +281,7 @@ def step_5_notebook_synthetic(
     eps: float = 1e-10,
     threshold: float = 0.01,
 ):
+    """Calculate the average causal effect and give context on how to interpret it for synthetic data."""
     tlatex = treatment.to_latex()
     olatex = outcome.to_latex()
 
@@ -298,16 +303,16 @@ def step_5_notebook_synthetic(
     display_markdown(
         f"""\
     ## Step 5: Estimate the Query
-    
+
     ### Calculating the True Average Treatment Effect (ATE)
-    
+
     We first generated synthetic observational data. Now, we generate two interventional datasets:
     one where we set ${treatment.to_latex()}$ to $0.0$ and one where we set ${treatment.to_latex()}$ to $1.0$.
     We can then calculate the "true" average treatment effect (ATE) as the difference of the means
     for the outcome variable ${outcome.to_latex()}$ in each. The ATE is formulated as:
- 
+
     $ATE = \\mathbb{{E}}[{olatex} \\mid do({tlatex} = 1)] - \\mathbb{{E}}[{olatex} \\mid do({tlatex} = 0)]$
-    
+
     After generating {samples:,} samples for each distribution, we took {n_subsamples:,} subsamples of size
     of size {subsample_size:,} and calculated the
     ATE for each. The variance comes to {ate_var:.1e}, which shows that the ATE is very stable with respect
@@ -320,7 +325,7 @@ def step_5_notebook_synthetic(
     2. If the ATE is negative, it suggests that the treatment ${tlatex}$ has a positive effect on the outcome ${olatex}$
 
     ### Estimating the Average Treatment Effect (ATE)
-    
+
     In practice, we are often unable to get the appropriate interventional data, and therefore want to estimate
     the average treatment effect (ATE) from observational data. Because we're using synthetic data, we generate
     {samples:,} samples, then took {n_subsamples:,} subsamples of size {subsample_size:,} through which we calculated
@@ -391,7 +396,8 @@ def step_5_notebook_synthetic(
 
         sns.histplot(ananke_ace_reference, ax=axes[0][0])
         axes[0][0].set_title(
-            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, $p={ananke_ace_significance_p_value:.2e}$"
+            f"ATEs on Original ADMG\nVariance: {ananke_ace_reference_var:.1e}, "
+            f"$p={ananke_ace_significance_p_value:.2e}$"
         )
         axes[0][0].set_xlabel("ATE from y0.algorithm.estimation.estimate_ace")
         axes[0][0].axvline(ate, color="red")
@@ -407,7 +413,8 @@ def step_5_notebook_synthetic(
 
         sns.histplot(linreg_ace_reference, ax=axes[1][0])
         axes[1][0].set_title(
-            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, $p={linreg_ace_significance_p_value:.2e}$"
+            f"ATEs on Original ADMG\nVariance: {linreg_ace_reference_var:.1e}, "
+            f"$p={linreg_ace_significance_p_value:.2e}$"
         )
         axes[1][0].set_xlabel("ATE from eliater.estimate_query")
         axes[1][0].axvline(ate, color="red")
@@ -438,13 +445,13 @@ def step_5_notebook_synthetic(
     display_markdown(
         f"""\
     Notes on this plot:
-    
+
     1. We show the _true_ ATE as a red vertical line
     2. We show both this process done with the original ADMG and the reduced ADMG. This shows that the reduction
        on the ADMG does not affect estimation. However, reduction is still valuable for simplifying visual exploration.
-    
+
     #### Interpreting $Y_0$/Ananke Estimation of ACE
-    
+
     {_interpret_nonzero_test(
         p_value=ananke_ace_significance_p_value,
         threshold=threshold,
@@ -453,7 +460,7 @@ def step_5_notebook_synthetic(
         distribution=ananke_ace_reference,
         label="ananke/y0 estimation of the ACE",
     )}
-    
+
     {_interpret_same_ate_test(
         p_value=ananke_ace_correctness_p_value,
         threshold=threshold,
@@ -471,7 +478,7 @@ def step_5_notebook_synthetic(
         distribution=linreg_ace_reference,
         label="Eliater linear regression estimation of the ACE",
     )}
-    
+
     {_interpret_same_ate_test(
         p_value=linreg_ace_correctness_p_value,
         threshold=threshold,
@@ -501,7 +508,7 @@ def step_5_notebook_synthetic(
         axes[0].set_xlabel(f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query")
         sns.histplot(linreg_ev_reduced, ax=axes[1])
         axes[1].set_title(
-            f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Reduced ADMG\nVariance: {ev_reduced_var:.1e}"
+            f"$E[{olatex} \\mid do({tlatex} = 0)]$ on Reduced ADMG\nVariance: {linreg_ev_reduced_var:.1e}"
         )
         axes[1].set_xlabel(f"$E[{olatex} \\mid do({tlatex} = 0)]$ from eliater.estimate_query")
         axes[1].set_ylabel("")
