@@ -184,6 +184,7 @@ __all__ = [
     "discretize_binary",
     "plot_treatment_and_outcome",
     "add_ci_undirected_edges",
+    "print_graph_falsifications",
     "p_value_of_bootstrap_data",
     "p_value_statistics",
     "plot_ci_size_dependence",
@@ -257,6 +258,7 @@ def print_graph_falsifications(
     Prints the summary to the console, which includes the total number of conditional independence tests,
     the number and percentage of failed tests, and statistical information about each test such as p-values,
     and test results.
+
     :param graph: an NxMixedGraph
     :param data: observational data corresponding to the graph
     :param method: the conditional independency test to use. If None, defaults to ``pearson`` for continuous data
