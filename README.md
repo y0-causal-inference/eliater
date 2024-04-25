@@ -45,11 +45,11 @@
 
 A high level, end-to-end causal inference workflow.
 
-## 💪 Getting Started
+## 📚 Case Studies
 
-> TODO show in a very small amount of space the **MOST** useful thing your package can do.
-> Make it as short as possible! You have an entire set of docs for later.
-
+1. [SARS-CoV-2 Model](notebooks/Case_study1_The_Sars_cov2_model.ipynb)
+2. [T Cell Signaling](notebooks/Case_study2_The_Tsignaling_pathway.ipynb)
+3. [E. Coli Signaling](notebooks/Case_study3_The_EColi.ipynb)
 
 ## 🚀 Installation
 
