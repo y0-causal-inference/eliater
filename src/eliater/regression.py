@@ -227,6 +227,7 @@ Unanswered Questions for Later
 """
 
 import statistics
+import warnings
 from operator import attrgetter
 from typing import Dict, Literal, NamedTuple, Tuple
 
@@ -242,6 +243,7 @@ from y0.graph import NxMixedGraph, _ensure_set
 __all__ = [
     # High-level functions
     "estimate_query_by_linear_regression",
+    "estimate_query",  # deprecated
     "estimate_ate",
     "estimate_probabilities",
     "summary_statistics",
@@ -329,6 +331,7 @@ def fit_regression(
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcome: Variable,
+    _adjustment_set=None,
 ) -> RegressionResult:
     """Fit a regression model to the adjustment set over the treatments and a given outcome.
 
@@ -346,7 +349,10 @@ def fit_regression(
     treatments = _ensure_set(treatments)
     if len(treatments) > 1:
         raise MultipleTreatmentsNotImplementedError
-    adjustment_set, _ = get_adjustment_set(graph=graph, treatments=treatments, outcome=outcome)
+    if _adjustment_set:
+        adjustment_set = _adjustment_set
+    else:
+        adjustment_set, _ = get_adjustment_set(graph=graph, treatments=treatments, outcome=outcome)
     variable_set = adjustment_set.union(treatments).difference({outcome})
     variables = sorted(variable_set, key=attrgetter("name"))
     model = LinearRegression()
@@ -362,6 +368,7 @@ def estimate_query_by_linear_regression(
     *,
     query_type: Literal["ate", "expected_value", "probability"] = "ate",
     interventions: Dict[Variable, float] | None = None,
+    _adjustment_set=None,
 ) -> float | list[float]:
     """Estimate treatment effects using Linear Regression.
 
@@ -385,6 +392,7 @@ def estimate_query_by_linear_regression(
             data=data,
             treatments=treatments,
             outcome=outcome,
+            _adjustment_set=_adjustment_set,
         )
 
     elif query_type in {"expected_value", "probability"}:
@@ -405,11 +413,18 @@ def estimate_query_by_linear_regression(
         raise TypeError(f"Unknown query type {query_type}")
 
 
+def estimate_query(*args, **kwargs):
+    """Fit a regression model to the adjustment set over the treatments and a given outcome."""
+    warnings.warn("This function was renamed", DeprecationWarning, stacklevel=1)
+    return estimate_query_by_linear_regression(*args, **kwargs)
+
+
 def estimate_ate(
     graph: NxMixedGraph,
     data: pd.DataFrame,
     treatments: Variable | set[Variable],
     outcome: Variable,
+    _adjustment_set=None,
 ) -> float:
     """Estimate the average treatment effect (ATE) using Linear Regression.
 
@@ -426,7 +441,9 @@ def estimate_ate(
     treatments = _ensure_set(treatments)
     if len(treatments) > 1:
         raise MultipleTreatmentsNotImplementedError
-    coefficients, _intercept = fit_regression(graph, data, treatments=treatments, outcome=outcome)
+    coefficients, _intercept = fit_regression(
+        graph, data, treatments=treatments, outcome=outcome, _adjustment_set=_adjustment_set
+    )
     return coefficients[list(treatments)[0]]
 
 

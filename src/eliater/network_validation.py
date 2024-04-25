@@ -158,6 +158,7 @@ chapter 4 of https://livebook.manning.com/book/causal-ai/welcome/v-4/.
 """
 
 import time
+import warnings
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -165,15 +166,23 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from numpy import mean, quantile
+from sklearn.preprocessing import KBinsDiscretizer
 from tabulate import tabulate
 from tqdm.auto import trange
 
-from y0.algorithm.conditional_independencies import get_conditional_independencies
+import y0.algorithm.conditional_independencies
 from y0.algorithm.falsification import get_graph_falsifications
 from y0.graph import NxMixedGraph
-from y0.struct import CITest, _ensure_method, get_conditional_independence_tests
+from y0.struct import (
+    DEFAULT_SIGNIFICANCE,
+    CITest,
+    _ensure_method,
+    get_conditional_independence_tests,
+)
 
 __all__ = [
+    "discretize_binary",
+    "plot_treatment_and_outcome",
     "add_ci_undirected_edges",
     "print_graph_falsifications",
     "p_value_of_bootstrap_data",
@@ -182,7 +191,25 @@ __all__ = [
 ]
 
 TESTS = get_conditional_independence_tests()
-DEFAULT_SIGNIFICANCE = 0.01
+
+
+def plot_treatment_and_outcome(data, treatment, outcome, figsize=(8, 2.5)) -> None:
+    """Plot the treatment and outcome histograms."""
+    fig, (lax, rax) = plt.subplots(1, 2, figsize=figsize)
+    sns.histplot(data=data, x=treatment.name, ax=lax)
+    lax.axvline(data[treatment.name].mean(), color="red")
+    lax.set_title("Treatment")
+
+    sns.histplot(data=data, x=outcome.name, ax=rax)
+    rax.axvline(data[outcome.name].mean(), color="red")
+    rax.set_ylabel("")
+    rax.set_title("Outcome")
+
+
+def discretize_binary(data: pd.DataFrame) -> pd.DataFrame:
+    """Discretize continuous data into binary data using K-Bins Discretization."""
+    kbins = KBinsDiscretizer(n_bins=2, encode="ordinal", strategy="uniform")
+    return pd.DataFrame(kbins.fit_transform(data), columns=data.columns)
 
 
 def add_ci_undirected_edges(
@@ -204,18 +231,15 @@ def add_ci_undirected_edges(
         the tested variables. If none, defaults to 0.05.
     :returns: A copy of the input graph potentially with new undirected edges added
     """
-    rv = NxMixedGraph(
-        directed=graph.directed.copy(),
-        undirected=graph.undirected.copy(),
+    warnings.warn(
+        "This method has been replaced by a refactored implementation in "
+        "y0.algorithm.conditional_independencies.add_ci_undirected_edges",
+        DeprecationWarning,
+        stacklevel=1,
     )
-    if significance_level is None:
-        significance_level = DEFAULT_SIGNIFICANCE
-    for judgement in get_conditional_independencies(rv):
-        if not judgement.test(
-            data, boolean=True, method=method, significance_level=significance_level
-        ):
-            rv.add_undirected_edge(judgement.left, judgement.right)
-    return rv
+    return y0.algorithm.conditional_independencies.add_ci_undirected_edges(
+        graph=graph, data=data, method=method, significance_level=significance_level
+    )
 
 
 def print_graph_falsifications(

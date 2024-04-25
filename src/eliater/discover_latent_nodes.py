@@ -141,17 +141,16 @@ The edges in the resultant graph are [($X$, $Y$), ($Z_1$, $Y$), ($Z_1$, $Z_2$), 
 $Z_4$ is removed as its children are a subset of $Z_1$'s children.
 """
 
-import itertools
-from typing import Iterable, Optional, Set, Union
+import warnings
+from typing import Set, Union
 
-import networkx as nx
-
-from y0.algorithm.simplify_latent import simplify_latent_dag
+from y0.algorithm.simplify_latent import evans_simplify
 from y0.dsl import Variable
-from y0.graph import DEFAULT_TAG, NxMixedGraph
+from y0.graph import NxMixedGraph, _ensure_set, get_nodes_in_directed_paths
 
 __all__ = [
     "remove_nuisance_variables",
+    "find_nuisance_variables",
 ]
 
 
@@ -159,90 +158,23 @@ def remove_nuisance_variables(
     graph: NxMixedGraph,
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
-    tag: Optional[str] = None,
 ) -> NxMixedGraph:
     """Find all nuisance variables and remove them based on Evans' simplification rules.
 
     :param graph: an NxMixedGraph
     :param treatments: a list of treatments
     :param outcomes: a list of outcomes
-    :param tag: The tag for which variables are latent
     :return: the new graph after simplification
     """
-    rv = NxMixedGraph(
-        directed=graph.directed.copy(),
-        undirected=graph.undirected.copy(),
-    )
-    lv_dag = mark_nuisance_variables_as_latent(
-        graph=rv, treatments=treatments, outcomes=outcomes, tag=tag
-    )
-    simplified_latent_dag = simplify_latent_dag(lv_dag, tag=tag)
-    return NxMixedGraph.from_latent_variable_dag(simplified_latent_dag.graph, tag=tag)
-
-
-def mark_nuisance_variables_as_latent(
-    graph: NxMixedGraph,
-    treatments: Union[Variable, Set[Variable]],
-    outcomes: Union[Variable, Set[Variable]],
-    tag: Optional[str] = None,
-) -> nx.DiGraph:
-    """Find all the nuisance variables and mark them as latent.
-
-    Mark nuisance variables as latent by first identifying them, then creating a new graph where these
-    nodes are marked as latent. Nuisance variables are the descendants of nodes in all proper causal paths
-    that are not ancestors of the outcome variables nodes. A proper causal path is a directed path from
-    treatments to the outcome. Nuisance variables should not be included in the estimation of the causal
-    effect as they increase the variance.
-
-    :param graph: an NxMixedGraph
-    :param treatments: a list of treatments
-    :param outcomes: a list of outcomes
-    :param tag: The tag for which variables are latent
-    :return: the modified graph after simplification, in place
-    """
-    if tag is None:
-        tag = DEFAULT_TAG
     nuisance_variables = find_nuisance_variables(graph, treatments=treatments, outcomes=outcomes)
-    lv_dag = NxMixedGraph.to_latent_variable_dag(graph, tag=tag)
-    # Set nuisance variables as latent
-    for node, data in lv_dag.nodes(data=True):
-        if Variable(node) in nuisance_variables:
-            data[tag] = True
-    return lv_dag
-
-
-def find_all_nodes_in_causal_paths(
-    graph: NxMixedGraph,
-    treatments: Union[Variable, Set[Variable]],
-    outcomes: Union[Variable, Set[Variable]],
-) -> Set[Variable]:
-    """Find all the nodes in proper causal paths from treatments to outcomes.
-
-    A proper causal path is a directed path from treatments to the outcome.
-
-    :param graph: an NxMixedGraph
-    :param treatments: a list of treatments
-    :param outcomes: a list of outcomes
-    :return: the nodes on all causal paths from treatments to outcomes.
-    """
-    if isinstance(treatments, Variable):
-        treatments = {treatments}
-    if isinstance(outcomes, Variable):
-        outcomes = {outcomes}
-
-    return {
-        node
-        for treatment, outcome in itertools.product(treatments, outcomes)
-        for causal_path in nx.all_simple_paths(graph.directed, treatment, outcome)
-        for node in causal_path
-    }
+    return evans_simplify(graph, latents=nuisance_variables)
 
 
 def find_nuisance_variables(
     graph: NxMixedGraph,
     treatments: Union[Variable, Set[Variable]],
     outcomes: Union[Variable, Set[Variable]],
-) -> Iterable[Variable]:
+) -> Set[Variable]:
     """Find the nuisance variables in the graph.
 
     Nuisance variables are the descendants of nodes in all proper causal paths that are
@@ -255,25 +187,26 @@ def find_nuisance_variables(
     :param outcomes: a list of outcomes
     :returns: The nuisance variables.
     """
-    if isinstance(treatments, Variable):
-        treatments = {treatments}
-    if isinstance(outcomes, Variable):
-        outcomes = {outcomes}
-
-    # Find the nodes on all causal paths
-    nodes_on_causal_paths = find_all_nodes_in_causal_paths(
-        graph=graph, treatments=treatments, outcomes=outcomes
+    treatments = _ensure_set(treatments)
+    outcomes = _ensure_set(outcomes)
+    intermediaries = get_nodes_in_directed_paths(graph, treatments, outcomes)
+    return (
+        graph.descendants_inclusive(intermediaries)
+        - graph.ancestors_inclusive(outcomes)
+        - treatments
+        - outcomes
     )
 
-    # Find the descendants of interest
-    descendants_of_nodes_on_causal_paths = graph.descendants_inclusive(nodes_on_causal_paths)
 
-    # Find the ancestors of outcome variables
-    ancestors_of_outcomes = graph.ancestors_inclusive(outcomes)
-
-    descendants_not_ancestors = descendants_of_nodes_on_causal_paths.difference(
-        ancestors_of_outcomes
+def find_all_nodes_in_causal_paths(
+    graph: NxMixedGraph,
+    treatments: Union[Variable, Set[Variable]],
+    outcomes: Union[Variable, Set[Variable]],
+) -> Set[Variable]:
+    """Find all the nodes in proper causal paths from treatments to outcomes."""
+    warnings.warn(
+        "This has been replaced with an efficient implementation in y0",
+        DeprecationWarning,
+        stacklevel=1,
     )
-
-    nuisance_variables = descendants_not_ancestors.difference(treatments.union(outcomes))
-    return nuisance_variables
+    return get_nodes_in_directed_paths(graph, treatments, outcomes)
