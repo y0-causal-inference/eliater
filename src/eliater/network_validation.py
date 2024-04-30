@@ -217,6 +217,7 @@ def add_ci_undirected_edges(
     data: pd.DataFrame,
     method: Optional[CITest] = None,
     significance_level: Optional[float] = None,
+    max_conditions: Optional[int] = None,
 ) -> NxMixedGraph:
     """Add undirected edges between d-separated nodes that fail a data-driven conditional independency test.
 
@@ -229,6 +230,7 @@ def add_ci_undirected_edges(
     :param significance_level: The statistical tests employ this value for
         comparison with the p-value of the test to determine the independence of
         the tested variables. If none, defaults to 0.05.
+    :param max_conditions: Longest set of conditions to investigate
     :returns: A copy of the input graph potentially with new undirected edges added
     """
     warnings.warn(
@@ -238,7 +240,7 @@ def add_ci_undirected_edges(
         stacklevel=1,
     )
     return y0.algorithm.conditional_independencies.add_ci_undirected_edges(
-        graph=graph, data=data, method=method, significance_level=significance_level
+        graph=graph, data=data, method=method, significance_level=significance_level, max_conditions=max_conditions
     )
 
 
