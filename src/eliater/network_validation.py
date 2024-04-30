@@ -240,7 +240,11 @@ def add_ci_undirected_edges(
         stacklevel=1,
     )
     return y0.algorithm.conditional_independencies.add_ci_undirected_edges(
-        graph=graph, data=data, method=method, significance_level=significance_level, max_conditions=max_conditions
+        graph=graph,
+        data=data,
+        method=method,
+        significance_level=significance_level,
+        max_conditions=max_conditions,
     )
 
 
