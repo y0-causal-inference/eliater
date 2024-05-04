@@ -900,3 +900,4 @@ FodyWeavers.xsd
 
 scratch/
 src/eliater/case_studies.tsv
+.idea/*
