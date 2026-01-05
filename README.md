@@ -1,12 +1,27 @@
-<!--
-<p align="center">
-  <img src="https://github.com/y0-causal-inference/eliater/raw/main/docs/source/logo.png" height="150">
-</p>
--->
+> [!CAUTION]
+> Eliater was developed as graduate student project and is not maintained.
+> Eliater provided a thin wrapper around functionally originally implemented
+> in the $Y_0$ Causal Reasoning Engine, which is maintained at
+> https://github.com/y0-causal-inference/y0.
 
-<h1 align="center">
-  Eliater
-</h1>
+Eliater was published at https://doi.org/10.1093/bioinformatics/btae527 and can
+be cited with:
+
+```bibtex
+@article{10.1093/bioinformatics/btae527,
+    author = {Mohammad-Taheri, Sara and Navada, Pruthvi Prakash and Hoyt, Charles Tapley and Zucker, Jeremy and Sachs, Karen and Gyori, Benjamin M and Vitek, Olga},
+    title = {Eliater: a Python package for estimating outcomes of perturbations in biomolecular networks},
+    journal = {Bioinformatics},
+    volume = {40},
+    number = {9},
+    year = {2024},
+    month = {08},
+    issn = {1367-4811},
+    doi = {10.1093/bioinformatics/btae527},
+}
+```
+
+# Eliater
 
 <p align="center">
     <a href="https://github.com/y0-causal-inference/eliater/actions/workflows/tests.yml">
