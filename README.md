@@ -1,10 +1,11 @@
 > [!CAUTION]
 > Eliater was developed as graduate student project and is not maintained.
-> Eliater provides a thin wrapper around functionally originally implemented
+> Eliater provided a thin wrapper around functionally originally implemented
 > in the $Y_0$ Causal Reasoning Engine, which is maintained at
-> https://github.com/y0-causal-inference/y0,
+> https://github.com/y0-causal-inference/y0.
 
-To cite Eliater, use:
+Eliater was published at https://doi.org/10.1093/bioinformatics/btae527 and can
+be cited with:
 
 ```bibtex
 @article{10.1093/bioinformatics/btae527,
