@@ -1,6 +1,8 @@
 > [!CAUTION]
 > Eliater was developed as graduate student project and is not maintained.
-> Please see the $Y_0$ Causal Reasoning Engine at https://github.com/y0-causal-inference/y0.
+> Eliater provides a thin wrapper around functionally originally implemented
+> in the $Y_0$ Causal Reasoning Engine, which is maintained at
+> https://github.com/y0-causal-inference/y0,
 
 To cite Eliater, use:
 
